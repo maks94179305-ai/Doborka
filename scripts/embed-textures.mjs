@@ -1,34 +1,28 @@
-import { existsSync, readFileSync, writeFileSync } from "node:fs";
+import { readFileSync, writeFileSync, readdirSync, statSync } from "node:fs";
+import { join } from "node:path";
 
-function dataUrl(path) {
-  if (!existsSync(path)) return "";
-  const bytes = readFileSync(path);
-  const ext = path.endsWith(".png") ? "png" : "jpeg";
-  return `data:image/${ext};base64,${bytes.toString("base64")}`;
-}
+const icon = "data:image/svg+xml," + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" rx="14" fill="#2c3034"/><path d="M16 44 L32 18 L48 44" fill="none" stroke="#f3f1ec" stroke-width="4"/></svg>');
+const graphite = "data:image/svg+xml," + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><rect width="32" height="32" fill="#3a4147"/></svg>');
+const gloss = "data:image/svg+xml," + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><rect width="32" height="32" fill="#23282e"/></svg>');
+const vintage = "data:image/svg+xml," + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><rect width="32" height="32" fill="#6e5a4a"/></svg>');
 
-const graphite = dataUrl("public/textures/graphite-matte.jpg");
-const gloss = dataUrl("public/textures/graphite-gloss.jpg");
-const vintage = dataUrl("public/textures/vintage-matte.jpg");
-const icon = dataUrl("public/icon-192.png") || "data:image/svg+xml," + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" rx="14" fill="#2a2d31"/><path d="M14 42 L32 16 L50 42" fill="none" stroke="#eceae4" stroke-width="4"/></svg>');
-
-writeFileSync(
-  "src/lib/phone-assets.ts",
-  `export const APP_ICON = ${JSON.stringify(icon)};\nconst TEXTURES: Record<string, string> = {\n  "#3a4147": ${JSON.stringify(graphite)},\n  "#23282e": ${JSON.stringify(gloss)},\n  "#6e5a4a": ${JSON.stringify(vintage)},\n};\nexport function textureFor(hex: string): string | undefined {\n  return TEXTURES[String(hex).toLowerCase()] || undefined;\n}\n`,
-);
-
-const viewPath = "src/components/plan-view.tsx";
-if (existsSync(viewPath)) {
-  let view = readFileSync(viewPath, "utf8");
-  if (!view.includes("textureFor")) {
-    view = view.replace(
-      'from "@/lib/types";',
-      'from "@/lib/types";\nimport { textureFor } from "@/lib/phone-assets";',
-    );
-    view = view.replace(
-      "const texture = profileTexture(hex);",
-      "const texture = textureFor(hex) ?? profileTexture(hex);",
-    );
-    writeFileSync(viewPath, view);
+function walk(dir, out = []) {
+  for (const name of readdirSync(dir)) {
+    const path = join(dir, name);
+    if (statSync(path).isDirectory()) walk(path, out);
+    else if (path.endsWith(".tsx") || path.endsWith(".ts")) out.push(path);
   }
+  return out;
 }
+
+for (const path of walk("src")) {
+  let text = readFileSync(path, "utf8");
+  const next = text
+    .replaceAll("/icon-192.png?v=pc", icon)
+    .replaceAll("/icon-512.png?v=pc", icon)
+    .replaceAll("/textures/graphite-matte.jpg", graphite)
+    .replaceAll("/textures/graphite-gloss.jpg", gloss)
+    .replaceAll("/textures/vintage-matte.jpg", vintage);
+  if (next !== text) writeFileSync(path, next);
+}
+writeFileSync("src/lib/phone-assets.ts", `export const APP_ICON = ${JSON.stringify(icon)};\nexport function textureFor(hex: string) {\n  const map = { \"#3a4147\": ${JSON.stringify(graphite)}, \"#23282e\": ${JSON.stringify(gloss)}, \"#6e5a4a\": ${JSON.stringify(vintage)} };\n  return map[String(hex).toLowerCase()];\n}\n`);
