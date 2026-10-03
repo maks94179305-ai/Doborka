@@ -22,7 +22,7 @@ for (const path of walk("src")) {
     .replaceAll("/icon-512.png?v=pc", icon)
     .replaceAll("/textures/graphite-matte.jpg", graphite)
     .replaceAll("/textures/graphite-gloss.jpg", gloss)
-    .replaceAll("/textures/vintage-matte.jpg", vintage);
+    .replaceAll("/textures/vintage-matte.jpg", vintage)
+    .replaceAll('from "@/lib/share-image"', 'from "@/lib/share-native"');
   if (next !== text) writeFileSync(path, next);
 }
-writeFileSync("src/lib/phone-assets.ts", `export const APP_ICON = ${JSON.stringify(icon)};\nexport function textureFor(hex: string) {\n  const map = { \"#3a4147\": ${JSON.stringify(graphite)}, \"#23282e\": ${JSON.stringify(gloss)}, \"#6e5a4a\": ${JSON.stringify(vintage)} };\n  return map[String(hex).toLowerCase()];\n}\n`);

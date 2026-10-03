@@ -18,6 +18,7 @@ jobs:
       - name: Build phone client
         run: |
           npm install
+          npm install @capacitor/core @capacitor/cli @capacitor/android @capacitor/share @capacitor/filesystem
           node scripts/embed-textures.mjs
           npx vite build --config vite.apk.config.ts
           rm -rf dist-apk-web
@@ -30,10 +31,9 @@ jobs:
       - name: Add Android shell
         run: |
           WEBDIR=$(cat /tmp/webdir)
-          npm install @capacitor/core @capacitor/cli @capacitor/android
           npx cap init Doborka com.example.doborka --web-dir "$WEBDIR"
           npx cap add android
-          npx cap copy android
+          npx cap sync android
       - name: Build APK
         working-directory: android
         run: chmod +x gradlew && ./gradlew assembleDebug
