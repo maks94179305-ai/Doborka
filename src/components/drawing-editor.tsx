@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Maximize2, MousePointer2, PenLine, Redo2, Ruler, Trash2, Undo2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { dimInputValue, dist, fitView, hitScore, keepMinOffset, paintDim, paintObject, parseMm, pickDimStart, resizeFromStart, SCALE_DEFAULT, SHEET_BG, signedPerp, snapDimEnd, snapToDrawing, strokeDash, type Pt } from "@/lib/draw-render";
+import { dimInputValue, dimLabelWorld, dist, fitView, hitDimPart, hitScore, keepMinOffset, paintDim, paintObject, parseMm, pickDimStart, resizeFromStart, SCALE_DEFAULT, SHEET_BG, signedPerp, snapDimEnd, snapToDrawing, strokeDash, type Pt } from "@/lib/draw-render";
 import { DRAW_COLORS, type DrawObject, type Drawing } from "@/lib/types";
 import { cn, uid } from "@/lib/utils";
 
@@ -16,6 +16,7 @@ export function DrawingEditor({ drawing, onChange, compact = false }: { drawing:
   const [view, setView] = useState(() => drawing.view ?? { x: 72, y: 72, scale: SCALE_DEFAULT });
   const [draft, setDraft] = useState<{ start: Pt; end: Pt; offset?: number; locked?: boolean } | null>(null);
   const [length, setLength] = useState("");
+  const [labelBox, setLabelBox] = useState<{ id: string; x: number; y: number; value: string } | null>(null);
   const history = useRef<DrawObject[][]>([drawing.objects]);
   const histIndex = useRef(0);
   const objects = drawing.objects;
@@ -36,6 +37,7 @@ export function DrawingEditor({ drawing, onChange, compact = false }: { drawing:
   const pinchRef = useRef<{ dist: number; scale: number; ox: number; oy: number; vx: number; vy: number } | null>(null);
   const holdRef = useRef<number | null>(null);
   const lengthRef = useRef<HTMLInputElement>(null);
+  const offsetDrag = useRef<string | null>(null);
   function clearHold() { if (holdRef.current) window.clearTimeout(holdRef.current); holdRef.current = null; }
   const lineColor = DRAW_COLORS[0];
   const dimColor = DRAW_COLORS[4];
@@ -175,7 +177,17 @@ export function DrawingEditor({ drawing, onChange, compact = false }: { drawing:
       const found = hit(world);
       setSelected(found ? [found.id] : []);
       if (found?.type === "line") setLength(String(Math.round(dist({ x: found.x1, y: found.y1 }, { x: found.x2, y: found.y2 }))));
-      if (found?.type === "dim") setLength(dimInputValue(found));
+      if (found?.type === "dim") {
+        const part = hitDimPart(found, world, 22 / viewRef.current.scale, viewRef.current.scale);
+        if (part === "label") {
+          const pose = dimLabelWorld(found, viewRef.current.scale);
+          const v = viewRef.current;
+          setLabelBox({ id: found.id, x: v.x + pose.x * v.scale, y: v.y + pose.y * v.scale, value: dimInputValue(found) });
+        } else {
+          offsetDrag.current = found.id;
+          setLabelBox(null);
+        }
+      } else setLabelBox(null);
       return;
     }
     const tol = 22 / viewRef.current.scale;
@@ -204,6 +216,16 @@ export function DrawingEditor({ drawing, onChange, compact = false }: { drawing:
       return;
     }
     if (downRef.current && Math.hypot(e.clientX - downRef.current.x, e.clientY - downRef.current.y) > 8) clearHold();
+    if (offsetDrag.current) {
+      const world = toWorld(local(e).x, local(e).y);
+      const id = offsetDrag.current;
+      const obj = objectsRef.current.find((o) => o.id === id && o.type === "dim");
+      if (obj && obj.type === "dim") {
+        const offset = keepMinOffset(signedPerp(world, { x: obj.x1, y: obj.y1 }, { x: obj.x2, y: obj.y2 }));
+        onChange({ ...drawing, objects: objectsRef.current.map((o) => o.id === id && o.type === "dim" ? { ...o, offset } : o), view: viewRef.current, updatedAt: Date.now() });
+      }
+      return;
+    }
     if (panRef.current) {
       setView({ ...viewRef.current, x: panRef.current.vx + (e.clientX - panRef.current.x), y: panRef.current.vy + (e.clientY - panRef.current.y) });
       return;
@@ -224,6 +246,7 @@ export function DrawingEditor({ drawing, onChange, compact = false }: { drawing:
     clearHold();
     if (e) pointers.current.delete(e.pointerId);
     if (pointers.current.size < 2) pinchRef.current = null;
+    if (offsetDrag.current) { const id = offsetDrag.current; offsetDrag.current = null; commit(objectsRef.current); setSelected([id]); return; }
     if (panRef.current) { panRef.current = null; return; }
     const tap = downRef.current;
     downRef.current = null;
@@ -241,9 +264,8 @@ export function DrawingEditor({ drawing, onChange, compact = false }: { drawing:
       return;
     }
     const line = { id: uid("dr"), type: "line" as const, x1: d.start.x, y1: d.start.y, x2: d.end.x, y2: d.end.y, color: activeColor("line"), width: 3, dash: "solid" as const };
-    const mark = { id: uid("dr"), type: "dim" as const, x1: d.start.x, y1: d.start.y, x2: d.end.x, y2: d.end.y, offset: 36, color: dimColor, width: 2, dash: "dash" as const };
-    commit([...objectsRef.current, line, mark]);
-    setSelected([mark.id]);
+    commit([...objectsRef.current, line]);
+    setSelected([line.id]);
     setLength(String(Math.round(dist(d.start, d.end))));
     setTool("select");
     window.setTimeout(() => lengthRef.current?.focus(), 40);
@@ -294,7 +316,7 @@ export function DrawingEditor({ drawing, onChange, compact = false }: { drawing:
             <button key={c} type="button" aria-label={`Цвет ${c}`} className="size-7 rounded-full" style={{ background: c, boxShadow: color === c ? `0 0 0 2px #141816, 0 0 0 4px ${c}` : "0 0 0 2px transparent" }} onClick={() => { manualRef.current = c; setColor(c); setTool("line"); }} />
           ))}
         </div>
-        {selected.length === 1 ? (
+        {selected.length === 1 && objects.find((o) => o.id === selected[0])?.type === "line" ? (
           <label className="flex items-center gap-2 text-xs text-muted-foreground">
             Длина
             <input ref={lengthRef} value={length} inputMode="numeric" onChange={(e) => setLength(e.target.value)} onBlur={applyLength} onKeyDown={(e) => { if (e.key === "Enter") applyLength(); }} className="h-9 w-24 rounded-lg border border-border bg-background px-2 tabular text-sm text-foreground" />
@@ -302,7 +324,19 @@ export function DrawingEditor({ drawing, onChange, compact = false }: { drawing:
         ) : null}
       </div>
       <div ref={wrapRef} className="relative min-h-[22rem] flex-1 overflow-hidden rounded-xl border border-border">
-        <canvas ref={canvasRef} className="absolute inset-0 touch-none" style={{ touchAction: "none" }} onPointerDown={onDown} onPointerMove={onMove} onPointerUp={onUp} onPointerCancel={(e) => { clearHold(); pointers.current.delete(e.pointerId); pinchRef.current = null; panRef.current = null; downRef.current = null; setDraft(null); }} onContextMenu={(e) => e.preventDefault()} />
+        <canvas ref={canvasRef} className="absolute inset-0 touch-none" style={{ touchAction: "none" }} onPointerDown={onDown} onPointerMove={onMove} onPointerUp={onUp} onPointerCancel={(e) => { clearHold(); pointers.current.delete(e.pointerId); pinchRef.current = null; panRef.current = null; offsetDrag.current = null; downRef.current = null; setDraft(null); }} onContextMenu={(e) => e.preventDefault()} />
+        {labelBox ? (
+          <input
+            autoFocus
+            inputMode="numeric"
+            value={labelBox.value}
+            onChange={(e) => setLabelBox({ ...labelBox, value: e.target.value })}
+            onBlur={() => { const box = labelBox; setLabelBox(null); commit(objectsRef.current.map((o) => o.id === box.id && o.type === "dim" ? { ...o, label: box.value.trim() || undefined } : o)); }}
+            onKeyDown={(e) => { if (e.key === "Enter") (e.currentTarget as HTMLInputElement).blur(); }}
+            className="absolute z-20 h-9 w-20 -translate-x-1/2 -translate-y-1/2 rounded-md border border-primary bg-background px-2 text-center text-sm text-foreground shadow-float"
+            style={{ left: labelBox.x, top: labelBox.y }}
+          />
+        ) : null}
       </div>
     </div>
   );
