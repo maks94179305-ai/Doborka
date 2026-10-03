@@ -3,7 +3,7 @@ import { createRoot } from "react-dom/client";
 import { createHashHistory, createRouter, RouterProvider } from "@tanstack/react-router";
 import { routeTree } from "./routeTree.gen";
 import { AppErrorComponent } from "@/lib/error-component";
-import "./styles.css";
+import "./phone.css";
 
 const router = createRouter({
   routeTree,

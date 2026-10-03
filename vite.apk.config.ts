@@ -4,13 +4,13 @@ import viteReact from "@vitejs/plugin-react";
 import tailwindcss from "@tailwindcss/vite";
 
 export default defineConfig({
-  root: "apk",
   plugins: [viteReact(), tailwindcss()],
   resolve: {
     alias: { "@": fileURLToPath(new URL("./src", import.meta.url)) },
   },
   build: {
-    outDir: "../dist-apk",
+    outDir: "dist-apk",
     emptyOutDir: true,
+    rollupOptions: { input: "apk/index.html" },
   },
 });
