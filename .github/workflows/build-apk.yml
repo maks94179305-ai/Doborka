@@ -15,45 +15,18 @@ jobs:
         with:
           distribution: temurin
           java-version: 21
-      - name: Build web app
+      - name: Build phone client
         run: |
           npm install
-          npx vite build
-          if [ -d .vercel/output/static ]; then WEBDIR=.vercel/output/static
-          elif [ -d dist/client ]; then WEBDIR=dist/client
-          elif [ -d dist ]; then WEBDIR=dist
-          else echo "no web output" && exit 1
-          fi
-          echo "$WEBDIR" > /tmp/webdir
-          JS=$(find "$WEBDIR/assets" -name 'index-*.js' | head -1)
-          CSS=$(find "$WEBDIR/assets" -name '*.css' | head -1)
-          JSREL=${JS#$WEBDIR/}
-          CSSREL=${CSS#$WEBDIR/}
-          {
-            echo '<!doctype html>'
-            echo '<html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">'
-            echo '<title>Доборка</title>'
-            echo '<style>html,body{margin:0;background:#161618;color:#f3f1ec;font-family:sans-serif}#boot{min-height:100vh;display:flex;align-items:center;justify-content:center;font-size:32px}</style>'
-            if [ -n "$CSS" ]; then echo "<link rel=\"stylesheet\" href=\"$CSSREL\">"; fi
-            echo '</head><body><div id="boot">Доборка</div><div id="root"></div>'
-            if [ -n "$JS" ]; then echo "<script type=\"module\" src=\"$JSREL\"></script>"; fi
-            echo '</body></html>'
-          } > "$WEBDIR/index.html"
-          find "$WEBDIR" -name '*.html' -o -name 'index-*.js' | head
+          npx vite build --config vite.apk.config.ts
+          test -f dist-apk/index.html
+          echo dist-apk > /tmp/webdir
       - name: Add Android shell
         run: |
           WEBDIR=$(cat /tmp/webdir)
           npm install @capacitor/core @capacitor/cli @capacitor/android
           npx cap init "Doborka" com.example.doborka --web-dir "$WEBDIR"
           npx cap add android
-          python3 - <<'PY'
-          from pathlib import Path
-          p = Path("capacitor.config.ts")
-          text = p.read_text()
-          if "backgroundColor" not in text:
-              text = text.replace("webDir:", "backgroundColor: '#161618',\n  webDir:")
-              p.write_text(text)
-          PY
           npx cap copy android
       - name: Build APK
         working-directory: android
