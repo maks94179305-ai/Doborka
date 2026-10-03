@@ -19,11 +19,14 @@ jobs:
         run: |
           npm install
           npx vite build
-          if [ -d dist/client ]; then echo dist/client > /tmp/webdir
+          if [ -d .vercel/output/static ]; then echo .vercel/output/static > /tmp/webdir
+          elif [ -d dist/client ]; then echo dist/client > /tmp/webdir
           elif [ -d dist ]; then echo dist > /tmp/webdir
           elif [ -d .output/public ]; then echo .output/public > /tmp/webdir
-          else echo "no web output" && find . -maxdepth 3 -type d | head && exit 1
+          else echo "no web output" && find . -maxdepth 4 -type d -name static -o -name client -o -name public | head && exit 1
           fi
+          echo "web dir: $(cat /tmp/webdir)"
+          ls -la "$(cat /tmp/webdir)" | head
       - name: Add Android shell
         run: |
           WEBDIR=$(cat /tmp/webdir)
