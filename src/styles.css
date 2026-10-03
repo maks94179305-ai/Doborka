@@ -1,0 +1,190 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "@fontsource/manrope/400.css";
+@import "@fontsource/manrope/500.css";
+@import "@fontsource/manrope/600.css";
+@import "@fontsource/manrope/700.css";
+@import "@fontsource/unbounded/500.css";
+@import "@fontsource/unbounded/600.css";
+@import "@fontsource/ibm-plex-mono/400.css";
+@import "@fontsource/ibm-plex-mono/500.css";
+
+@theme {
+  --font-sans: "Manrope", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Unbounded", "Manrope", sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, monospace;
+
+  --color-background: #121614;
+  --color-foreground: #f1eee6;
+  --color-card: #1b211e;
+  --color-card-foreground: #f1eee6;
+  --color-popover: #222925;
+  --color-popover-foreground: #f1eee6;
+  --color-primary: #e8e4d8;
+  --color-primary-foreground: #141816;
+  --color-secondary: #262d29;
+  --color-secondary-foreground: #d9ddd6;
+  --color-muted: #262d29;
+  --color-muted-foreground: #9aa59d;
+  --color-accent: #2c3531;
+  --color-accent-foreground: #e8e4d8;
+  --color-destructive: #c45c4a;
+  --color-destructive-foreground: #fde8e4;
+  --color-border: #2e3733;
+  --color-input: #2e3733;
+  --color-ring: #9bb0a6;
+  --color-steel: #9bb0a6;
+  --color-aqua: #3ee0d0;
+  --color-chalk: #f1eee6;
+  --color-waste: #c4a574;
+  --color-ok: #7d9a78;
+  --color-mill: #161c19;
+
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 22px;
+  --radius-2xl: 28px;
+
+  --shadow-panel: inset 0 1px 0 color-mix(in oklab, white 6%, transparent);
+  --shadow-float: 0 12px 40px color-mix(in oklab, black 38%, transparent);
+}
+
+@utility panel {
+  border-radius: var(--radius-xl);
+  border: 1px solid color-mix(in oklab, var(--color-foreground) 8%, transparent);
+  background-color: var(--color-card);
+  box-shadow: var(--shadow-panel);
+}
+
+@utility panel-dash {
+  border-radius: var(--radius-xl);
+  border: 1px dashed color-mix(in oklab, var(--color-foreground) 16%, transparent);
+  background-color: color-mix(in oklab, var(--color-card) 72%, transparent);
+}
+
+@utility cut-rule {
+  height: 0.375rem;
+  width: 100%;
+  border-radius: 9999px;
+  background-color: var(--color-aqua);
+  box-shadow:
+    0 0 10px color-mix(in oklab, var(--color-aqua) 90%, transparent),
+    0 0 28px color-mix(in oklab, var(--color-aqua) 55%, transparent);
+}
+
+@utility kicker {
+  font-size: 0.6875rem;
+  font-weight: 500;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--color-steel);
+}
+
+@layer base {
+  * {
+    border-color: var(--color-border);
+  }
+
+  html {
+    color-scheme: dark;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  body {
+    margin: 0;
+    min-height: 100dvh;
+    background-color: var(--color-background);
+    background-image: radial-gradient(
+      1100px 520px at 50% -14%,
+      color-mix(in oklab, var(--color-steel) 22%, transparent),
+      transparent 68%
+    );
+    color: var(--color-foreground);
+    font-family: var(--font-sans);
+    line-height: 1.5;
+  }
+
+  h1,
+  h2,
+  h3 {
+    text-wrap: balance;
+    font-family: var(--font-display);
+    letter-spacing: -0.03em;
+    line-height: 1.15;
+  }
+
+  h1 {
+    font-size: clamp(1.45rem, 1.15rem + 1.2vw, 1.85rem);
+    font-weight: 500;
+  }
+
+  p {
+    text-wrap: pretty;
+  }
+
+  button:not(:disabled),
+  [role="button"]:not(:disabled) {
+    cursor: pointer;
+  }
+
+  input,
+  select,
+  textarea {
+    font-family: inherit;
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-ring);
+    outline-offset: 2px;
+  }
+
+  .tabular {
+    font-variant-numeric: tabular-nums;
+    font-family: var(--font-mono);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+@media print {
+  body {
+    background: white;
+    color: #1a1c1a;
+  }
+  .no-print {
+    display: none !important;
+  }
+}
+
+.mill-grid {
+  background-image:
+    linear-gradient(to right, color-mix(in oklab, var(--color-foreground) 4%, transparent) 1px, transparent 1px),
+    linear-gradient(to bottom, color-mix(in oklab, var(--color-foreground) 4%, transparent) 1px, transparent 1px);
+  background-size: 28px 28px;
+}
+
+.hatch {
+  background-image: repeating-linear-gradient(
+    -45deg,
+    color-mix(in oklab, var(--color-waste) 35%, transparent),
+    color-mix(in oklab, var(--color-waste) 35%, transparent) 1px,
+    transparent 1px,
+    transparent 6px
+  );
+}
+
+@media print {
+  #boot-splash {
+    display: none !important;
+  }
+}
