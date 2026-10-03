@@ -17,6 +17,7 @@ export function DrawingEditor({ drawing, onChange, compact = false }: { drawing:
   const [draft, setDraft] = useState<{ start: Pt; end: Pt; offset?: number; locked?: boolean } | null>(null);
   const [length, setLength] = useState("");
   const [labelBox, setLabelBox] = useState<{ id: string; x: number; y: number; value: string } | null>(null);
+  const [pad, setPad] = useState<null | "length" | "label">(null);
   const history = useRef<DrawObject[][]>([drawing.objects]);
   const histIndex = useRef(0);
   const objects = drawing.objects;
@@ -182,7 +183,7 @@ export function DrawingEditor({ drawing, onChange, compact = false }: { drawing:
         if (part === "label") {
           const pose = dimLabelWorld(found, viewRef.current.scale);
           const v = viewRef.current;
-          setLabelBox({ id: found.id, x: v.x + pose.x * v.scale, y: v.y + pose.y * v.scale, value: dimInputValue(found) });
+          setLabelBox({ id: found.id, x: v.x + pose.x * v.scale, y: v.y + pose.y * v.scale, value: dimInputValue(found) }); setPad("label");
         } else {
           offsetDrag.current = found.id;
           setLabelBox(null);
@@ -268,7 +269,7 @@ export function DrawingEditor({ drawing, onChange, compact = false }: { drawing:
     setSelected([line.id]);
     setLength(String(Math.round(dist(d.start, d.end))));
     setTool("select");
-    window.setTimeout(() => lengthRef.current?.focus(), 40);
+    setPad("length");
   }
 
   function applyLength() {
@@ -313,29 +314,35 @@ export function DrawingEditor({ drawing, onChange, compact = false }: { drawing:
         <Button size="icon-sm" variant="secondary" aria-label="Вписать" onClick={() => { const el = wrapRef.current; if (el) setView(fitView(objects, el.clientWidth, el.clientHeight)); }}><Maximize2 /></Button>
         <div className="flex items-center gap-2">
           {DRAW_COLORS.map((c) => (
-            <button key={c} type="button" aria-label={`Цвет ${c}`} className="size-7 rounded-full" style={{ background: c, boxShadow: color === c ? `0 0 0 2px #141816, 0 0 0 4px ${c}` : "0 0 0 2px transparent" }} onClick={() => { manualRef.current = c; setColor(c); setTool("line"); }} />
+            <button key={c} type="button" aria-label={`Цвет ${c}`} className="size-7 rounded-full" style={{ background: c, boxShadow: color === c ? `0 0 0 2px #141816, 0 0 0 4px ${c}` : "0 0 0 2px transparent" }} onClick={() => { manualRef.current = c; setColor(c); if (toolRef.current !== "dim") setTool("line"); }} />
           ))}
         </div>
         {selected.length === 1 && objects.find((o) => o.id === selected[0])?.type === "line" ? (
           <label className="flex items-center gap-2 text-xs text-muted-foreground">
             Длина
-            <input ref={lengthRef} value={length} inputMode="numeric" onChange={(e) => setLength(e.target.value)} onBlur={applyLength} onKeyDown={(e) => { if (e.key === "Enter") applyLength(); }} className="h-9 w-24 rounded-lg border border-border bg-background px-2 tabular text-sm text-foreground" />
+            <button type="button" onClick={() => setPad("length")} className="h-9 w-24 rounded-lg border border-border bg-background px-2 text-left tabular text-sm text-foreground">{length || "мм"}</button>
           </label>
         ) : null}
       </div>
       <div ref={wrapRef} className="relative min-h-[22rem] flex-1 overflow-hidden rounded-xl border border-border">
         <canvas ref={canvasRef} className="absolute inset-0 touch-none" style={{ touchAction: "none" }} onPointerDown={onDown} onPointerMove={onMove} onPointerUp={onUp} onPointerCancel={(e) => { clearHold(); pointers.current.delete(e.pointerId); pinchRef.current = null; panRef.current = null; offsetDrag.current = null; downRef.current = null; setDraft(null); }} onContextMenu={(e) => e.preventDefault()} />
         {labelBox ? (
-          <input
-            autoFocus
-            inputMode="numeric"
-            value={labelBox.value}
-            onChange={(e) => setLabelBox({ ...labelBox, value: e.target.value })}
-            onBlur={() => { const box = labelBox; setLabelBox(null); commit(objectsRef.current.map((o) => o.id === box.id && o.type === "dim" ? { ...o, label: box.value.trim() || undefined } : o)); }}
-            onKeyDown={(e) => { if (e.key === "Enter") (e.currentTarget as HTMLInputElement).blur(); }}
-            className="absolute z-20 h-9 w-20 -translate-x-1/2 -translate-y-1/2 rounded-md border border-primary bg-background px-2 text-center text-sm text-foreground shadow-float"
-            style={{ left: labelBox.x, top: labelBox.y }}
-          />
+          <div className="absolute z-20 h-9 w-20 -translate-x-1/2 -translate-y-1/2 rounded-md border border-primary bg-background px-2 text-center text-sm leading-9 text-foreground shadow-float" style={{ left: labelBox.x, top: labelBox.y }}>{labelBox.value || "0"}</div>
+        ) : null}
+        {pad || labelBox ? (
+          <div className="absolute bottom-2 right-2 z-30 grid w-36 grid-cols-3 gap-1 rounded-xl border border-border bg-card/95 p-1.5 shadow-float">
+            {["1", "2", "3", "4", "5", "6", "7", "8", "9", "0", "⌫", "OK"].map((key) => (
+              <button key={key} type="button" className="h-8 rounded-md bg-background text-sm font-medium text-foreground" onClick={() => {
+                if (labelBox) {
+                  if (key === "OK") { const box = labelBox; setLabelBox(null); setPad(null); commit(objectsRef.current.map((o) => o.id === box.id && o.type === "dim" ? { ...o, label: box.value.trim() || undefined } : o)); return; }
+                  setLabelBox({ ...labelBox, value: key === "⌫" ? labelBox.value.slice(0, -1) : (labelBox.value + key).slice(0, 6) });
+                  return;
+                }
+                if (key === "OK") { applyLength(); setPad(null); return; }
+                setLength((v) => (key === "⌫" ? v.slice(0, -1) : (v + key).slice(0, 6)));
+              }}>{key}</button>
+            ))}
+          </div>
         ) : null}
       </div>
     </div>
