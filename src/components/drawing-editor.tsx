@@ -18,6 +18,7 @@ export function DrawingEditor({ drawing, onChange, compact = false }: { drawing:
   const [length, setLength] = useState("");
   const [labelBox, setLabelBox] = useState<{ id: string; x: number; y: number; value: string } | null>(null);
   const [pad, setPad] = useState<null | "length" | "label">(null);
+  const [pressedKey, setPressedKey] = useState("");
   const freshRef = useRef(true);
   const history = useRef<DrawObject[][]>([drawing.objects]);
   const histIndex = useRef(0);
@@ -255,11 +256,7 @@ export function DrawingEditor({ drawing, onChange, compact = false }: { drawing:
     const d = draftRef.current;
     setDraft(null);
     const moved = e && tap ? Math.hypot(e.clientX - tap.x, e.clientY - tap.y) : d ? dist(d.start, d.end) : 0;
-    if (toolRef.current === "line" && tap?.empty && moved < 8) {
-      setTool("select");
-      setColor(activeColor("select"));
-      return;
-    }
+    if (tap?.empty && moved < 8) confirmTyped();
     if (!d || dist(d.start, d.end) < 2) return;
     if (toolRef.current === "dim") {
       commit([...objectsRef.current, { id: uid("dr"), type: "dim", x1: d.start.x, y1: d.start.y, x2: d.end.x, y2: d.end.y, offset: d.offset ?? 40, color: activeColor("dim"), width: 2, dash: "dash" }]);
@@ -269,10 +266,21 @@ export function DrawingEditor({ drawing, onChange, compact = false }: { drawing:
     commit([...objectsRef.current, line]);
     setSelected([line.id]);
     setLength(""); freshRef.current = true;
-    setTool("select");
     setPad("length");
   }
 
+  function confirmTyped() {
+    if (labelBox) {
+      const box = labelBox;
+      setLabelBox(null);
+      setPad(null);
+      freshRef.current = true;
+      commit(objectsRef.current.map((o) => o.id === box.id && o.type === "dim" ? { ...o, label: box.value.trim() || undefined } : o));
+      return;
+    }
+    applyLength();
+    freshRef.current = true;
+  }
   function applyLength() {
     const id = selected[0];
     const obj = objects.find((o) => o.id === id);
@@ -318,12 +326,6 @@ export function DrawingEditor({ drawing, onChange, compact = false }: { drawing:
             <button key={c} type="button" aria-label={`Цвет ${c}`} className="size-7 rounded-full" style={{ background: c, boxShadow: color === c ? `0 0 0 2px #141816, 0 0 0 4px ${c}` : "0 0 0 2px transparent" }} onClick={() => { manualRef.current = c; setColor(c); if (toolRef.current !== "dim") setTool("line"); }} />
           ))}
         </div>
-        {selected.length === 1 ? (
-          <label className="flex items-center gap-2 text-xs text-muted-foreground">
-            Длина
-            <button type="button" onClick={() => setPad("length")} className="h-9 w-24 rounded-lg border border-border bg-background px-2 text-left tabular text-sm text-foreground">{length || "мм"}</button>
-          </label>
-        ) : null}
       </div>
       <div ref={wrapRef} className="relative min-h-[22rem] flex-1 overflow-hidden rounded-xl border border-border">
         <canvas ref={canvasRef} className="absolute inset-0 touch-none" style={{ touchAction: "none" }} onPointerDown={onDown} onPointerMove={onMove} onPointerUp={onUp} onPointerCancel={(e) => { clearHold(); pointers.current.delete(e.pointerId); pinchRef.current = null; panRef.current = null; offsetDrag.current = null; downRef.current = null; setDraft(null); }} onContextMenu={(e) => e.preventDefault()} />
@@ -331,16 +333,21 @@ export function DrawingEditor({ drawing, onChange, compact = false }: { drawing:
           <div className="absolute z-20 h-9 w-20 -translate-x-1/2 -translate-y-1/2 rounded-md border border-primary bg-background px-2 text-center text-sm leading-9 text-foreground shadow-float" style={{ left: labelBox.x, top: labelBox.y }}>{labelBox.value || "0"}</div>
         ) : null}
       </div>
-      <div className="grid shrink-0 grid-cols-6 gap-1 pb-[max(0.25rem,env(safe-area-inset-bottom))]">
+      <div className="flex h-9 shrink-0 items-center justify-center gap-1">
+        {(labelBox ? labelBox.value : length).split("").map((digit, i) => (
+          <span key={`${digit}-${i}`} className="grid h-9 min-w-9 place-items-center rounded-md border border-primary bg-primary text-sm font-medium text-primary-foreground">{digit}</span>
+        ))}
+      </div>
+      <div className="grid shrink-0 grid-cols-6 gap-1 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
         {["1", "2", "3", "4", "5", "6", "7", "8", "9", "0", "⌫", "OK"].map((key) => (
-          <button key={key} type="button" className="h-9 rounded-md border border-border bg-card text-sm font-medium text-foreground" onClick={() => {
+          <button key={key} type="button" className={cn("h-9 rounded-md border text-sm font-medium", pressedKey === key ? "border-primary bg-primary text-primary-foreground" : "border-border bg-card text-foreground")} onPointerDown={() => setPressedKey(key)} onPointerUp={() => setPressedKey("")} onPointerLeave={() => setPressedKey("")} onClick={() => {
             const nextDigit = (current: string) => { const fresh = freshRef.current; freshRef.current = false; if (key === "⌫") return current.slice(0, -1); return (fresh ? key : current + key).slice(0, 6); };
             if (labelBox) {
-              if (key === "OK") { const box = labelBox; setLabelBox(null); setPad(null); freshRef.current = true; commit(objectsRef.current.map((o) => o.id === box.id && o.type === "dim" ? { ...o, label: box.value.trim() || undefined } : o)); return; }
+              if (key === "OK") { confirmTyped(); return; }
               setLabelBox({ ...labelBox, value: nextDigit(labelBox.value) });
               return;
             }
-            if (key === "OK") { applyLength(); freshRef.current = true; return; }
+            if (key === "OK") { confirmTyped(); return; }
             setLength((v) => nextDigit(v));
             setPad("length");
           }}>{key}</button>
