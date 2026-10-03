@@ -6,28 +6,18 @@ b64 = Path("scripts/icon-a.txt").read_text().strip() + Path("scripts/icon-b.txt"
 raw = base64.b64decode(b64)
 Path("public").mkdir(exist_ok=True)
 Path("public/icon-src.jpg").write_bytes(raw)
-im = Image.open("public/icon-src.jpg").convert("RGBA")
-px = im.load()
-w, h = im.size
-for y in range(h):
-    for x in range(w):
-        r, g, b, a = px[x, y]
-        if r > 200 and g > 200 and b > 200:
-            px[x, y] = (0, 0, 0, 0)
-bbox = im.getbbox() or (0, 0, w, h)
-im = im.crop(bbox).resize((192, 192), Image.Resampling.LANCZOS)
+im = Image.open("public/icon-src.jpg").convert("RGB")
+im = im.resize((192, 192), Image.Resampling.LANCZOS)
 im.save("public/icon-192.png")
 im.resize((512, 512), Image.Resampling.LANCZOS).save("public/icon-512.png")
 im.resize((180, 180), Image.Resampling.LANCZOS).save("public/icon-180.png")
 sizes = {"mdpi": 48, "hdpi": 72, "xhdpi": 96, "xxhdpi": 144, "xxxhdpi": 192}
 root = Path("android/app/src/main/res")
 if root.exists():
-    bg = Image.new("RGBA", (192, 192), (27, 33, 40, 255))
-    bg.alpha_composite(im.resize((192, 192)))
     for density, size in sizes.items():
         folder = root / f"mipmap-{density}"
         folder.mkdir(parents=True, exist_ok=True)
-        icon = bg.resize((size, size), Image.Resampling.LANCZOS)
+        icon = im.resize((size, size), Image.Resampling.LANCZOS)
         for name in ("ic_launcher.png", "ic_launcher_round.png", "ic_launcher_foreground.png"):
             icon.save(folder / name)
     color = root / "values" / "ic_launcher_background.xml"
