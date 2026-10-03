@@ -1,0 +1,133 @@
+import { useEffect, useState } from "react";
+import { Download, Trash2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
+import { DEFAULT_STOCK, SIDE_KEYS, SIDE_SHORT, type Strategy } from "@/lib/types";
+import { useProject, useWorkspace } from "@/lib/store";
+import { downloadText } from "@/lib/report";
+import { PairPanel } from "@/components/pair-panel";
+
+type BIPEvent = Event & { prompt: () => Promise<void> };
+
+export function MoreView() {
+  const project = useProject();
+  const ws = useWorkspace();
+  const [installEvt, setInstallEvt] = useState<BIPEvent | null>(null);
+  const [standalone, setStandalone] = useState(false);
+  const [customStock, setCustomStock] = useState("");
+
+  useEffect(() => {
+    const standaloneNow = window.matchMedia("(display-mode: standalone)").matches || ("standalone" in navigator && Boolean((navigator as { standalone?: boolean }).standalone));
+    setStandalone(standaloneNow);
+    const onbip = (e: Event) => { e.preventDefault(); setInstallEvt(e as BIPEvent); };
+    window.addEventListener("beforeinstallprompt", onbip);
+    return () => window.removeEventListener("beforeinstallprompt", onbip);
+  }, []);
+
+  if (!project) return null;
+  const st = project.settings;
+  function patchSettings(partial: Partial<typeof st>) { ws.patchProject((p) => ({ ...p, settings: { ...p.settings, ...partial } })); }
+  function toggleStock(n: number) {
+    const has = st.stockLengths.includes(n);
+    patchSettings({ stockLengths: has ? st.stockLengths.filter((x) => x !== n) : [...st.stockLengths, n].sort((a, b) => a - b) });
+  }
+  async function install() {
+    if (installEvt) { await installEvt.prompt(); setInstallEvt(null); return; }
+    window.location.assign("/?install=1");
+  }
+  function exportJson() {
+    if (!project) return;
+    downloadText(`doborka-${project.name}.json`, JSON.stringify(project, null, 2), "application/json");
+  }
+  function importJson(file: File | undefined) {
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      try {
+        const data = JSON.parse(String(reader.result));
+        if (data && data.openings && data.settings) ws.importProject(data);
+      } catch { /* ignore */ }
+    };
+    reader.readAsText(file);
+  }
+
+  return (
+    <div className="mx-auto flex w-full max-w-2xl flex-col gap-8 pb-8">
+      <header><p className="kicker">Доборка</p><h1>Настройки</h1></header>
+      <section className="panel p-5">
+        <div className="flex items-start gap-3">
+          <img src="/icon-192.png?v=pc" alt="" width={56} height={56} className="size-14 shrink-0 rounded-2xl border border-border/70 shadow-panel" />
+          <div className="flex-1">
+            <h2 className="font-medium">Приложение на телефоне</h2>
+            <p className="mt-1 text-sm text-muted-foreground">На Android это ставится как обычное приложение: иконка «Доборка» на главном экране, без строки браузера, работает без интернета.</p>
+            {standalone ? <p className="mt-3 text-sm text-ok">Уже установлено на это устройство.</p> : <Button className="mt-3" onClick={() => void install()}><Download /> Установить на телефон</Button>}
+          </div>
+        </div>
+      </section>
+      <PairPanel />
+      <section className="space-y-3">
+        <h2 className="font-display text-lg">Объект</h2>
+        <label className="grid gap-1.5"><Label>Название</Label><Input value={project.name} onChange={(e) => ws.renameProject(project.id, e.target.value)} /></label>
+        <div className="flex flex-wrap gap-2">
+          <Button variant="secondary" onClick={() => ws.addProject()}>Новый объект</Button>
+          <Button variant="outline" onClick={() => ws.loadDemo()}>Пример 5 проёмов</Button>
+          <Button variant="outline" onClick={exportJson}><Download /> Копия JSON</Button>
+          <Button variant="outline" asChild><label>Открыть JSON<input type="file" accept="application/json" className="sr-only" onChange={(e) => { importJson(e.target.files?.[0]); e.target.value = ""; }} /></label></Button>
+        </div>
+        {ws.projects.length > 1 ? (
+          <ul className="grid gap-1">
+            {ws.projects.map((p) => (
+              <li key={p.id} className="flex items-center gap-2">
+                <button type="button" className={`h-11 flex-1 rounded-lg px-3 text-left text-sm ${p.id === project.id ? "bg-primary text-primary-foreground" : "bg-secondary"}`} onClick={() => ws.setActive(p.id)}>{p.name}</button>
+                <Button size="icon-sm" variant="ghost" onClick={() => ws.deleteProject(p.id)} aria-label="Удалить объект"><Trash2 /></Button>
+              </li>
+            ))}
+          </ul>
+        ) : null}
+      </section>
+      <section className="space-y-3">
+        <h2 className="font-display text-lg">Запас и раскрой</h2>
+        <div className="grid grid-cols-2 gap-3">
+          <label className="grid gap-1.5"><Label>Запас на элемент, мм</Label><Input inputMode="numeric" className="tabular" value={st.defaultAllowance} onChange={(e) => patchSettings({ defaultAllowance: Number(e.target.value) || 0 })} /></label>
+          <label className="grid gap-1.5"><Label>Пропил, мм</Label><Input inputMode="numeric" className="tabular" value={st.kerf} onChange={(e) => patchSettings({ kerf: Number(e.target.value) || 0 })} /></label>
+          <label className="grid gap-1.5 col-span-2"><Label>Минимальный полезный остаток, мм</Label><Input inputMode="numeric" className="tabular" value={st.minRemainder} onChange={(e) => patchSettings({ minRemainder: Number(e.target.value) || 0 })} /></label>
+        </div>
+        <div>
+          <Label className="mb-2 block">Цель расчёта</Label>
+          <div className="grid grid-cols-3 gap-2">
+            {([["waste", "Мин. отход"], ["meters", "Мин. метраж"], ["short", "Короткие"]] as [Strategy, string][]).map(([k, label]) => (
+              <Button key={k} variant={st.strategy === k ? "default" : "secondary"} size="sm" onClick={() => patchSettings({ strategy: k })}>{label}</Button>
+            ))}
+          </div>
+        </div>
+        <div>
+          <Label className="mb-2 block">Стороны по умолчанию</Label>
+          <div className="grid grid-cols-2 gap-2">
+            {SIDE_KEYS.map((k) => (
+              <label key={k} className="flex h-11 items-center justify-between rounded-md border border-border px-3">
+                <span className="text-sm">{SIDE_SHORT[k]}</span>
+                <Switch checked={st.defaultSides[k]} onCheckedChange={(v) => patchSettings({ defaultSides: { ...st.defaultSides, [k]: v } })} />
+              </label>
+            ))}
+          </div>
+        </div>
+      </section>
+      <section className="space-y-3">
+        <h2 className="font-display text-lg">Длины хлыстов</h2>
+        <p className="text-sm text-muted-foreground">Можно смешивать разные длины — раскрой сам подберёт, с какого хлыста резать.</p>
+        <div className="flex flex-wrap gap-2">
+          {[...new Set([...DEFAULT_STOCK, ...st.stockLengths])].sort((a, b) => a - b).map((n) => {
+            const on = st.stockLengths.includes(n);
+            return <button key={n} type="button" onClick={() => toggleStock(n)} className={`h-11 rounded-lg px-3 tabular text-sm ${on ? "bg-primary text-primary-foreground" : "bg-secondary text-muted-foreground"}`}>{n}</button>;
+          })}
+        </div>
+        <div className="flex gap-2">
+          <Input inputMode="numeric" placeholder="Своя длина" className="tabular" value={customStock} onChange={(e) => setCustomStock(e.target.value.replace(/\D/g, ""))} />
+          <Button variant="secondary" onClick={() => { const n = Number(customStock); if (n > 0) { toggleStock(n); setCustomStock(""); } }}>Добавить</Button>
+        </div>
+      </section>
+    </div>
+  );
+}
