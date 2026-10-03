@@ -1,10 +1,16 @@
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
-import { RouterProvider } from "@tanstack/react-router";
-import { getRouter } from "./router";
+import { createHashHistory, createRouter, RouterProvider } from "@tanstack/react-router";
+import { routeTree } from "./routeTree.gen";
+import { AppErrorComponent } from "@/lib/error-component";
 import "./styles.css";
 
-const router = getRouter();
+const router = createRouter({
+  routeTree,
+  history: createHashHistory(),
+  defaultErrorComponent: AppErrorComponent,
+});
+
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <RouterProvider router={router} />

@@ -19,6 +19,7 @@ jobs:
         run: |
           npm install
           npx vite build --config vite.apk.config.ts
+          cp -a public/. dist-apk/ || true
           test -f dist-apk/index.html
           echo dist-apk > /tmp/webdir
       - name: Add Android shell
