@@ -1,0 +1,16 @@
+{
+  "name": "doborka",
+  "version": "1.0.0",
+  "private": true,
+  "main": "main.cjs",
+  "description": "Доборка",
+  "author": "Doborka",
+  "build": {
+    "appId": "com.doborka.app",
+    "productName": "Doborka",
+    "directories": { "output": "release" },
+    "files": ["main.cjs", "app/**/*"],
+    "win": { "target": "nsis", "signAndEditExecutable": false },
+    "nsis": { "oneClick": true, "perMachine": false, "artifactName": "Doborka-Setup.exe" }
+  }
+}
