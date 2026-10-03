@@ -1,0 +1,46 @@
+name: Build APK
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - name: Build web app
+        run: |
+          npm ci
+          npx vite build
+          if [ -d dist/client ]; then echo dist/client > /tmp/webdir
+          elif [ -d dist ]; then echo dist > /tmp/webdir
+          elif [ -d .output/public ]; then echo .output/public > /tmp/webdir
+          else echo "no web output" && find . -maxdepth 3 -type d -name dist -o -name public | head && exit 1
+          fi
+          echo "WEBDIR=$(cat /tmp/webdir)"
+
+      - name: Add Android shell
+        run: |
+          WEBDIR=$(cat /tmp/webdir)
+          npm install @capacitor/core @capacitor/cli @capacitor/android
+          npx cap init "Doborka" com.example.doborka --web-dir "$WEBDIR"
+          npx cap add android
+
+      - name: Build APK
+        working-directory: android
+        run: chmod +x gradlew && ./gradlew assembleDebug
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: doborka-apk
+          path: android/app/build/outputs/apk/debug/*.apk
