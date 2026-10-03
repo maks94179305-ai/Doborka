@@ -176,21 +176,29 @@ export function DrawingEditor({ drawing, onChange, compact = false }: { drawing:
     }
     if (e.button === 1 || toolRef.current === "select" && e.shiftKey) return;
     const found = hit(world);
-    if (found?.type === "dim" && hitDimPart(found, world, 22 / viewRef.current.scale, viewRef.current.scale) === "label") {
-      const pose = dimLabelWorld(found, viewRef.current.scale);
-      const v = viewRef.current;
-      setSelected([found.id]);
-      setLabelBox({ id: found.id, x: v.x + pose.x * v.scale, y: v.y + pose.y * v.scale, value: "" });
-      setPad("label");
-      freshRef.current = true;
-      return;
+    if (found?.type === "dim") {
+      const part = hitDimPart(found, world, 22 / viewRef.current.scale, viewRef.current.scale);
+      if (part === "label") {
+        const pose = dimLabelWorld(found, viewRef.current.scale);
+        const v = viewRef.current;
+        setSelected([found.id]);
+        setLabelBox({ id: found.id, x: v.x + pose.x * v.scale, y: v.y + pose.y * v.scale, value: "" });
+        setPad("label");
+        freshRef.current = true;
+        return;
+      }
+      if (part === "body") {
+        offsetDrag.current = found.id;
+        setSelected([found.id]);
+        setLabelBox(null);
+        return;
+      }
     }
     downRef.current = { x: e.clientX, y: e.clientY, empty: !found };
     if (toolRef.current === "select") {
       setSelected(found ? [found.id] : []);
       if (found?.type === "line") { setLength(String(Math.round(dist({ x: found.x1, y: found.y1 }, { x: found.x2, y: found.y2 })))); freshRef.current = true; }
-      if (found?.type === "dim") { offsetDrag.current = found.id; setLabelBox(null); }
-      else setLabelBox(null);
+      setLabelBox(null);
       return;
     }
     const tol = 22 / viewRef.current.scale;
@@ -307,7 +315,8 @@ export function DrawingEditor({ drawing, onChange, compact = false }: { drawing:
   ], []);
 
   return (
-    <div className={cn("flex min-h-0 flex-1 flex-col gap-2", compact && "min-h-[24rem]")}>
+    <div className={cn("flex min-h-0 flex-1 flex-col gap-2 landscape:flex-row", compact && "min-h-[24rem]")}>
+      <div className="flex min-h-0 min-w-0 flex-1 flex-col gap-2">
       <div className="flex shrink-0 flex-wrap items-center gap-2">
         <div className="flex rounded-xl border border-border/80 bg-card/80 p-1">
           {tools.map((t) => (
@@ -333,13 +342,15 @@ export function DrawingEditor({ drawing, onChange, compact = false }: { drawing:
           <div className="absolute z-20 h-9 w-20 -translate-x-1/2 -translate-y-1/2 rounded-md border border-primary bg-background px-2 text-center text-sm leading-9 text-foreground shadow-float" style={{ left: labelBox.x, top: labelBox.y }}>{labelBox.value || "0"}</div>
         ) : null}
       </div>
+      </div>
+      <div className="flex w-full shrink-0 flex-col gap-1 landscape:w-40">
       <div className="flex h-9 shrink-0 items-center justify-center gap-1">
         {(labelBox ? labelBox.value : length).split("").map((digit, i) => (
           <span key={`${digit}-${i}`} className="grid h-9 min-w-9 place-items-center rounded-md border border-primary bg-primary text-sm font-medium text-primary-foreground">{digit}</span>
         ))}
       </div>
-      <div className="grid shrink-0 grid-cols-6 gap-1 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
-        {["1", "2", "3", "4", "5", "6", "7", "8", "9", "0", "⌫", "OK"].map((key) => (
+      <div className="grid shrink-0 grid-cols-6 gap-1 pb-[max(0.75rem,env(safe-area-inset-bottom))] landscape:grid-cols-3 landscape:pb-0">
+        {["1", "2", "3", "4", "5", "6", "7", "8", "9", "⌫", "0", "OK"].map((key) => (
           <button key={key} type="button" className={cn("h-9 rounded-md border text-sm font-medium", pressedKey === key ? "border-primary bg-primary text-primary-foreground" : "border-border bg-card text-foreground")} onPointerDown={() => setPressedKey(key)} onPointerUp={() => setPressedKey("")} onPointerLeave={() => setPressedKey("")} onClick={() => {
             const nextDigit = (current: string) => { const fresh = freshRef.current; freshRef.current = false; if (key === "⌫") return current.slice(0, -1); return (fresh ? key : current + key).slice(0, 6); };
             if (labelBox) {
@@ -352,6 +363,7 @@ export function DrawingEditor({ drawing, onChange, compact = false }: { drawing:
             setPad("length");
           }}>{key}</button>
         ))}
+      </div>
       </div>
     </div>
   );
