@@ -13,14 +13,19 @@ const icon = dataUrl("public/icon-192.png");
 
 writeFileSync(
   "src/lib/phone-assets.ts",
-  `export const APP_ICON = ${JSON.stringify(icon)};
-const TEXTURES = {
-  "#3a4147": ${JSON.stringify(graphite)},
-  "#23282e": ${JSON.stringify(gloss)},
-  "#6e5a4a": ${JSON.stringify(vintage)},
-};
-export function textureFor(hex: string): string | undefined {
-  return TEXTURES[String(hex).toLowerCase()];
-}
-`,
+  `export const APP_ICON = ${JSON.stringify(icon)};\nconst TEXTURES: Record<string, string> = {\n  "#3a4147": ${JSON.stringify(graphite)},\n  "#23282e": ${JSON.stringify(gloss)},\n  "#6e5a4a": ${JSON.stringify(vintage)},\n};\nexport function textureFor(hex: string): string | undefined {\n  return TEXTURES[String(hex).toLowerCase()];\n}\n`,
 );
+
+const viewPath = "src/components/plan-view.tsx";
+let view = readFileSync(viewPath, "utf8");
+if (!view.includes("textureFor")) {
+  view = view.replace(
+    'import { PROFILE_COLORS, profileCanonicalHex, profileChipSide, profileColorName, profileFinish, profileId, profileSwatchBg, profileTexture, type Drawing } from "@/lib/types";',
+    'import { PROFILE_COLORS, profileCanonicalHex, profileChipSide, profileColorName, profileFinish, profileId, profileSwatchBg, profileTexture, type Drawing } from "@/lib/types";\nimport { textureFor } from "@/lib/phone-assets";',
+  );
+  view = view.replace(
+    "const texture = profileTexture(hex);",
+    "const texture = textureFor(hex) ?? profileTexture(hex);",
+  );
+  writeFileSync(viewPath, view);
+}
