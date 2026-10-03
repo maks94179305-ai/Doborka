@@ -27,8 +27,16 @@ export function DrawingEditor({ drawing, onChange, compact = false }: { drawing:
   toolRef.current = tool;
   const colorRef = useRef(color);
   colorRef.current = color;
+  const manualRef = useRef<string | null>(null);
   const draftRef = useRef(draft);
   draftRef.current = draft;
+  const panRef = useRef<{ x: number; y: number; vx: number; vy: number } | null>(null);
+  const downRef = useRef<{ x: number; y: number; empty: boolean } | null>(null);
+  const lineColor = DRAW_COLORS[0];
+  const dimColor = DRAW_COLORS[2];
+  function activeColor(forTool: Tool = toolRef.current) {
+    return manualRef.current ?? (forTool === "dim" ? dimColor : lineColor);
+  }
 
   const commit = useCallback((next: DrawObject[]) => {
     history.current = [...history.current.slice(0, histIndex.current + 1), next].slice(-40);
@@ -83,10 +91,12 @@ export function DrawingEditor({ drawing, onChange, compact = false }: { drawing:
     ctx.scale(v.scale, v.scale);
     for (const obj of objectsRef.current) paintObject(ctx, obj, v.scale, selected.includes(obj.id));
     const preview = draftRef.current;
-    if (preview && toolRef.current === "dim") {
-      paintDim(ctx, { id: "tmp", type: "dim", x1: preview.start.x, y1: preview.start.y, x2: preview.end.x, y2: preview.end.y, offset: preview.offset ?? 40, color: colorRef.current, width: 2, dash: "dash" }, v.scale);
+    if (preview && preview.pan) {
+      /* sheet is moving */
+    } else if (preview && toolRef.current === "dim") {
+      paintDim(ctx, { id: "tmp", type: "dim", x1: preview.start.x, y1: preview.start.y, x2: preview.end.x, y2: preview.end.y, offset: preview.offset ?? 40, color: activeColor("dim"), width: 2, dash: "dash" }, v.scale);
     } else if (preview) {
-      ctx.strokeStyle = colorRef.current;
+      ctx.strokeStyle = activeColor("line");
       ctx.lineWidth = 2.8 / v.scale;
       strokeDash(ctx, "solid", v.scale);
       ctx.beginPath();
@@ -98,6 +108,24 @@ export function DrawingEditor({ drawing, onChange, compact = false }: { drawing:
   }, [selected]);
 
   useEffect(() => { redraw(); }, [redraw, objects, view, draft, color]);
+  useEffect(() => {
+    const el = canvasRef.current;
+    if (!el) return;
+    const onWheel = (e: WheelEvent) => {
+      e.preventDefault();
+      const r = el.getBoundingClientRect();
+      const cx = e.clientX - r.left;
+      const cy = e.clientY - r.top;
+      const v = viewRef.current;
+      const factor = e.deltaY < 0 ? 1.12 : 1 / 1.12;
+      const scale = Math.min(8, Math.max(0.25, v.scale * factor));
+      const wx = (cx - v.x) / v.scale;
+      const wy = (cy - v.y) / v.scale;
+      setView({ scale, x: cx - wx * scale, y: cy - wy * scale });
+    };
+    el.addEventListener("wheel", onWheel, { passive: false });
+    return () => el.removeEventListener("wheel", onWheel);
+  }, []);
   useEffect(() => {
     const el = wrapRef.current;
     if (!el) return;
@@ -117,11 +145,16 @@ export function DrawingEditor({ drawing, onChange, compact = false }: { drawing:
   }
 
   function onDown(e: React.PointerEvent) {
-    e.preventDefault();
+    if (e.button !== 2) e.preventDefault();
     (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
     const p = local(e);
-    if (e.button === 1 || e.button === 2 || toolRef.current === "select" && e.shiftKey) return;
     const world = toWorld(p.x, p.y);
+    if (e.button === 2) {
+      if (!hit(world)) panRef.current = { x: e.clientX, y: e.clientY, vx: viewRef.current.x, vy: viewRef.current.y };
+      return;
+    }
+    if (e.button === 1 || toolRef.current === "select" && e.shiftKey) return;
+    downRef.current = { x: e.clientX, y: e.clientY, empty: !hit(world) };
     if (toolRef.current === "select") {
       const found = hit(world);
       setSelected(found ? [found.id] : []);
@@ -139,6 +172,10 @@ export function DrawingEditor({ drawing, onChange, compact = false }: { drawing:
     setDraft({ start, end: start });
   }
   function onMove(e: React.PointerEvent) {
+    if (panRef.current) {
+      setView({ ...viewRef.current, x: panRef.current.vx + (e.clientX - panRef.current.x), y: panRef.current.vy + (e.clientY - panRef.current.y) });
+      return;
+    }
     if (!draftRef.current) return;
     const world = toWorld(local(e).x, local(e).y);
     const tol = 22 / viewRef.current.scale;
@@ -151,15 +188,24 @@ export function DrawingEditor({ drawing, onChange, compact = false }: { drawing:
     const ortho = Math.abs(end.x - draftRef.current.start.x) > Math.abs(end.y - draftRef.current.start.y) ? { x: end.x, y: draftRef.current.start.y } : { x: draftRef.current.start.x, y: end.y };
     setDraft({ ...draftRef.current, end: ortho });
   }
-  function onUp() {
+  function onUp(e?: React.PointerEvent) {
+    if (panRef.current) { panRef.current = null; return; }
+    const tap = downRef.current;
+    downRef.current = null;
     const d = draftRef.current;
     setDraft(null);
-    if (!d || dist(d.start, d.end) < 2) return;
-    if (toolRef.current === "dim") {
-      commit([...objectsRef.current, { id: uid("dr"), type: "dim", x1: d.start.x, y1: d.start.y, x2: d.end.x, y2: d.end.y, offset: d.offset ?? 40, color: colorRef.current, width: 2, dash: "dash" }]);
+    const moved = e && tap ? Math.hypot(e.clientX - tap.x, e.clientY - tap.y) : d ? dist(d.start, d.end) : 0;
+    if (toolRef.current === "line" && tap?.empty && moved < 8) {
+      setTool("select");
+      setColor(activeColor("select"));
       return;
     }
-    commit([...objectsRef.current, { id: uid("dr"), type: "line", x1: d.start.x, y1: d.start.y, x2: d.end.x, y2: d.end.y, color: colorRef.current, width: 3, dash: "solid" }]);
+    if (!d || dist(d.start, d.end) < 2) return;
+    if (toolRef.current === "dim") {
+      commit([...objectsRef.current, { id: uid("dr"), type: "dim", x1: d.start.x, y1: d.start.y, x2: d.end.x, y2: d.end.y, offset: d.offset ?? 40, color: activeColor("dim"), width: 2, dash: "dash" }]);
+      return;
+    }
+    commit([...objectsRef.current, { id: uid("dr"), type: "line", x1: d.start.x, y1: d.start.y, x2: d.end.x, y2: d.end.y, color: activeColor("line"), width: 3, dash: "solid" }]);
   }
 
   function applyLength() {
@@ -187,7 +233,7 @@ export function DrawingEditor({ drawing, onChange, compact = false }: { drawing:
       <div className="flex shrink-0 flex-wrap items-center gap-2">
         <div className="flex rounded-xl border border-border/80 bg-card/80 p-1">
           {tools.map((t) => (
-            <button key={t.id} type="button" aria-label={t.label} aria-pressed={tool === t.id} onClick={() => setTool(t.id)} className={cn("flex h-10 items-center gap-1.5 rounded-lg px-2 text-xs font-medium", tool === t.id ? "bg-primary text-primary-foreground" : "text-muted-foreground")}>
+            <button key={t.id} type="button" aria-label={t.label} aria-pressed={tool === t.id} onClick={() => { setTool(t.id); setColor(manualRef.current ?? (t.id === "dim" ? dimColor : lineColor)); }} className={cn("flex h-10 items-center gap-1.5 rounded-lg px-2 text-xs font-medium", tool === t.id ? "bg-primary text-primary-foreground" : "text-muted-foreground")}>
               <t.icon className="size-4" />
               <span>{t.label}</span>
             </button>
@@ -199,7 +245,7 @@ export function DrawingEditor({ drawing, onChange, compact = false }: { drawing:
         <Button size="icon-sm" variant="secondary" aria-label="Вписать" onClick={() => { const el = wrapRef.current; if (el) setView(fitView(objects, el.clientWidth, el.clientHeight)); }}><Maximize2 /></Button>
         <div className="flex items-center gap-2">
           {DRAW_COLORS.map((c) => (
-            <button key={c} type="button" aria-label={`Цвет ${c}`} className="size-7 rounded-full" style={{ background: c, boxShadow: color === c ? `0 0 0 3px #141816, 0 0 0 6px ${c}` : "0 0 0 2px transparent" }} onClick={() => setColor(c)} />
+            <button key={c} type="button" aria-label={`Цвет ${c}`} className="size-7 rounded-full" style={{ background: c, boxShadow: color === c ? `0 0 0 2px #141816, 0 0 0 4px ${c}` : "0 0 0 2px transparent" }} onClick={() => { manualRef.current = c; setColor(c); setTool("line"); }} />
           ))}
         </div>
         {selected.length === 1 ? (
@@ -210,7 +256,7 @@ export function DrawingEditor({ drawing, onChange, compact = false }: { drawing:
         ) : null}
       </div>
       <div ref={wrapRef} className="relative min-h-[22rem] flex-1 overflow-hidden rounded-xl border border-border">
-        <canvas ref={canvasRef} className="absolute inset-0 touch-none" style={{ touchAction: "none" }} onPointerDown={onDown} onPointerMove={onMove} onPointerUp={onUp} onPointerCancel={onUp} onContextMenu={(e) => e.preventDefault()} />
+        <canvas ref={canvasRef} className="absolute inset-0 touch-none" style={{ touchAction: "none" }} onPointerDown={onDown} onPointerMove={onMove} onPointerUp={onUp} onPointerCancel={() => { panRef.current = null; downRef.current = null; setDraft(null); }} onContextMenu={(e) => e.preventDefault()} />
       </div>
     </div>
   );
