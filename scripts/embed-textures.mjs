@@ -27,7 +27,7 @@ for (const path of walk("src")) {
     .replaceAll("/textures/vintage-matte.jpg", vintage)
     .replaceAll('className="absolute bottom-3 right-3 z-10 shadow-float"', 'className="mt-3 w-full"')
     .replaceAll('ring-1 ring-white/15', 'bg-[#1b2128]')
-    .replaceAll('border border-border/70 shadow-panel', 'bg-transparent')
+    .replaceAll('className="size-9 object-cover"', 'className="size-9 rounded-[12px] object-cover"')
     .replaceAll("<Label>Минимальный полезный остаток, мм</Label>", "<Label>Минимальный полезный остаток, мм (от 0 до 9999)</Label>")
     .replaceAll(
       "patchSettings({ minRemainder: Number(e.target.value) || 0 })",
