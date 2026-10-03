@@ -37,6 +37,10 @@ for (const path of walk("src")) {
     'import { composeWindowShot, shareOrSave, type ShareCardMeta } from "@/lib/share-image";',
     'import { composeWindowShot, type ShareCardMeta } from "@/lib/share-image";\nimport { shareOrSave } from "@/lib/share-native";',
   );
-  next = next.replace(/export const APP_ICON = svg\('<svg[^']*<\\/svg>'\);/, 'export const APP_ICON = ' + JSON.stringify(icon) + ';');
+  const iconLine = next.indexOf('export const APP_ICON = ');
+  if (iconLine >= 0) {
+    const iconEnd = next.indexOf(';', iconLine);
+    next = next.slice(0, iconLine) + 'export const APP_ICON = ' + JSON.stringify(icon) + next.slice(iconEnd);
+  }
   if (next !== text) writeFileSync(path, next);
 }
