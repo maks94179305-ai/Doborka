@@ -2,13 +2,14 @@ import base64
 from pathlib import Path
 from PIL import Image
 
-src = base64.b64decode(Path("scripts/icon-192.b64").read_text().strip())
+b64 = Path("scripts/icon-a.txt").read_text().strip() + Path("scripts/icon-b.txt").read_text().strip()
+raw = base64.b64decode(b64)
 Path("public").mkdir(exist_ok=True)
-Path("public/icon-192.png").write_bytes(src)
-im = Image.open("public/icon-192.png").convert("RGBA")
+Path("public/icon-src.jpg").write_bytes(raw)
+im = Image.open("public/icon-src.jpg").convert("RGBA")
+im.save("public/icon-192.png")
 im.resize((512, 512), Image.Resampling.LANCZOS).save("public/icon-512.png")
 im.resize((180, 180), Image.Resampling.LANCZOS).save("public/icon-180.png")
-
 sizes = {"mdpi": 48, "hdpi": 72, "xhdpi": 96, "xxhdpi": 144, "xxxhdpi": 192}
 root = Path("android/app/src/main/res")
 if root.exists():

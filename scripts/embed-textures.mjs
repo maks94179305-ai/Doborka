@@ -1,7 +1,9 @@
-import { readFileSync, writeFileSync, readdirSync, statSync } from "node:fs";
+import { existsSync, readFileSync, writeFileSync, readdirSync, statSync } from "node:fs";
 import { join } from "node:path";
 
-const icon = "data:image/svg+xml," + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" rx="14" fill="#2c3034"/><path d="M16 44 L32 18 L48 44" fill="none" stroke="#f3f1ec" stroke-width="4"/></svg>');
+const icon = existsSync("public/icon-192.png")
+  ? "data:image/png;base64," + readFileSync("public/icon-192.png").toString("base64")
+  : "data:image/svg+xml," + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" rx="14" fill="#1b2128"/></svg>');
 const graphite = "data:image/svg+xml," + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><rect width="32" height="32" fill="#3a4147"/></svg>');
 const gloss = "data:image/svg+xml," + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><rect width="32" height="32" fill="#23282e"/></svg>');
 const vintage = "data:image/svg+xml," + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><rect width="32" height="32" fill="#6e5a4a"/></svg>');
@@ -30,3 +32,4 @@ for (const path of walk("src")) {
   );
   if (next !== text) writeFileSync(path, next);
 }
+writeFileSync("src/lib/phone-assets.ts", `export const APP_ICON = ${JSON.stringify(icon)};\nexport function textureFor(hex: string) {\n  const map = { \"#3a4147\": ${JSON.stringify(graphite)}, \"#23282e\": ${JSON.stringify(gloss)}, \"#6e5a4a\": ${JSON.stringify(vintage)} };\n  return map[String(hex).toLowerCase()];\n}\n`);
