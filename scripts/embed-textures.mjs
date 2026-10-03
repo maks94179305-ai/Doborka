@@ -27,7 +27,13 @@ for (const path of walk("src")) {
     .replaceAll("/textures/vintage-matte.jpg", vintage)
     .replaceAll('className="absolute bottom-3 right-3 z-10 shadow-float"', 'className="mt-3 w-full"')
     .replaceAll('ring-1 ring-white/15', 'bg-[#1b2128]')
-    .replaceAll('border border-border/70 shadow-panel', 'bg-transparent');
+    .replaceAll('border border-border/70 shadow-panel', 'bg-transparent')
+    .replaceAll("<Label>Минимальный полезный остаток, мм</Label>", "<Label>Минимальный полезный остаток, мм (от 0 до 9999)</Label>")
+    .replaceAll(
+      "patchSettings({ minRemainder: Number(e.target.value) || 0 })",
+      "patchSettings({ minRemainder: Math.min(9999, Math.max(0, Number(e.target.value.replace(/\\D/g, '')) || 0)) })",
+    )
+    .replaceAll("if (settings.minRemainder === 200) settings.minRemainder = 800;", "");
   next = next.replace(/<section className="panel p-5">[\s\S]*?Приложение на телефоне[\s\S]*?<\/section>\s*/, "");
   next = next.replace(
     'import { composeWindowShot, shareOrSave, type ShareCardMeta } from "@/lib/share-image";',
