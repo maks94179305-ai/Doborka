@@ -17,12 +17,15 @@ function walk(dir, out = []) {
 
 for (const path of walk("src")) {
   let text = readFileSync(path, "utf8");
-  const next = text
+  let next = text
     .replaceAll("/icon-192.png?v=pc", icon)
     .replaceAll("/icon-512.png?v=pc", icon)
     .replaceAll("/textures/graphite-matte.jpg", graphite)
     .replaceAll("/textures/graphite-gloss.jpg", gloss)
-    .replaceAll("/textures/vintage-matte.jpg", vintage)
-    .replaceAll('from "@/lib/share-image"', 'from "@/lib/share-native"');
+    .replaceAll("/textures/vintage-matte.jpg", vintage);
+  next = next.replace(
+    'import { composeWindowShot, shareOrSave, type ShareCardMeta } from "@/lib/share-image";',
+    'import { composeWindowShot, type ShareCardMeta } from "@/lib/share-image";\nimport { shareOrSave } from "@/lib/share-native";',
+  );
   if (next !== text) writeFileSync(path, next);
 }
