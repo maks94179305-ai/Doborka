@@ -1,13 +1,10 @@
 import base64
 from pathlib import Path
 from PIL import Image
-
-b64 = Path("scripts/icon-a.txt").read_text().strip() + Path("scripts/icon-b.txt").read_text().strip()
-raw = base64.b64decode(b64)
+import io
+raw = base64.b64decode(Path("scripts/logo.txt").read_text().strip())
 Path("public").mkdir(exist_ok=True)
-Path("public/icon-src.jpg").write_bytes(raw)
-im = Image.open("public/icon-src.jpg").convert("RGB")
-im = im.resize((192, 192), Image.Resampling.LANCZOS)
+im = Image.open(io.BytesIO(raw)).convert("RGB")
 im.save("public/icon-192.png")
 im.resize((512, 512), Image.Resampling.LANCZOS).save("public/icon-512.png")
 im.resize((180, 180), Image.Resampling.LANCZOS).save("public/icon-180.png")

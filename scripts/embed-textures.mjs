@@ -1,9 +1,7 @@
 import { existsSync, readFileSync, writeFileSync, readdirSync, statSync } from "node:fs";
 import { join } from "node:path";
 
-const icon = existsSync("public/icon-192.png")
-  ? "data:image/png;base64," + readFileSync("public/icon-192.png").toString("base64")
-  : "";
+const icon = "data:image/jpeg;base64," + readFileSync("scripts/logo.txt", "utf8").trim();
 const graphite = "data:image/svg+xml," + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><rect width="32" height="32" fill="#3a4147"/></svg>');
 const gloss = "data:image/svg+xml," + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><rect width="32" height="32" fill="#23282e"/></svg>');
 const vintage = "data:image/svg+xml," + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><rect width="32" height="32" fill="#6e5a4a"/></svg>');
