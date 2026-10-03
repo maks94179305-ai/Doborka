@@ -117,6 +117,7 @@ export function DrawingEditor({ drawing, onChange, compact = false }: { drawing:
   }
 
   function onDown(e: React.PointerEvent) {
+    e.preventDefault();
     (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
     const p = local(e);
     if (e.button === 1 || e.button === 2 || toolRef.current === "select" && e.shiftKey) return;
@@ -209,7 +210,7 @@ export function DrawingEditor({ drawing, onChange, compact = false }: { drawing:
         ) : null}
       </div>
       <div ref={wrapRef} className="relative min-h-[22rem] flex-1 overflow-hidden rounded-xl border border-border">
-        <canvas ref={canvasRef} className="absolute inset-0 touch-none" onPointerDown={onDown} onPointerMove={onMove} onPointerUp={onUp} onContextMenu={(e) => e.preventDefault()} />
+        <canvas ref={canvasRef} className="absolute inset-0 touch-none" style={{ touchAction: "none" }} onPointerDown={onDown} onPointerMove={onMove} onPointerUp={onUp} onPointerCancel={onUp} onContextMenu={(e) => e.preventDefault()} />
       </div>
     </div>
   );
