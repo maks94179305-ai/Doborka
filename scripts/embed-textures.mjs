@@ -22,7 +22,8 @@ for (const path of walk("src")) {
     .replaceAll("/icon-512.png?v=pc", icon)
     .replaceAll("/textures/graphite-matte.jpg", graphite)
     .replaceAll("/textures/graphite-gloss.jpg", gloss)
-    .replaceAll("/textures/vintage-matte.jpg", vintage);
+    .replaceAll("/textures/vintage-matte.jpg", vintage)
+    .replaceAll('className="absolute bottom-3 right-3 z-10 shadow-float"', 'className="mt-3 w-full"');
   next = next.replace(
     'import { composeWindowShot, shareOrSave, type ShareCardMeta } from "@/lib/share-image";',
     'import { composeWindowShot, type ShareCardMeta } from "@/lib/share-image";\nimport { shareOrSave } from "@/lib/share-native";',
