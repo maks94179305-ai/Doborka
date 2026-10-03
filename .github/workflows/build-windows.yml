@@ -1,0 +1,40 @@
+name: Build Windows
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Build desktop client
+        shell: bash
+        run: |
+          npm install
+          npm install @capacitor/core @capacitor/cli @capacitor/share @capacitor/filesystem
+          python -m pip install pillow
+          python scripts/make-icons.py
+          node scripts/embed-textures.mjs
+          npx vite build --config vite.apk.config.ts
+          rm -rf desktop/app
+          mkdir -p desktop/app
+          cp dist-apk/apk/index.html desktop/app/index.html
+          cp -a dist-apk/assets desktop/app/assets
+          sed -i 's|\.\./assets|assets|g' desktop/app/index.html
+          cp -a public/. desktop/app/ || true
+      - name: Package Windows installer
+        shell: bash
+        run: |
+          cd desktop
+          npm install --no-save electron@33 electron-builder@25
+          npx electron-builder --win nsis
+        env:
+          CSC_IDENTITY_AUTO_DISCOVERY: false
+      - uses: actions/upload-artifact@v4
+        with:
+          name: doborka-windows
+          path: desktop/release/Doborka-Setup.exe
