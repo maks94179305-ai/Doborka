@@ -18,6 +18,7 @@ jobs:
       - name: Build phone client
         run: |
           npm install
+          node scripts/embed-textures.mjs
           npx vite build --config vite.apk.config.ts
           rm -rf dist-apk-web
           mkdir -p dist-apk-web
@@ -25,13 +26,24 @@ jobs:
           cp -a dist-apk/assets dist-apk-web/assets
           sed -i 's|\.\./assets|assets|g' dist-apk-web/index.html
           cp -a public/. dist-apk-web/ || true
-          test -f dist-apk-web/index.html
           echo dist-apk-web > /tmp/webdir
       - name: Add Android shell
         run: |
           WEBDIR=$(cat /tmp/webdir)
           npm install @capacitor/core @capacitor/cli @capacitor/android
           npx cap init "Doborka" com.example.doborka --web-dir "$WEBDIR"
+          python3 - <<'PY'
+          from pathlib import Path
+          Path("capacitor.config.ts").write_text('''import type { CapacitorConfig } from '@capacitor/cli';
+const config: CapacitorConfig = {
+  appId: 'com.example.doborka',
+  appName: 'Doborka',
+  webDir: 'dist-apk-web',
+  android: { adjustMarginsForEdgeToEdge: 'force' },
+};
+export default config;
+''')
+          PY
           npx cap add android
           npx cap copy android
       - name: Build APK
