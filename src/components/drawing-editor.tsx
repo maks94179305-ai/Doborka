@@ -18,6 +18,7 @@ export function DrawingEditor({ drawing, onChange, compact = false }: { drawing:
   const [length, setLength] = useState("");
   const [labelBox, setLabelBox] = useState<{ id: string; x: number; y: number; value: string } | null>(null);
   const [pad, setPad] = useState<null | "length" | "label">(null);
+  const freshRef = useRef(true);
   const history = useRef<DrawObject[][]>([drawing.objects]);
   const histIndex = useRef(0);
   const objects = drawing.objects;
@@ -173,22 +174,22 @@ export function DrawingEditor({ drawing, onChange, compact = false }: { drawing:
       return;
     }
     if (e.button === 1 || toolRef.current === "select" && e.shiftKey) return;
-    downRef.current = { x: e.clientX, y: e.clientY, empty: !hit(world) };
+    const found = hit(world);
+    if (found?.type === "dim" && hitDimPart(found, world, 22 / viewRef.current.scale, viewRef.current.scale) === "label") {
+      const pose = dimLabelWorld(found, viewRef.current.scale);
+      const v = viewRef.current;
+      setSelected([found.id]);
+      setLabelBox({ id: found.id, x: v.x + pose.x * v.scale, y: v.y + pose.y * v.scale, value: "" });
+      setPad("label");
+      freshRef.current = true;
+      return;
+    }
+    downRef.current = { x: e.clientX, y: e.clientY, empty: !found };
     if (toolRef.current === "select") {
-      const found = hit(world);
       setSelected(found ? [found.id] : []);
-      if (found?.type === "line") setLength(String(Math.round(dist({ x: found.x1, y: found.y1 }, { x: found.x2, y: found.y2 }))));
-      if (found?.type === "dim") {
-        const part = hitDimPart(found, world, 22 / viewRef.current.scale, viewRef.current.scale);
-        if (part === "label") {
-          const pose = dimLabelWorld(found, viewRef.current.scale);
-          const v = viewRef.current;
-          setLabelBox({ id: found.id, x: v.x + pose.x * v.scale, y: v.y + pose.y * v.scale, value: dimInputValue(found) }); setPad("label");
-        } else {
-          offsetDrag.current = found.id;
-          setLabelBox(null);
-        }
-      } else setLabelBox(null);
+      if (found?.type === "line") { setLength(String(Math.round(dist({ x: found.x1, y: found.y1 }, { x: found.x2, y: found.y2 })))); freshRef.current = true; }
+      if (found?.type === "dim") { offsetDrag.current = found.id; setLabelBox(null); }
+      else setLabelBox(null);
       return;
     }
     const tol = 22 / viewRef.current.scale;
@@ -267,7 +268,7 @@ export function DrawingEditor({ drawing, onChange, compact = false }: { drawing:
     const line = { id: uid("dr"), type: "line" as const, x1: d.start.x, y1: d.start.y, x2: d.end.x, y2: d.end.y, color: activeColor("line"), width: 3, dash: "solid" as const };
     commit([...objectsRef.current, line]);
     setSelected([line.id]);
-    setLength(String(Math.round(dist(d.start, d.end))));
+    setLength(""); freshRef.current = true;
     setTool("select");
     setPad("length");
   }
@@ -333,13 +334,14 @@ export function DrawingEditor({ drawing, onChange, compact = false }: { drawing:
       <div className="grid shrink-0 grid-cols-6 gap-1 pb-[max(0.25rem,env(safe-area-inset-bottom))]">
         {["1", "2", "3", "4", "5", "6", "7", "8", "9", "0", "⌫", "OK"].map((key) => (
           <button key={key} type="button" className="h-9 rounded-md border border-border bg-card text-sm font-medium text-foreground" onClick={() => {
+            const nextDigit = (current: string) => { const fresh = freshRef.current; freshRef.current = false; if (key === "⌫") return current.slice(0, -1); return (fresh ? key : current + key).slice(0, 6); };
             if (labelBox) {
-              if (key === "OK") { const box = labelBox; setLabelBox(null); setPad(null); commit(objectsRef.current.map((o) => o.id === box.id && o.type === "dim" ? { ...o, label: box.value.trim() || undefined } : o)); return; }
-              setLabelBox({ ...labelBox, value: key === "⌫" ? labelBox.value.slice(0, -1) : (labelBox.value + key).slice(0, 6) });
+              if (key === "OK") { const box = labelBox; setLabelBox(null); setPad(null); freshRef.current = true; commit(objectsRef.current.map((o) => o.id === box.id && o.type === "dim" ? { ...o, label: box.value.trim() || undefined } : o)); return; }
+              setLabelBox({ ...labelBox, value: nextDigit(labelBox.value) });
               return;
             }
-            if (key === "OK") { applyLength(); return; }
-            setLength((v) => (key === "⌫" ? v.slice(0, -1) : (v + key).slice(0, 6)));
+            if (key === "OK") { applyLength(); freshRef.current = true; return; }
+            setLength((v) => nextDigit(v));
             setPad("length");
           }}>{key}</button>
         ))}
