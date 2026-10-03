@@ -19,9 +19,14 @@ jobs:
         run: |
           npm install
           npx vite build --config vite.apk.config.ts
-          cp -a public/. dist-apk/ || true
-          test -f dist-apk/index.html
-          echo dist-apk > /tmp/webdir
+          rm -rf dist-apk-web
+          mkdir -p dist-apk-web
+          cp dist-apk/apk/index.html dist-apk-web/index.html
+          cp -a dist-apk/assets dist-apk-web/assets
+          sed -i 's|\.\./assets|assets|g' dist-apk-web/index.html
+          cp -a public/. dist-apk-web/ || true
+          test -f dist-apk-web/index.html
+          echo dist-apk-web > /tmp/webdir
       - name: Add Android shell
         run: |
           WEBDIR=$(cat /tmp/webdir)
