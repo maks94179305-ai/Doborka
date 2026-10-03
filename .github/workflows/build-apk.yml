@@ -19,14 +19,29 @@ jobs:
         run: |
           npm install
           npx vite build
-          if [ -d .vercel/output/static ]; then echo .vercel/output/static > /tmp/webdir
-          elif [ -d dist/client ]; then echo dist/client > /tmp/webdir
-          elif [ -d dist ]; then echo dist > /tmp/webdir
-          elif [ -d .output/public ]; then echo .output/public > /tmp/webdir
-          else echo "no web output" && find . -maxdepth 4 -type d -name static -o -name client -o -name public | head && exit 1
+          if [ -d .vercel/output/static ]; then WEBDIR=.vercel/output/static
+          elif [ -d dist/client ]; then WEBDIR=dist/client
+          elif [ -d dist ]; then WEBDIR=dist
+          elif [ -d .output/public ]; then WEBDIR=.output/public
+          else echo "no web output" && exit 1
           fi
-          echo "web dir: $(cat /tmp/webdir)"
-          ls -la "$(cat /tmp/webdir)" | head
+          echo "$WEBDIR" > /tmp/webdir
+          if [ ! -f "$WEBDIR/index.html" ]; then
+            JS=$(find "$WEBDIR" -name 'index-*.js' | head -1)
+            CSS=$(find "$WEBDIR" -name '*.css' | head -1)
+            JSREL=${JS#$WEBDIR/}
+            CSSREL=${CSS#$WEBDIR/}
+            {
+              echo '<!doctype html>'
+              echo '<html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Доборка</title>'
+              if [ -n "$CSS" ]; then echo "<link rel=\"stylesheet\" href=\"/$CSSREL\">"; fi
+              echo '</head><body><div id="root"></div>'
+              if [ -n "$JS" ]; then echo "<script type=\"module\" src=\"/$JSREL\"></script>"; fi
+              echo '</body></html>'
+            } > "$WEBDIR/index.html"
+          fi
+          echo "web dir: $WEBDIR"
+          ls -la "$WEBDIR" | head
       - name: Add Android shell
         run: |
           WEBDIR=$(cat /tmp/webdir)
