@@ -39,7 +39,7 @@ export function DialogContent({
         {title ? <DialogPrimitive.Title className="mb-5 font-display text-lg font-medium">{title}</DialogPrimitive.Title> : <DialogPrimitive.Title className="sr-only">Диалог</DialogPrimitive.Title>}
         <DialogPrimitive.Description className="sr-only">Форма приложения Доборка</DialogPrimitive.Description>
         {children}
-        <DialogPrimitive.Close data-share-ignore="1" aria-label="Закрыть" className="absolute right-3 top-3 z-30 rounded-lg p-2 text-muted-foreground hover:bg-accent hover:text-foreground">
+        <DialogPrimitive.Close data-share-ignore="1" aria-label="Закрыть" className="absolute right-3 top-[max(3.25rem,env(safe-area-inset-top))] z-30 rounded-lg p-2 text-muted-foreground hover:bg-accent hover:text-foreground">
           <X className="size-4" />
         </DialogPrimitive.Close>
       </DialogPrimitive.Content>
