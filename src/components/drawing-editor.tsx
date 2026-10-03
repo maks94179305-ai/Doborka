@@ -32,8 +32,13 @@ export function DrawingEditor({ drawing, onChange, compact = false }: { drawing:
   draftRef.current = draft;
   const panRef = useRef<{ x: number; y: number; vx: number; vy: number } | null>(null);
   const downRef = useRef<{ x: number; y: number; empty: boolean } | null>(null);
+  const pointers = useRef(new Map<number, { x: number; y: number }>());
+  const pinchRef = useRef<{ dist: number; scale: number; ox: number; oy: number; vx: number; vy: number } | null>(null);
+  const holdRef = useRef<number | null>(null);
+  const lengthRef = useRef<HTMLInputElement>(null);
+  function clearHold() { if (holdRef.current) window.clearTimeout(holdRef.current); holdRef.current = null; }
   const lineColor = DRAW_COLORS[0];
-  const dimColor = DRAW_COLORS[2];
+  const dimColor = DRAW_COLORS[4];
   function activeColor(forTool: Tool = toolRef.current) {
     return manualRef.current ?? (forTool === "dim" ? dimColor : lineColor);
   }
@@ -146,9 +151,20 @@ export function DrawingEditor({ drawing, onChange, compact = false }: { drawing:
 
   function onDown(e: React.PointerEvent) {
     if (e.button !== 2) e.preventDefault();
+    pointers.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    if (pointers.current.size >= 2) {
+      clearHold();
+      setDraft(null);
+      const pts = [...pointers.current.values()];
+      const r = canvasRef.current?.getBoundingClientRect();
+      pinchRef.current = { dist: Math.hypot(pts[0].x - pts[1].x, pts[0].y - pts[1].y) || 1, scale: viewRef.current.scale, ox: (pts[0].x + pts[1].x) / 2 - (r?.left ?? 0), oy: (pts[0].y + pts[1].y) / 2 - (r?.top ?? 0), vx: viewRef.current.x, vy: viewRef.current.y };
+      return;
+    }
     (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
     const p = local(e);
     const world = toWorld(p.x, p.y);
+    clearHold();
+    holdRef.current = window.setTimeout(() => { setSelected(objectsRef.current.map((o) => o.id)); setTool("select"); setDraft(null); }, 560);
     if (e.button === 2) {
       if (!hit(world)) panRef.current = { x: e.clientX, y: e.clientY, vx: viewRef.current.x, vy: viewRef.current.y };
       return;
@@ -172,6 +188,22 @@ export function DrawingEditor({ drawing, onChange, compact = false }: { drawing:
     setDraft({ start, end: start });
   }
   function onMove(e: React.PointerEvent) {
+    if (pointers.current.has(e.pointerId)) pointers.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    if (pointers.current.size >= 2 && pinchRef.current) {
+      clearHold();
+      const pts = [...pointers.current.values()];
+      const distNow = Math.hypot(pts[0].x - pts[1].x, pts[0].y - pts[1].y) || 1;
+      const r = canvasRef.current?.getBoundingClientRect();
+      const cx = (pts[0].x + pts[1].x) / 2 - (r?.left ?? 0);
+      const cy = (pts[0].y + pts[1].y) / 2 - (r?.top ?? 0);
+      const pinch = pinchRef.current;
+      const scale = Math.min(16, Math.max(0.06, pinch.scale * (distNow / pinch.dist)));
+      const wx = (pinch.ox - pinch.vx) / pinch.scale;
+      const wy = (pinch.oy - pinch.vy) / pinch.scale;
+      setView({ scale, x: cx - wx * scale, y: cy - wy * scale });
+      return;
+    }
+    if (downRef.current && Math.hypot(e.clientX - downRef.current.x, e.clientY - downRef.current.y) > 8) clearHold();
     if (panRef.current) {
       setView({ ...viewRef.current, x: panRef.current.vx + (e.clientX - panRef.current.x), y: panRef.current.vy + (e.clientY - panRef.current.y) });
       return;
@@ -189,6 +221,9 @@ export function DrawingEditor({ drawing, onChange, compact = false }: { drawing:
     setDraft({ ...draftRef.current, end: ortho });
   }
   function onUp(e?: React.PointerEvent) {
+    clearHold();
+    if (e) pointers.current.delete(e.pointerId);
+    if (pointers.current.size < 2) pinchRef.current = null;
     if (panRef.current) { panRef.current = null; return; }
     const tap = downRef.current;
     downRef.current = null;
@@ -205,7 +240,13 @@ export function DrawingEditor({ drawing, onChange, compact = false }: { drawing:
       commit([...objectsRef.current, { id: uid("dr"), type: "dim", x1: d.start.x, y1: d.start.y, x2: d.end.x, y2: d.end.y, offset: d.offset ?? 40, color: activeColor("dim"), width: 2, dash: "dash" }]);
       return;
     }
-    commit([...objectsRef.current, { id: uid("dr"), type: "line", x1: d.start.x, y1: d.start.y, x2: d.end.x, y2: d.end.y, color: activeColor("line"), width: 3, dash: "solid" }]);
+    const line = { id: uid("dr"), type: "line" as const, x1: d.start.x, y1: d.start.y, x2: d.end.x, y2: d.end.y, color: activeColor("line"), width: 3, dash: "solid" as const };
+    const mark = { id: uid("dr"), type: "dim" as const, x1: d.start.x, y1: d.start.y, x2: d.end.x, y2: d.end.y, offset: 36, color: dimColor, width: 2, dash: "dash" as const };
+    commit([...objectsRef.current, line, mark]);
+    setSelected([mark.id]);
+    setLength(String(Math.round(dist(d.start, d.end))));
+    setTool("select");
+    window.setTimeout(() => lengthRef.current?.focus(), 40);
   }
 
   function applyLength() {
@@ -218,7 +259,12 @@ export function DrawingEditor({ drawing, onChange, compact = false }: { drawing:
       commit(objects.map((o) => o.id === id && o.type === "line" ? resizeFromStart(o, n) : o));
     }
     if (obj.type === "dim") {
-      commit(objects.map((o) => o.id === id && o.type === "dim" ? { ...o, label: length.trim() || undefined } : o));
+      const n = parseMm(length);
+      commit(objects.map((o) => {
+        if (o.id === id && o.type === "dim") return { ...o, label: length.trim() || undefined };
+        if (n != null && o.type === "line" && Math.round(o.x1) === Math.round(obj.x1) && Math.round(o.y1) === Math.round(obj.y1) && Math.round(o.x2) === Math.round(obj.x2) && Math.round(o.y2) === Math.round(obj.y2)) return resizeFromStart(o, n);
+        return o;
+      }));
     }
   }
 
@@ -233,7 +279,7 @@ export function DrawingEditor({ drawing, onChange, compact = false }: { drawing:
       <div className="flex shrink-0 flex-wrap items-center gap-2">
         <div className="flex rounded-xl border border-border/80 bg-card/80 p-1">
           {tools.map((t) => (
-            <button key={t.id} type="button" aria-label={t.label} aria-pressed={tool === t.id} onClick={() => { setTool(t.id); setColor(manualRef.current ?? (t.id === "dim" ? dimColor : lineColor)); }} className={cn("flex h-10 items-center gap-1.5 rounded-lg px-2 text-xs font-medium", tool === t.id ? "bg-primary text-primary-foreground" : "text-muted-foreground")}>
+            <button key={t.id} type="button" aria-label={t.label} aria-pressed={tool === t.id} onClick={() => { manualRef.current = null; setTool(t.id); setColor(t.id === "dim" ? dimColor : lineColor); }} className={cn("flex h-10 items-center gap-1.5 rounded-lg px-2 text-xs font-medium", tool === t.id ? "bg-primary text-primary-foreground" : "text-muted-foreground")}>
               <t.icon className="size-4" />
               <span>{t.label}</span>
             </button>
@@ -251,12 +297,12 @@ export function DrawingEditor({ drawing, onChange, compact = false }: { drawing:
         {selected.length === 1 ? (
           <label className="flex items-center gap-2 text-xs text-muted-foreground">
             Длина
-            <input value={length} onChange={(e) => setLength(e.target.value)} onBlur={applyLength} onKeyDown={(e) => { if (e.key === "Enter") applyLength(); }} className="h-9 w-24 rounded-lg border border-border bg-background px-2 tabular text-sm text-foreground" />
+            <input ref={lengthRef} value={length} inputMode="numeric" onChange={(e) => setLength(e.target.value)} onBlur={applyLength} onKeyDown={(e) => { if (e.key === "Enter") applyLength(); }} className="h-9 w-24 rounded-lg border border-border bg-background px-2 tabular text-sm text-foreground" />
           </label>
         ) : null}
       </div>
       <div ref={wrapRef} className="relative min-h-[22rem] flex-1 overflow-hidden rounded-xl border border-border">
-        <canvas ref={canvasRef} className="absolute inset-0 touch-none" style={{ touchAction: "none" }} onPointerDown={onDown} onPointerMove={onMove} onPointerUp={onUp} onPointerCancel={() => { panRef.current = null; downRef.current = null; setDraft(null); }} onContextMenu={(e) => e.preventDefault()} />
+        <canvas ref={canvasRef} className="absolute inset-0 touch-none" style={{ touchAction: "none" }} onPointerDown={onDown} onPointerMove={onMove} onPointerUp={onUp} onPointerCancel={(e) => { clearHold(); pointers.current.delete(e.pointerId); pinchRef.current = null; panRef.current = null; downRef.current = null; setDraft(null); }} onContextMenu={(e) => e.preventDefault()} />
       </div>
     </div>
   );
