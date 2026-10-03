@@ -37,5 +37,6 @@ for (const path of walk("src")) {
     'import { composeWindowShot, shareOrSave, type ShareCardMeta } from "@/lib/share-image";',
     'import { composeWindowShot, type ShareCardMeta } from "@/lib/share-image";\nimport { shareOrSave } from "@/lib/share-native";',
   );
+  next = next.replace(/export const APP_ICON = svg\('<svg[^']*<\\/svg>'\);/, 'export const APP_ICON = ' + JSON.stringify(icon) + ';');
   if (next !== text) writeFileSync(path, next);
 }
