@@ -19,12 +19,12 @@ jobs:
           python -m pip install pillow
           python scripts/make-icons.py
           node scripts/embed-textures.mjs
-          npx vite build --config vite.apk.config.ts
+          npx vite build --config vite.apk.config.ts --base ./
           rm -rf desktop/app
           mkdir -p desktop/app
           cp dist-apk/apk/index.html desktop/app/index.html
           cp -a dist-apk/assets desktop/app/assets
-          sed -i 's|\.\./assets|assets|g' desktop/app/index.html
+          sed -i 's|\.\./assets|assets|g; s|src="/assets|src="assets|g; s|href="/assets|href="assets|g' desktop/app/index.html
           cp -a public/. desktop/app/ || true
       - name: Package Windows installer
         shell: bash
