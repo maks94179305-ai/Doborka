@@ -41,6 +41,8 @@ export function DrawingEditor({ drawing, onChange, compact = false }: { drawing:
   const holdRef = useRef<number | null>(null);
   const lengthRef = useRef<HTMLInputElement>(null);
   const offsetDrag = useRef<string | null>(null);
+  const frame = useRef(0);
+  function paintSoon() { if (frame.current) return; frame.current = requestAnimationFrame(() => { frame.current = 0; redraw(); }); }
   function clearHold() { if (holdRef.current) window.clearTimeout(holdRef.current); holdRef.current = null; }
   const lineColor = DRAW_COLORS[0];
   const dimColor = DRAW_COLORS[4];
@@ -223,7 +225,8 @@ export function DrawingEditor({ drawing, onChange, compact = false }: { drawing:
       const scale = Math.min(16, Math.max(0.06, pinch.scale * (distNow / pinch.dist)));
       const wx = (pinch.ox - pinch.vx) / pinch.scale;
       const wy = (pinch.oy - pinch.vy) / pinch.scale;
-      setView({ scale, x: cx - wx * scale, y: cy - wy * scale });
+      viewRef.current = { scale, x: cx - wx * scale, y: cy - wy * scale };
+      paintSoon();
       return;
     }
     if (downRef.current && Math.hypot(e.clientX - downRef.current.x, e.clientY - downRef.current.y) > 8) clearHold();
@@ -233,12 +236,14 @@ export function DrawingEditor({ drawing, onChange, compact = false }: { drawing:
       const obj = objectsRef.current.find((o) => o.id === id && o.type === "dim");
       if (obj && obj.type === "dim") {
         const offset = keepMinOffset(signedPerp(world, { x: obj.x1, y: obj.y1 }, { x: obj.x2, y: obj.y2 }));
-        onChange({ ...drawing, objects: objectsRef.current.map((o) => o.id === id && o.type === "dim" ? { ...o, offset } : o), view: viewRef.current, updatedAt: Date.now() });
+        objectsRef.current = objectsRef.current.map((o) => o.id === id && o.type === "dim" ? { ...o, offset } : o);
+        paintSoon();
       }
       return;
     }
     if (panRef.current) {
-      setView({ ...viewRef.current, x: panRef.current.vx + (e.clientX - panRef.current.x), y: panRef.current.vy + (e.clientY - panRef.current.y) });
+      viewRef.current = { ...viewRef.current, x: panRef.current.vx + (e.clientX - panRef.current.x), y: panRef.current.vy + (e.clientY - panRef.current.y) };
+      paintSoon();
       return;
     }
     if (!draftRef.current) return;
@@ -246,19 +251,21 @@ export function DrawingEditor({ drawing, onChange, compact = false }: { drawing:
     const tol = 22 / viewRef.current.scale;
     if (toolRef.current === "dim") {
       const snapped = draftRef.current.locked ? snapDimEnd(draftRef.current.start, world, objectsRef.current, tol) : { end: snapToDrawing(world, objectsRef.current, [draftRef.current.start], tol), offset: keepMinOffset(signedPerp(world, draftRef.current.start, world)) };
-      setDraft({ ...draftRef.current, end: snapped.end, offset: snapped.offset });
+      draftRef.current = { ...draftRef.current, end: snapped.end, offset: snapped.offset };
+      paintSoon();
       return;
     }
     const end = snapToDrawing(world, objectsRef.current, [draftRef.current.start], tol);
     const ortho = Math.abs(end.x - draftRef.current.start.x) > Math.abs(end.y - draftRef.current.start.y) ? { x: end.x, y: draftRef.current.start.y } : { x: draftRef.current.start.x, y: end.y };
-    setDraft({ ...draftRef.current, end: ortho });
+    draftRef.current = { ...draftRef.current, end: ortho };
+    paintSoon();
   }
   function onUp(e?: React.PointerEvent) {
     clearHold();
     if (e) pointers.current.delete(e.pointerId);
     if (pointers.current.size < 2) pinchRef.current = null;
-    if (offsetDrag.current) { const id = offsetDrag.current; offsetDrag.current = null; commit(objectsRef.current); setSelected([id]); return; }
-    if (panRef.current) { panRef.current = null; return; }
+    if (offsetDrag.current) { const id = offsetDrag.current; offsetDrag.current = null; setView(viewRef.current); commit(objectsRef.current); setSelected([id]); return; }
+    if (panRef.current) { panRef.current = null; setView(viewRef.current); return; }
     const tap = downRef.current;
     downRef.current = null;
     const d = draftRef.current;
