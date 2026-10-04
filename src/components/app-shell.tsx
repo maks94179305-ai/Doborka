@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { Component, useEffect, type ReactNode } from "react";
 import { Link, Outlet, useRouterState } from "@tanstack/react-router";
 import { Archive, Boxes, LayoutGrid, Ruler, Settings2 } from "lucide-react";
 import { useWorkspace } from "@/lib/store";
@@ -14,6 +14,15 @@ const NAV = [
   { to: "/arxiv", label: "История", icon: Archive },
   { to: "/esche", label: "Настройки", icon: Settings2 },
 ] as const;
+
+class PageBoundary extends Component<{ children: ReactNode }, { error: string }> {
+  state = { error: "" };
+  static getDerivedStateFromError(error: unknown) { return { error: error instanceof Error ? error.message : "Ошибка вкладки" }; }
+  render() {
+    if (this.state.error) return <div className="panel p-5"><p>Эта вкладка не открылась.</p><button type="button" className="mt-3 underline" onClick={() => this.setState({ error: "" })}>Повторить</button></div>;
+    return this.props.children;
+  }
+}
 
 function NavWords({ label }: { label: string }) {
   const parts = label.split(" ");
@@ -70,7 +79,7 @@ export function AppShell() {
         </div>
       </header>
       <main className="mx-auto flex w-full max-w-5xl flex-1 flex-col px-4 py-6 pb-28 md:pb-10">
-        <Outlet />
+        <PageBoundary><Outlet /></PageBoundary>
       </main>
       <nav className="no-print pointer-events-none fixed inset-x-0 bottom-0 z-[90] px-4 pb-[max(0.85rem,env(safe-area-inset-bottom))]">
         <ul className="pointer-events-auto mx-auto grid max-w-lg grid-cols-5 rounded-2xl border border-border/80 bg-card/92 p-1.5 shadow-float backdrop-blur-md">
