@@ -34,8 +34,8 @@ export function PairGate() {
   return (
     <div className="fixed inset-0 z-[80] flex flex-col items-center justify-center bg-[#161618] px-6" style={{ pointerEvents: "auto" }}>
       <img src="/icon-192.png?v=pc" alt="" width={96} height={96} className="size-24 rounded-[1.6rem]" />
-      <h1 className="mt-6 font-display text-3xl font-medium text-[#f3f1ec]">Доборка</h1>
-      <p className="mt-2 max-w-sm text-center text-sm text-[#b7b1a6]">Введите пин-код и нажмите «Подключить».</p>
+      <h1 className="mt-6 text-3xl font-medium text-[#f3f1ec]">Доборка</h1>
+      <p className="mt-2 max-w-sm text-center text-sm text-[#b7b1a6]">Введите 4 цифры и нажмите «Подключить». Можно нажать Enter.</p>
       <input
         value={code}
         inputMode="numeric"
@@ -47,8 +47,16 @@ export function PairGate() {
         className="mt-6 h-14 w-full max-w-sm rounded-xl border border-[#d7d1c6] bg-[#111] px-4 text-center text-2xl tracking-[0.3em] text-[#f3f1ec]"
       />
       {error ? <p className="mt-2 text-sm text-red-300">{error}</p> : null}
-      <button type="button" onClick={connect} className="mt-4 h-12 w-full max-w-sm rounded-xl bg-[#e8e4d8] text-base font-medium text-[#141816]">Подключить</button>
-      <button type="button" onClick={() => { markPairSeen(); setOpen(false); }} className="mt-3 h-11 text-base text-[#f3f1ec] underline">Позже</button>
+      <button
+        type="button"
+        onMouseDown={(e) => { e.preventDefault(); connect(); }}
+        onClick={connect}
+        style={{ background: "#e8e4d8", color: "#141816", pointerEvents: "auto" }}
+        className="mt-4 h-12 w-full max-w-sm rounded-xl text-base font-medium"
+      >
+        Подключить
+      </button>
+      <button type="button" onMouseDown={() => { markPairSeen(); setOpen(false); }} className="mt-3 h-11 text-base text-[#f3f1ec] underline">Позже</button>
     </div>
   );
 }
