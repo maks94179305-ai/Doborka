@@ -26,6 +26,7 @@ jobs:
           cp -a dist-apk/assets desktop/app/assets
           sed -i 's|\.\./assets|assets|g; s|src="/assets|src="assets|g; s|href="/assets|href="assets|g' desktop/app/index.html
           cp -a public/. desktop/app/ || true
+          cp desktop/pin.html desktop/app/pin.html
       - name: Package Windows installer
         shell: bash
         run: |
