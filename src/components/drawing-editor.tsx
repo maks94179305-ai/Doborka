@@ -40,6 +40,10 @@ export function DrawingEditor({ drawing, onChange, compact = false }: { drawing:
   const pinchRef = useRef<{ dist: number; scale: number; ox: number; oy: number; vx: number; vy: number } | null>(null);
   const holdRef = useRef<number | null>(null);
   const lengthRef = useRef<HTMLInputElement>(null);
+  const labelRef = useRef(labelBox);
+  const lengthStateRef = useRef(length);
+  labelRef.current = labelBox;
+  lengthStateRef.current = length;
   const offsetDrag = useRef<string | null>(null);
   const frame = useRef(0);
   function paintSoon() { if (frame.current) return; frame.current = requestAnimationFrame(() => { frame.current = 0; redraw(); }); }
@@ -314,6 +318,30 @@ export function DrawingEditor({ drawing, onChange, compact = false }: { drawing:
       }));
     }
   }
+
+
+  useEffect(() => {
+    function onKey(e: KeyboardEvent) {
+      const target = e.target as HTMLElement | null;
+      if (target && (target.tagName === "INPUT" || target.tagName === "TEXTAREA" || target.isContentEditable)) return;
+      const digit = e.key >= "0" && e.key <= "9" ? e.key : e.code.startsWith("Numpad") && e.code.slice(6) >= "0" && e.code.slice(6) <= "9" ? e.code.slice(6) : "";
+      if (!digit && e.key !== "Backspace" && e.key !== "Enter") return;
+      e.preventDefault();
+      const nextDigit = (current: string) => {
+        const fresh = freshRef.current;
+        freshRef.current = false;
+        if (e.key === "Backspace") return current.slice(0, -1);
+        return (fresh ? digit : current + digit).slice(0, 6);
+      };
+      if (e.key === "Enter") { confirmTyped(); return; }
+      const box = labelRef.current;
+      if (box) { setLabelBox({ ...box, value: nextDigit(box.value) }); return; }
+      setLength(nextDigit(lengthStateRef.current));
+      setPad("length");
+    }
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  });
 
   const tools = useMemo(() => [
     { id: "select" as const, icon: MousePointer2, label: "Выбор" },
