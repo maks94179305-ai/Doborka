@@ -15,7 +15,7 @@ export function PairConnectForm({ autoFocus, onDone }: { autoFocus?: boolean; on
   }
   return (
     <div className="space-y-3">
-      <Button type="button" className="w-full bg-[#e8e4d8] text-[#141816]" onClick={create} onPointerDown={create}>Создать пин-код</Button>
+      <button type="button" className="h-11 w-full rounded-lg bg-[#e8e4d8] text-base font-medium text-[#141816]" onClick={create}>Создать пин-код</button>
       <div className="flex flex-wrap items-end gap-2">
         <label className="grid min-w-[10rem] flex-1 gap-1.5">
           <span className="text-xs uppercase tracking-[0.14em] text-steel">Или ввести код</span>
