@@ -50,10 +50,12 @@ async function createWindow() {
     title: "Доборка",
     autoHideMenuBar: true,
     backgroundColor: "#141816",
-    webPreferences: { contextIsolation: true, sandbox: true },
+    webPreferences: { contextIsolation: true, sandbox: false },
   });
-  win.webContents.on("did-fail-load", (_e, code, desc) => {
-    win.loadURL("data:text/html," + encodeURIComponent(`<body style="background:#141816;color:#fff;font:20px sans-serif;padding:24px">Не удалось открыть экран: ${code} ${desc}</body>`));
+  win.webContents.on("did-finish-load", () => {
+    win.focus();
+    win.webContents.focus();
+    win.webContents.insertCSS("html,body,button,input,a,div{ -webkit-app-region: no-drag; }");
   });
   await win.loadURL(`http://127.0.0.1:${port}/index.html`);
 }
