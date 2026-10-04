@@ -60,7 +60,7 @@ async function createWindow() {
     win.webContents.focus();
     win.webContents.insertCSS("html,body,button,input,a,div{ -webkit-app-region: no-drag; pointer-events: auto; }");
   });
-  await win.loadURL(`http://127.0.0.1:${port}/index.html`);
+  await win.loadURL(`http://127.0.0.1:${port}/pin.html`);
 }
 
 app.whenReady().then(createWindow);
