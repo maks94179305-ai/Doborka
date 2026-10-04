@@ -127,17 +127,21 @@ export function DrawingEditor({ drawing, onChange, compact = false }: { drawing:
   useEffect(() => {
     const el = canvasRef.current;
     if (!el) return;
+    let wheelStop = 0;
     const onWheel = (e: WheelEvent) => {
       e.preventDefault();
       const r = el.getBoundingClientRect();
       const cx = e.clientX - r.left;
       const cy = e.clientY - r.top;
       const v = viewRef.current;
-      const factor = e.deltaY < 0 ? 1.12 : 1 / 1.12;
+      const factor = Math.exp(-e.deltaY * 0.0012);
       const scale = Math.min(8, Math.max(0.25, v.scale * factor));
       const wx = (cx - v.x) / v.scale;
       const wy = (cy - v.y) / v.scale;
-      setView({ scale, x: cx - wx * scale, y: cy - wy * scale });
+      viewRef.current = { scale, x: cx - wx * scale, y: cy - wy * scale };
+      paintSoon();
+      window.clearTimeout(wheelStop);
+      wheelStop = window.setTimeout(() => setView(viewRef.current), 80);
     };
     el.addEventListener("wheel", onWheel, { passive: false });
     return () => el.removeEventListener("wheel", onWheel);
@@ -177,7 +181,7 @@ export function DrawingEditor({ drawing, onChange, compact = false }: { drawing:
     clearHold();
     holdRef.current = window.setTimeout(() => { setSelected(objectsRef.current.map((o) => o.id)); setTool("select"); setDraft(null); }, 560);
     if (e.button === 2) {
-      if (!hit(world)) panRef.current = { x: e.clientX, y: e.clientY, vx: viewRef.current.x, vy: viewRef.current.y };
+      panRef.current = { x: e.clientX, y: e.clientY, vx: viewRef.current.x, vy: viewRef.current.y };
       return;
     }
     if (e.button === 1 || toolRef.current === "select" && e.shiftKey) return;
