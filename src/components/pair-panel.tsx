@@ -15,13 +15,13 @@ export function PairConnectForm({ autoFocus, onDone }: { autoFocus?: boolean; on
   }
   return (
     <div className="space-y-3">
-      <Button className="w-full" onClick={create}>Создать пин-код</Button>
+      <Button type="button" className="w-full bg-[#e8e4d8] text-[#141816]" onClick={create} onPointerDown={create}>Создать пин-код</Button>
       <div className="flex flex-wrap items-end gap-2">
         <label className="grid min-w-[10rem] flex-1 gap-1.5">
           <span className="text-xs uppercase tracking-[0.14em] text-steel">Или ввести код</span>
           <Input inputMode="numeric" autoComplete="one-time-code" autoFocus={autoFocus} maxLength={5} placeholder="00 00" value={formatPin(join)} onChange={(e) => { setError(""); setJoin(e.target.value.replace(/\D/g, "").slice(0, 4)); }} onKeyDown={(e) => { if (e.key === "Enter") connect(); }} />
         </label>
-        <Button variant="secondary" onClick={connect} disabled={join.replace(/\D/g, "").length !== 4}>Подключить</Button>
+        <Button type="button" variant="secondary" onClick={connect}>Подключить</Button>
       </div>
       {error ? <p className="text-sm text-destructive">{error}</p> : null}
     </div>
