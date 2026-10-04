@@ -1,4 +1,6 @@
 const { app, BrowserWindow } = require("electron");
+app.disableHardwareAcceleration();
+app.commandLine.appendSwitch("disable-gpu");
 const http = require("http");
 const fs = require("fs");
 const path = require("path");
@@ -52,10 +54,11 @@ async function createWindow() {
     backgroundColor: "#141816",
     webPreferences: { contextIsolation: true, sandbox: false },
   });
+  win.setIgnoreMouseEvents(false);
   win.webContents.on("did-finish-load", () => {
     win.focus();
     win.webContents.focus();
-    win.webContents.insertCSS("html,body,button,input,a,div{ -webkit-app-region: no-drag; }");
+    win.webContents.insertCSS("html,body,button,input,a,div{ -webkit-app-region: no-drag; pointer-events: auto; }");
   });
   await win.loadURL(`http://127.0.0.1:${port}/index.html`);
 }
