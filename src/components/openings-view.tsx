@@ -108,10 +108,11 @@ export function OpeningsView() {
       )}
       <Dialog open={!!editing} onOpenChange={(o) => !o && setEditId(null)}>
         {editing ? (
-          <DialogContent title={editing.name}>
+          <DialogContent title={editing.name} className="z-[70]">
             <div className="max-h-[70vh] overflow-y-auto pr-1">
               <OpeningEditor opening={editing} fallback={fallback} onChange={(patch) => updateOpening(editing.id, patch)} onRemove={() => { removeOpening(editing.id); setEditId(null); }} />
             </div>
+            <Button type="button" className="mt-3 w-full" onClick={() => setEditId(null)}>Закрыть</Button>
           </DialogContent>
         ) : null}
       </Dialog>
