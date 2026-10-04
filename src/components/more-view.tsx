@@ -35,7 +35,7 @@ export function MoreView() {
   }
   async function install() {
     if (installEvt) { await installEvt.prompt(); setInstallEvt(null); return; }
-    window.location.assign("/?install=1");
+    /* desktop has no browser install */
   }
   function exportJson() {
     if (!project) return;
