@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { deletePhoto, getPhoto } from "@/lib/photos";
 import { useProject, useWorkspace } from "@/lib/store";
 import { unpublishHistory } from "@/lib/team-sync";
@@ -85,11 +84,7 @@ export function ArchiveView() {
           ))}
         </ul>
       )}
-      <Dialog open={!!preview} onOpenChange={(o) => !o && setPreview(null)}>
-        <DialogContent title="Карточка" className="w-[min(52rem,calc(100vw-1.5rem))] p-4">
-          {preview ? <img src={preview} alt="" className="max-h-[70vh] w-full object-contain" /> : null}
-        </DialogContent>
-      </Dialog>
+      {preview ? <section className="panel space-y-3 p-3"><div className="flex justify-end"><button type="button" className="underline" onClick={() => setPreview(null)}>Закрыть</button></div><img src={preview} alt="" className="max-h-[50vh] w-full object-contain" /></section> : null}
     </div>
   );
 }
