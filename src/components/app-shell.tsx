@@ -72,7 +72,7 @@ export function AppShell() {
       <main className="mx-auto flex w-full max-w-5xl flex-1 flex-col px-4 py-6 pb-28 md:pb-10">
         <Outlet />
       </main>
-      <nav className="no-print pointer-events-none fixed inset-x-0 bottom-0 z-30 px-4 pb-[max(0.85rem,env(safe-area-inset-bottom))]">
+      <nav className="no-print pointer-events-none fixed inset-x-0 bottom-0 z-[90] px-4 pb-[max(0.85rem,env(safe-area-inset-bottom))]">
         <ul className="pointer-events-auto mx-auto grid max-w-lg grid-cols-5 rounded-2xl border border-border/80 bg-card/92 p-1.5 shadow-float backdrop-blur-md">
           {NAV.map((item) => {
             const active = pathname === item.to;
