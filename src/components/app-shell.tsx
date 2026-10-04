@@ -87,7 +87,7 @@ export function AppShell() {
             const active = pathname === item.to;
             return (
               <li key={item.to}>
-                <Link to={item.to} className={cn("flex h-16 flex-col items-center justify-center gap-0.5 rounded-xl px-0.5 text-center text-[10px] font-medium leading-tight", active ? "bg-primary/10 text-foreground" : "text-muted-foreground")}>
+                <Link to={item.to} onClick={() => window.dispatchEvent(new Event("doborka-skip-pair"))} className={cn("flex h-16 flex-col items-center justify-center gap-0.5 rounded-xl px-0.5 text-center text-[10px] font-medium leading-tight", active ? "bg-primary/10 text-foreground" : "text-muted-foreground")}>
                   <item.icon className={cn("size-5", active && "text-steel")} />
                   <NavWords label={item.label} />
                 </Link>
