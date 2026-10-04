@@ -25,7 +25,7 @@ export function DialogContent({
 }: ComponentProps<typeof DialogPrimitive.Content> & { title?: string; instant?: boolean }) {
   return (
     <DialogPrimitive.Portal>
-      <DialogPrimitive.Overlay className={cn("fixed inset-0 z-50 bg-background/70", !instant && "backdrop-blur-[2px] data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0")} />
+      <DialogPrimitive.Overlay className={cn("pointer-events-none fixed inset-0 z-50 bg-background/70", !instant && "backdrop-blur-[2px] data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0")} />
       <DialogPrimitive.Content
         ref={ref}
         {...props}
