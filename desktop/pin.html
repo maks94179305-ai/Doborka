@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <title>Доборка</title>
+  <style>
+    html, body { margin: 0; height: 100%; background: #161618; color: #f3f1ec; font-family: sans-serif; }
+    body { display: flex; align-items: center; justify-content: center; }
+    main { width: min(28rem, calc(100% - 2rem)); text-align: center; }
+    h1 { font-size: 2rem; margin: 0.4rem 0; }
+    p { color: #b7b1a6; }
+    input { width: 100%; box-sizing: border-box; height: 3.4rem; margin-top: 1.2rem; border-radius: 0.8rem; border: 1px solid #d7d1c6; background: #111; color: #f3f1ec; text-align: center; font-size: 1.6rem; letter-spacing: 0.3em; }
+    button { width: 100%; height: 3.2rem; margin-top: 0.8rem; border: 0; border-radius: 0.8rem; background: #e8e4d8; color: #141816; font-size: 1.1rem; font-weight: 700; }
+    #later { background: transparent; color: #f3f1ec; text-decoration: underline; }
+    #err { color: #f0a8a8; min-height: 1.2rem; }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>Доборка</h1>
+    <p>Введите 4 цифры и нажмите «Подключить».</p>
+    <input id="pin" inputmode="numeric" maxlength="4" placeholder="0000" autofocus />
+    <div id="err"></div>
+    <button id="go" type="button">Подключить</button>
+    <button id="later" type="button">Позже</button>
+  </main>
+  <script>
+    if (localStorage.getItem("doborka-pair-seen") === "1" || /^\d{4}$/.test(localStorage.getItem("doborka-pair-pin") || "")) location.replace("index.html");
+    const pin = document.getElementById("pin");
+    function enter() {
+      const digits = pin.value.replace(/\D/g, "");
+      if (digits.length !== 4) { document.getElementById("err").textContent = "Введите 4 цифры"; return; }
+      localStorage.setItem("doborka-pair-pin", digits);
+      localStorage.setItem("doborka-pair-seen", "1");
+      location.replace("index.html");
+    }
+    document.getElementById("go").addEventListener("click", enter);
+    document.getElementById("later").addEventListener("click", () => { localStorage.setItem("doborka-pair-seen", "1"); location.replace("index.html"); });
+    pin.addEventListener("keydown", (e) => { if (e.key === "Enter") enter(); });
+  </script>
+</body>
+</html>
