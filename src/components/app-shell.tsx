@@ -78,7 +78,7 @@ export function AppShell() {
           ) : null}
         </div>
       </header>
-      <main className="mx-auto flex w-full max-w-5xl flex-1 flex-col px-4 py-6 pb-28 md:pb-10">
+      <main className="mx-auto flex w-full max-w-5xl flex-1 flex-col overflow-y-auto px-4 py-6 pb-28 md:pb-10" style={{ scrollBehavior: "smooth" }}>
         <PageBoundary><Outlet /></PageBoundary>
       </main>
       <nav className="no-print pointer-events-none fixed inset-x-0 bottom-0 z-[90] px-4 pb-[max(0.85rem,env(safe-area-inset-bottom))]">
