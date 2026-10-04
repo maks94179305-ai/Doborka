@@ -10,8 +10,9 @@ export function PairGate() {
 
   useEffect(() => {
     if (!ready) return;
-    setOpen(pairPromptPending());
-    const on = () => setOpen(pairPromptPending());
+    const desktop = navigator.userAgent.includes("Electron");
+    setOpen(desktop ? false : pairPromptPending());
+    const on = () => setOpen(desktop ? false : pairPromptPending());
     window.addEventListener("doborka-pair", on);
     return () => window.removeEventListener("doborka-pair", on);
   }, [ready]);
