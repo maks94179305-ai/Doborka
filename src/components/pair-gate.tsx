@@ -24,7 +24,7 @@ export function PairGate() {
   }
 
   return (
-    <div className="fixed inset-0 z-40 flex flex-col items-center justify-center bg-[#161618] px-6">
+    <div className="fixed inset-0 z-[80] flex flex-col items-center justify-center bg-[#161618] px-6" style={{ pointerEvents: "auto", WebkitAppRegion: "no-drag" }}>
       <img src="/icon-192.png?v=pc" alt="" width={96} height={96} className="size-24 rounded-[1.6rem] shadow-[0_18px_40px_rgba(0,0,0,.45)]" />
       <h1 className="mt-6 font-display text-3xl font-medium tracking-tight text-[#f3f1ec]">Доборка</h1>
       <p className="mt-2 max-w-sm text-center text-sm text-muted-foreground">
@@ -33,7 +33,7 @@ export function PairGate() {
       <div className="mt-6 w-full max-w-sm">
         <PairConnectForm autoFocus onDone={() => setOpen(false)} />
       </div>
-      <Button variant="ghost" className="mt-4 text-muted-foreground" onClick={skip}>
+      <Button type="button" variant="ghost" className="mt-4 text-muted-foreground" onClick={skip} onPointerDown={skip}>
         Позже
       </Button>
     </div>
