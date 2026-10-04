@@ -66,6 +66,13 @@ export function PhotoStrip({ ids, onChange, variant = "photos", previewAside, ex
     onChange(ids.filter((x) => x !== id));
   }
 
+
+  async function sendTo(kind: "telegram" | "whatsapp" | "viber") {
+    await share();
+    const text = encodeURIComponent("Схема · Доборка");
+    const url = kind === "telegram" ? `tg://msg?text=${text}` : kind === "whatsapp" ? `whatsapp://send?text=${text}` : `viber://forward?text=${text}`;
+    window.open(url, "_blank");
+  }
   async function share() {
     if (!preview || shareState === "busy") return;
     setShareState("busy");
@@ -118,7 +125,12 @@ export function PhotoStrip({ ids, onChange, variant = "photos", previewAside, ex
           {previewAside}
           <div className="flex gap-2">
             {scheme && onEdit && previewId ? <Button type="button" variant="secondary" onClick={() => { const id = previewId; setPreviewId(null); onEdit(id); }}>Редактировать</Button> : null}
-            <Button type="button" onClick={() => void share()} disabled={shareState === "busy"}>{shareState === "busy" ? "Готовлю…" : "Поделиться"}</Button>
+<div className="flex flex-wrap gap-2">
+              <Button type="button" onClick={() => void sendTo("telegram")}>Telegram</Button>
+              <Button type="button" onClick={() => void sendTo("whatsapp")}>WhatsApp</Button>
+              <Button type="button" onClick={() => void sendTo("viber")}>Viber</Button>
+              <Button type="button" variant="secondary" onClick={() => void share()}>Сохранить</Button>
+            </div>
           </div>
         </section>
       ) : null}
