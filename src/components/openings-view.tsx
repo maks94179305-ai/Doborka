@@ -4,7 +4,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Num } from "@/components/num-field";
 import { PhotoStrip } from "@/components/photo-strip";
 import { WindowDiagram } from "@/components/window-diagram";
@@ -106,16 +105,12 @@ export function OpeningsView() {
           })}
         </ul>
       )}
-      <Dialog open={!!editing} onOpenChange={(o) => !o && setEditId(null)}>
-        {editing ? (
-          <DialogContent title={editing.name} className="z-[70]">
-            <div className="max-h-[70vh] overflow-y-auto pr-1">
-              <OpeningEditor opening={editing} fallback={fallback} onChange={(patch) => updateOpening(editing.id, patch)} onRemove={() => { removeOpening(editing.id); setEditId(null); }} />
-            </div>
-            <Button type="button" className="mt-3 w-full" onClick={() => setEditId(null)}>Закрыть</Button>
-          </DialogContent>
-        ) : null}
-      </Dialog>
+      {editing ? (
+        <section className="panel space-y-3 p-5">
+          <div className="flex items-center justify-between"><h2 className="font-medium">{editing.name}</h2><Button type="button" onClick={() => setEditId(null)}>Закрыть</Button></div>
+          <OpeningEditor opening={editing} fallback={fallback} onChange={(patch) => updateOpening(editing.id, patch)} onRemove={() => { removeOpening(editing.id); setEditId(null); }} />
+        </section>
+      ) : null}
     </div>
   );
 }
