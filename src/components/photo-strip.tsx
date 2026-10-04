@@ -1,6 +1,5 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { Camera, FileUp, ImagePlus, Share2, X } from "lucide-react";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { deletePhoto, fileToBlob, getPhoto, savePhoto } from "@/lib/photos";
 import { composeWindowShot, shareOrSave, type ShareCardMeta } from "@/lib/share-image";
@@ -112,27 +111,17 @@ export function PhotoStrip({ ids, onChange, variant = "photos", previewAside, ex
         </label>
         {extraActions}
       </div>
-      <Dialog open={!!previewId && !!preview} onOpenChange={(o) => !o && setPreviewId(null)}>
-        <DialogContent title={scheme ? "Схема" : "Фото"} className={cn("flex flex-col p-4", previewAside ? "w-[min(52rem,calc(100vw-1.5rem))] max-h-[min(85dvh,44rem)]" : "w-[min(44rem,calc(100vw-1.5rem))] max-h-[min(85dvh,44rem)]")}>
-          {preview ? (
-            <>
-              <div className={cn("min-h-0 flex-1 overflow-y-auto", previewAside && "grid items-start gap-4 md:grid-cols-[minmax(0,1fr)_15rem]")}>
-                <div className="relative mx-auto w-fit max-w-full">
-                  <img src={preview} alt="" className="max-h-[58vh] max-w-full object-contain" />
-                  {scheme && onEdit && previewId ? (
-                    <Button type="button" variant="secondary" className="absolute bottom-3 right-3 z-10 shadow-float" onClick={() => { const id = previewId; setPreviewId(null); onEdit(id); }}>Редактировать</Button>
-                  ) : null}
-                </div>
-                {previewAside}
-              </div>
-              <Button type="button" className="mt-3 min-h-11 w-full shrink-0" onClick={() => void share()} disabled={shareState === "busy"}>
-                <Share2 />
-                {shareState === "busy" ? "Готовлю…" : shareState === "shared" ? "Отправлено" : shareState === "saved" ? "Сохранено" : "Поделиться"}
-              </Button>
-            </>
-          ) : null}
-        </DialogContent>
-      </Dialog>
+      {previewId && preview ? (
+        <section className="panel space-y-3 p-3">
+          <div className="flex items-center justify-between"><h3 className="font-medium">{scheme ? "Схема" : "Фото"}</h3><Button type="button" onClick={() => setPreviewId(null)}>Закрыть</Button></div>
+          <img src={preview} alt="" className="max-h-[42vh] w-full object-contain" />
+          {previewAside}
+          <div className="flex gap-2">
+            {scheme && onEdit && previewId ? <Button type="button" variant="secondary" onClick={() => { const id = previewId; setPreviewId(null); onEdit(id); }}>Редактировать</Button> : null}
+            <Button type="button" onClick={() => void share()} disabled={shareState === "busy"}>{shareState === "busy" ? "Готовлю…" : "Поделиться"}</Button>
+          </div>
+        </section>
+      ) : null}
     </div>
   );
 }
