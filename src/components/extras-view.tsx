@@ -3,7 +3,6 @@ import { Pencil, Plus, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Num } from "@/components/num-field";
 import { PhotoStrip } from "@/components/photo-strip";
 import { SchemeDrawDialog } from "@/components/scheme-draw-dialog";
@@ -45,18 +44,17 @@ export function ExtrasView() {
       ) : (
         <ul className="grid gap-3">{project.extras.map((e) => <li key={e.id}><ExtraCard extra={e} onChange={(patch) => updateExtra(e.id, patch)} onRemove={() => removeExtra(e.id)} /></li>)}</ul>
       )}
-      <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent title="Добавить элемент">
-          <div className="grid gap-2">
-            {EXTRA_PRESETS.map((p) => (
-              <button key={p.kind} type="button" className="rounded-xl border border-border bg-background/50 px-3 py-3 text-left hover:bg-accent" onClick={() => { const kind = p.kind as ExtraKind; addExtra({ kind, name: extraPreset(kind).name, length: p.defaultLength || 1000, qty: 1 }); setOpen(false); }}>
-                <span className="block font-medium">{p.name}</span>
-                <span className="text-xs text-muted-foreground">{p.hint}</span>
-              </button>
-            ))}
-          </div>
-        </DialogContent>
-      </Dialog>
+      {open ? (
+        <section className="panel space-y-2 p-4">
+          <div className="flex items-center justify-between"><h2 className="font-medium">Добавить элемент</h2><Button type="button" onClick={() => setOpen(false)}>Закрыть</Button></div>
+          {EXTRA_PRESETS.map((p) => (
+            <button key={p.kind} type="button" className="w-full rounded-xl border border-border bg-background/50 px-3 py-3 text-left hover:bg-accent" onClick={() => { const kind = p.kind as ExtraKind; addExtra({ kind, name: extraPreset(kind).name, length: p.defaultLength || 1000, qty: 1 }); setOpen(false); }}>
+              <span className="block font-medium">{p.name}</span>
+              <span className="text-xs text-muted-foreground">{p.hint}</span>
+            </button>
+          ))}
+        </section>
+      ) : null}
     </div>
   );
 }
