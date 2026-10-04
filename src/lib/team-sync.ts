@@ -189,6 +189,7 @@ async function syncOnce() {
   } catch { /* ignore */ } finally { syncing = false; }
 }
 export function useTeamSync() {
+  if (typeof navigator !== "undefined" && navigator.userAgent.includes("Electron")) return;
   const ready = useWorkspace((s) => s.ready);
   const [pin, setPin] = useState<string | null>(null);
   useEffect(() => {
