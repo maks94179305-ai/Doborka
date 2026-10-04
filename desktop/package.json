@@ -1,6 +1,6 @@
 {
   "name": "doborka",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "private": true,
   "main": "main.cjs",
   "description": "Доборка",
@@ -8,6 +8,7 @@
   "build": {
     "appId": "com.doborka.app",
     "productName": "Doborka",
+    "asar": false,
     "directories": { "output": "release" },
     "files": ["main.cjs", "app/**/*"],
     "win": { "target": "nsis", "signAndEditExecutable": false },
