@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Minus, Pencil, Plus, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -6,7 +6,6 @@ import { Label } from "@/components/ui/label";
 import { Num } from "@/components/num-field";
 import { PhotoStrip } from "@/components/photo-strip";
 import { SchemeDrawDialog } from "@/components/scheme-draw-dialog";
-import { ProfileColorPicker } from "@/components/plan-view";
 import { mm } from "@/lib/format";
 import { plansByMaterial } from "@/lib/cutting";
 import { collectPieces } from "@/lib/pieces";
@@ -14,7 +13,7 @@ import { deletePhoto, savePhoto } from "@/lib/photos";
 import { renderDrawingToBlob } from "@/lib/draw-render";
 import { schemeIdsOf, profileColorOf } from "@/lib/pieces";
 import { useProject, useWorkspace } from "@/lib/store";
-import { EXTRA_PRESETS, extraPreset, PROFILE_COLORS, profileCanonicalHex, profileColorName, type Drawing, type ExtraItem, type ExtraKind } from "@/lib/types";
+import { EXTRA_PRESETS, extraPreset, PROFILE_COLORS, profileCanonicalHex, profileChipSide, profileColorName, profileFinish, profileId, profileTexture, type Drawing, type ExtraItem, type ExtraKind } from "@/lib/types";
 import { uid } from "@/lib/utils";
 
 function schemeKey(extraId: string) { return `extra:${extraId}`; }
@@ -65,7 +64,7 @@ export function ExtrasView() {
 
 function extraShare(extra: ExtraItem, project: NonNullable<ReturnType<typeof useProject>>) {
   const key = schemeKey(extra.id);
-  const plan = plansByMaterial(collectPieces(project), project.settings.stockLengths, project.settings.kerf, project.settings.minRemainder, project.settings.strategy).find((m) => m.key === key)?.plan;
+  const plan = plansByMaterial(collectPieces(project).filter((piece) => piece.extraId === extra.id), project.settings.stockLengths, project.settings.kerf, project.settings.minRemainder, project.settings.strategy)[0]?.plan;
   const color = profileColorOf(project, key);
   return { heading: "Схема", title: extra.name, color, colorName: profileColorName(color), note: project.profileNotes?.[key] ?? "", bars: plan?.barCounts ?? [], totalBars: plan?.bars.length ?? 0 };
 }
@@ -98,6 +97,28 @@ function QtyField({ value, onChange }: { value: number; onChange: (n: number) =>
       </div>
     </div>
   );
+}
+
+function ElementPalette({ value, onChange }: { value: string; onChange: (hex: string) => void }) {
+  return (
+    <div className="flex flex-wrap gap-2">
+      {PROFILE_COLORS.map((c) => {
+        const on = profileCanonicalHex(c.hex).toLowerCase() === profileCanonicalHex(value).toLowerCase();
+        return (
+          <button key={c.id} type="button" title={c.name} aria-label={c.name} onClick={() => onChange(c.hex)} className={`flex w-[5.6rem] flex-col items-center gap-1 rounded-xl px-1 py-1.5 ${on ? "bg-accent ring-2 ring-steel" : ""}`}>
+            <PaletteChip hex={c.hex} />
+            <span className="text-center text-[11px] leading-tight">{c.name}</span>
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+function PaletteChip({ hex }: { hex: string }) {
+  const texture = profileTexture(hex);
+  const gloss = profileFinish(hex) === "gloss";
+  const matte = profileFinish(hex) === "matte";
+  return <span className="inline-block h-9 w-10 rounded-md border border-border" style={{ background: texture ? `url(${texture}) center/cover` : hex, boxShadow: `3px 4px 0 ${profileChipSide(hex)}`, filter: gloss ? "saturate(1.1)" : matte ? "contrast(0.92)" : undefined }} />;
 }
 function ExtraCard({ extra, onChange, onRemove }: { extra: ExtraItem; onChange: (patch: Partial<ExtraItem>) => void; onRemove: () => void }) {
   const project = useProject();
@@ -155,7 +176,7 @@ function ExtraCard({ extra, onChange, onRemove }: { extra: ExtraItem; onChange: 
         <p className="mb-2 text-xs uppercase tracking-[0.14em] text-steel">Чертёж</p>
         <div className={hasDrawing ? "grid items-start gap-3 lg:grid-cols-[minmax(0,1fr)_auto]" : ""}>
           <PhotoStrip ids={schemeIds} onChange={(ids) => setSchemeIds(key, ids)} variant="scheme" extraActions={<Button type="button" variant="outline" className="h-11" onClick={hasDrawing ? editDrawing : openBlank}><Pencil /> {hasDrawing ? "Редактировать" : "Начертить"}</Button>} previewAside={project ? <ExtraOrder extra={extra} project={project} /> : undefined} shareCard={project ? extraShare(extra, project) : undefined} onEdit={openExisting} />
-          {hasDrawing && project ? <ProfileColorPicker value={profileColorOf(project, key)} onChange={(hex) => useWorkspace.getState().setProfileColor(key, hex)} /> : null}
+          {hasDrawing && project ? <ElementPalette value={profileColorOf(project, key)} onChange={(hex) => useWorkspace.getState().setProfileColor(key, hex)} /> : null}
         </div>
       </div>
       {draft ? <SchemeDrawDialog open={drawOpen} title={extra.name} drawing={draft} onOpenChange={setDrawOpen} onDone={(d) => { void persistDraw(d); }} /> : null}
