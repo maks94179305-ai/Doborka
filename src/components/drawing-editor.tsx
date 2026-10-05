@@ -148,6 +148,14 @@ export function DrawingEditor({ drawing, onChange, compact = false }: { drawing:
 
   useEffect(() => { redraw(); }, [redraw, objects, view, draft, color]);
   useEffect(() => {
+    const el = wrapRef.current;
+    if (!el || objects.length === 0) return;
+    const next = fitView(objects, el.clientWidth, el.clientHeight);
+    viewRef.current = next;
+    setView(next);
+  }, [drawing.id]);
+
+  useEffect(() => {
     const el = canvasRef.current;
     if (!el) return;
     let wheelStop = 0;
