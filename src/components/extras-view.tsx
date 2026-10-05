@@ -80,10 +80,10 @@ function ExtraOrder({ extra, project }: { extra: ExtraItem; project: NonNullable
 }
 function CompactColors({ value, onChange }: { value: string; onChange: (hex: string) => void }) {
   return (
-    <div className="mt-3 flex flex-wrap gap-1.5">
+    <div className="grid grid-cols-2 gap-1">
       {PROFILE_COLORS.map((c) => {
         const on = profileCanonicalHex(c.hex).toLowerCase() === profileCanonicalHex(value).toLowerCase();
-        return <button key={c.id} type="button" title={c.name} aria-label={c.name} aria-pressed={on} onClick={() => onChange(c.hex)} className="size-6 rounded-full border border-border" style={{ background: c.hex, boxShadow: on ? "0 0 0 2px #141816, 0 0 0 4px #8ec8c4" : undefined }} />;
+        return <button key={c.id} type="button" title={c.name} aria-label={c.name} aria-pressed={on} onClick={() => onChange(c.hex)} className={`flex flex-col items-center gap-0.5 rounded-lg px-0.5 py-1 ${on ? "bg-accent ring-2 ring-steel" : ""}`}><span className="size-5 rounded-full border border-border" style={{ background: c.hex }} /><span className="text-center text-[9px] leading-tight">{c.name}</span></button>;
       })}
     </div>
   );
@@ -147,10 +147,12 @@ function ExtraCard({ extra, onChange, onRemove }: { extra: ExtraItem; onChange: 
           </div>
         </div>
       </div>
-      {project ? <CompactColors value={profileColorOf(project, key)} onChange={(hex) => useWorkspace.getState().setProfileColor(key, hex)} /> : null}
       <div className="mt-4 border-t border-border pt-3">
         <p className="mb-2 text-xs uppercase tracking-[0.14em] text-steel">Чертёж</p>
-        <PhotoStrip ids={schemeIds} onChange={(ids) => setSchemeIds(key, ids)} variant="scheme" extraActions={<Button type="button" variant="outline" className="h-11" onClick={hasDrawing ? editDrawing : openBlank}><Pencil /> {hasDrawing ? "Редактировать" : "Начертить"}</Button>} previewAside={project ? <ExtraOrder extra={extra} project={project} /> : undefined} shareCard={project ? extraShare(extra, project) : undefined} onEdit={openExisting} />
+        <div className={hasDrawing ? "grid grid-cols-[minmax(0,1fr)_9.5rem] items-start gap-2" : ""}>
+          <PhotoStrip ids={schemeIds} onChange={(ids) => setSchemeIds(key, ids)} variant="scheme" extraActions={<Button type="button" variant="outline" className="h-11" onClick={hasDrawing ? editDrawing : openBlank}><Pencil /> {hasDrawing ? "Редактировать" : "Начертить"}</Button>} previewAside={project ? <ExtraOrder extra={extra} project={project} /> : undefined} shareCard={project ? extraShare(extra, project) : undefined} onEdit={openExisting} />
+          {project ? <CompactColors value={profileColorOf(project, key)} onChange={(hex) => useWorkspace.getState().setProfileColor(key, hex)} /> : null}
+        </div>
       </div>
       {draft ? <SchemeDrawDialog open={drawOpen} title={extra.name} drawing={draft} onOpenChange={setDrawOpen} onDone={(d) => { void persistDraw(d); }} /> : null}
     </article>
