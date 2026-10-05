@@ -9,12 +9,12 @@ export function SchemeDrawDialog({ open, title, drawing, onOpenChange, onDone }:
   if (!open) return null;
   function close() { onDone(local); onOpenChange(false); }
   return (
-    <section className="panel mt-3 flex min-h-[28rem] flex-col gap-2 p-3">
+    <div className="fixed inset-0 z-[80] flex flex-col bg-[#141816] p-3 pt-[max(2.75rem,env(safe-area-inset-top))]">
       <div className="mb-2 flex items-center justify-between gap-3">
         <h2 className="font-display text-lg text-[#f3f1ec]">Схема · {title}</h2>
         <Button type="button" onClick={close}>Готово</Button>
       </div>
       <DrawingEditor key={`${drawing.id}-${open}`} drawing={local} onChange={setLocal} compact />
-    </section>
+    </div>
   );
 }
