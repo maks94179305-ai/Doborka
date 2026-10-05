@@ -67,12 +67,6 @@ export function PhotoStrip({ ids, onChange, variant = "photos", previewAside, ex
   }
 
 
-  async function sendTo(kind: "telegram" | "whatsapp" | "viber") {
-    await share();
-    const text = encodeURIComponent("Схема · Доборка");
-    const url = kind === "telegram" ? `tg://msg?text=${text}` : kind === "whatsapp" ? `whatsapp://send?text=${text}` : `viber://forward?text=${text}`;
-    window.open(url, "_blank");
-  }
   async function share() {
     if (!preview || shareState === "busy") return;
     setShareState("busy");
@@ -119,20 +113,15 @@ export function PhotoStrip({ ids, onChange, variant = "photos", previewAside, ex
         {extraActions}
       </div>
       {previewId && preview ? (
-        <section className="panel space-y-3 p-3">
-          <div className="flex items-center justify-between"><h3 className="font-medium">{scheme ? "Схема" : "Фото"}</h3><Button type="button" onClick={() => setPreviewId(null)}>Закрыть</Button></div>
-          <img src={preview} alt="" className="max-h-[42vh] w-full object-contain" />
+        <div className="fixed inset-0 z-[120] flex flex-col bg-[#161618] px-4 py-4 pt-[max(1.25rem,env(safe-area-inset-top))]">
+          <div className="flex items-center justify-between"><h3 className="font-medium text-[#f3f1ec]">{scheme ? "Схема" : "Фото"}</h3><Button type="button" onClick={() => setPreviewId(null)}>Закрыть</Button></div>
+          <img src={preview} alt="" className="mt-3 max-h-[52vh] w-full object-contain" />
           {previewAside}
-          <div className="flex gap-2">
+          <div className="mt-3 flex gap-2">
             {scheme && onEdit && previewId ? <Button type="button" variant="secondary" onClick={() => { const id = previewId; setPreviewId(null); onEdit(id); }}>Редактировать</Button> : null}
-<div className="flex flex-wrap gap-2">
-              <Button type="button" onClick={() => void sendTo("telegram")}>Telegram</Button>
-              <Button type="button" onClick={() => void sendTo("whatsapp")}>WhatsApp</Button>
-              <Button type="button" onClick={() => void sendTo("viber")}>Viber</Button>
-              <Button type="button" variant="secondary" onClick={() => void share()}>Сохранить</Button>
-            </div>
+            <Button type="button" onClick={() => void share()} disabled={shareState === "busy"}>{shareState === "busy" ? "Готовлю…" : "Поделиться"}</Button>
           </div>
-        </section>
+        </div>
       ) : null}
     </div>
   );
