@@ -92,7 +92,7 @@ export function ArchiveView() {
           ))}
         </div>
       )}
-      {preview ? <section className="panel space-y-3 p-3"><div className="flex justify-end"><button type="button" className="underline" onClick={() => setPreview(null)}>Закрыть</button></div><img src={preview} alt="" className="max-h-[50vh] w-full object-contain" /></section> : null}
+      {preview ? <div className="fixed inset-0 z-[120] flex flex-col bg-[#161618] px-4 py-4 pt-[max(1.25rem,env(safe-area-inset-top))]"><div className="flex justify-end"><button type="button" className="rounded-lg bg-[#e8e4d8] px-4 py-2 text-[#141816]" onClick={() => setPreview(null)}>Закрыть</button></div><img src={preview} alt="" className="mt-3 max-h-[80vh] w-full object-contain" /></div> : null}
     </div>
   );
 }
