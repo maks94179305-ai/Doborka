@@ -73,7 +73,11 @@ export const useWorkspace = create<Workspace>()(
         }
         set({
           ready: true,
-          projects: s.projects.map(normalizeProject),
+          projects: s.projects.map((p) => {
+            const n = normalizeProject(p);
+            if (n.name !== "Объект — пример") return n;
+            return { ...n, openings: n.openings.slice(0, 1), extras: n.extras.slice(0, 1) };
+          }),
           activeId: s.activeId && s.projects.some((p) => p.id === s.activeId) ? s.activeId : s.projects[0].id,
         });
       },
