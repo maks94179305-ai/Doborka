@@ -106,10 +106,12 @@ export function OpeningsView() {
         </ul>
       )}
       {editing ? (
-        <section className="panel space-y-3 p-5">
-          <div className="flex items-center justify-between"><h2 className="font-medium">{editing.name}</h2><Button type="button" onClick={() => setEditId(null)}>Закрыть</Button></div>
-          <OpeningEditor opening={editing} fallback={fallback} onChange={(patch) => updateOpening(editing.id, patch)} onRemove={() => { removeOpening(editing.id); setEditId(null); }} />
-        </section>
+        <div className="fixed inset-0 z-[120] overflow-y-auto bg-[#161618] px-4 py-6 pt-[max(1.5rem,env(safe-area-inset-top))]">
+          <div className="mx-auto flex max-w-lg items-center justify-between"><h2 className="font-medium text-[#f3f1ec]">{editing.name}</h2><Button type="button" onClick={() => setEditId(null)}>Закрыть</Button></div>
+          <div className="mx-auto mt-4 max-w-lg">
+            <OpeningEditor opening={editing} fallback={fallback} onChange={(patch) => updateOpening(editing.id, patch)} onRemove={() => { removeOpening(editing.id); setEditId(null); }} />
+          </div>
+        </div>
       ) : null}
     </div>
   );
