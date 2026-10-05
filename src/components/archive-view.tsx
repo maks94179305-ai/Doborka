@@ -6,6 +6,7 @@ import { useProject, useWorkspace } from "@/lib/store";
 import { unpublishHistory } from "@/lib/team-sync";
 
 const sentFmt = new Intl.DateTimeFormat("ru-RU", { day: "numeric", month: "long", year: "numeric", hour: "2-digit", minute: "2-digit" });
+const dayFmt = new Intl.DateTimeFormat("ru-RU", { day: "numeric", month: "long", year: "numeric" });
 
 export function ArchiveView() {
   const project = useProject();
@@ -66,8 +67,12 @@ export function ArchiveView() {
           <p className="mt-1 text-sm text-muted-foreground">Нажмите «Поделиться» на схеме в раскрое — карточка появится здесь.</p>
         </div>
       ) : (
-        <ul className="grid gap-3 sm:grid-cols-2">
-          {entries.map((e) => (
+        <div className="space-y-8">
+          {Object.entries(entries.reduce<Record<string, typeof entries>>((acc, e) => { const day = dayFmt.format(e.sentAt); (acc[day] ??= []).push(e); return acc; }, {})).map(([day, items]) => (
+          <section key={day}>
+            <h2 className="mb-3 font-display text-3xl text-[#f3f1ec]">{day}</h2>
+            <ul className="grid gap-3 sm:grid-cols-2">
+          {items.map((e) => (
             <li key={e.id} className="panel overflow-hidden p-4">
               <button type="button" className="block w-full overflow-hidden rounded-xl border border-border bg-background/50" onClick={() => urls[e.id] && setPreview(urls[e.id])} aria-label="Открыть карточку">
                 {urls[e.id] ? <img src={urls[e.id]} alt="" className="max-h-52 w-full object-contain" /> : <div className="h-36 bg-muted" />}
@@ -82,7 +87,10 @@ export function ArchiveView() {
               </div>
             </li>
           ))}
-        </ul>
+            </ul>
+          </section>
+          ))}
+        </div>
       )}
       {preview ? <section className="panel space-y-3 p-3"><div className="flex justify-end"><button type="button" className="underline" onClick={() => setPreview(null)}>Закрыть</button></div><img src={preview} alt="" className="max-h-[50vh] w-full object-contain" /></section> : null}
     </div>
