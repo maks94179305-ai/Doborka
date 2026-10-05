@@ -277,15 +277,12 @@ export function DrawingEditor({ drawing, onChange, compact = false }: { drawing:
     }
     if (downRef.current && Math.hypot(e.clientX - downRef.current.x, e.clientY - downRef.current.y) > 8) clearHold();
     if (endDrag.current) {
-      const world = toWorld(local(e).x, local(e).y);
-      const drag = endDrag.current;
-      objectsRef.current = objectsRef.current.map((o) => {
-        if (o.id !== drag.id || o.type !== "line") return o;
-        const fixed = drag.end === "start" ? { x: o.x2, y: o.y2 } : { x: o.x1, y: o.y1 };
-        const next = snapAngle(fixed, world);
-        return drag.end === "start" ? { ...o, x1: next.x, y1: next.y } : { ...o, x2: next.x, y2: next.y };
-      });
-      paintSoon();
+      const id = endDrag.current.id;
+      endDrag.current = null;
+      if (endHold.current) { window.clearTimeout(endHold.current); endHold.current = null; }
+      pendingEnd.current = null;
+      commit(objectsRef.current);
+      setSelected([id]);
       return;
     }
     if (offsetDrag.current) {
