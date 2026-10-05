@@ -45,14 +45,9 @@ export function demoProject(): Project {
     updatedAt: now,
     openings: [
       opening("Кухня", 1650, 2050),
-      opening("Зал", 1400, 1800),
-      opening("Спальня", 1200, 1500),
-      opening("Балкон", 2100, 2200, { sides: { left: true, right: true, top: true, bottom: true } }),
-      opening("Санузел", 600, 1200),
     ],
     extras: [
       { id: uid("ex"), kind: "outer-corner", name: "Сложный внешний угол", length: 600, qty: 4, note: "", photoIds: [], drawingId: null },
-      { id: uid("ex"), kind: "inner-corner", name: "Внутренний угол", length: 400, qty: 6, note: "", photoIds: [], drawingId: null },
     ],
     drawings: [],
     schemes: {},
