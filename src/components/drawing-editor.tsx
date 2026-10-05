@@ -46,6 +46,8 @@ export function DrawingEditor({ drawing, onChange, compact = false }: { drawing:
   lengthStateRef.current = length;
   const offsetDrag = useRef<string | null>(null);
   const endDrag = useRef<{ id: string; end: "start" | "end" } | null>(null);
+  const endHold = useRef<number | null>(null);
+  const pendingEnd = useRef<{ id: string; end: "start" | "end"; x: number; y: number } | null>(null);
   function snapAngle(fixed: { x: number; y: number }, pointer: { x: number; y: number }, step = 5) {
     const dx = pointer.x - fixed.x;
     const dy = pointer.y - fixed.y;
@@ -200,18 +202,21 @@ export function DrawingEditor({ drawing, onChange, compact = false }: { drawing:
     const p = local(e);
     const world = toWorld(p.x, p.y);
     clearHold();
-    holdRef.current = window.setTimeout(() => { setSelected(objectsRef.current.map((o) => o.id)); setTool("select"); setDraft(null); }, 560);
     if (e.button === 2) {
       panRef.current = { x: e.clientX, y: e.clientY, vx: viewRef.current.x, vy: viewRef.current.y };
       return;
     }
     if (e.button === 1 || toolRef.current === "select" && e.shiftKey) return;
     const endHit = nearestEnd(world, 22 / viewRef.current.scale);
-    if (endHit && toolRef.current !== "dim") {
-      endDrag.current = { id: endHit.id, end: endHit.end };
-      setSelected([endHit.id]);
-      setLabelBox(null);
-      return;
+    if (endHit && toolRef.current === "line") {
+      pendingEnd.current = { ...endHit, x: e.clientX, y: e.clientY };
+      if (endHold.current) window.clearTimeout(endHold.current);
+      endHold.current = window.setTimeout(() => {
+        endDrag.current = { id: endHit.id, end: endHit.end };
+        pendingEnd.current = null;
+        setDraft(null);
+        setSelected([endHit.id]);
+      }, 480);
     }
     const found = hit(world);
     if (found?.type === "dim") {
@@ -264,6 +269,11 @@ export function DrawingEditor({ drawing, onChange, compact = false }: { drawing:
       viewRef.current = { scale, x: cx - wx * scale, y: cy - wy * scale };
       paintSoon();
       return;
+    }
+    if (pendingEnd.current && Math.hypot(e.clientX - pendingEnd.current.x, e.clientY - pendingEnd.current.y) > 8) {
+      if (endHold.current) window.clearTimeout(endHold.current);
+      endHold.current = null;
+      pendingEnd.current = null;
     }
     if (downRef.current && Math.hypot(e.clientX - downRef.current.x, e.clientY - downRef.current.y) > 8) clearHold();
     if (endDrag.current) {
@@ -323,6 +333,8 @@ export function DrawingEditor({ drawing, onChange, compact = false }: { drawing:
       paintSoon();
       return;
     }
+    if (endHold.current) { window.clearTimeout(endHold.current); endHold.current = null; }
+    pendingEnd.current = null;
     if (endDrag.current) { const id = endDrag.current.id; endDrag.current = null; commit(objectsRef.current); setSelected([id]); return; }
     if (offsetDrag.current) { const id = offsetDrag.current; offsetDrag.current = null; setView(viewRef.current); commit(objectsRef.current); setSelected([id]); return; }
     if (panRef.current) { panRef.current = null; setView(viewRef.current); return; }
