@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Pencil, Plus, Trash2 } from "lucide-react";
+import { Minus, Pencil, Plus, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -13,7 +13,7 @@ import { deletePhoto, savePhoto } from "@/lib/photos";
 import { renderDrawingToBlob } from "@/lib/draw-render";
 import { schemeIdsOf, profileColorOf } from "@/lib/pieces";
 import { useProject, useWorkspace } from "@/lib/store";
-import { EXTRA_PRESETS, extraPreset, profileColorName, type Drawing, type ExtraItem, type ExtraKind } from "@/lib/types";
+import { EXTRA_PRESETS, extraPreset, PROFILE_COLORS, profileCanonicalHex, profileColorName, type Drawing, type ExtraItem, type ExtraKind } from "@/lib/types";
 import { uid } from "@/lib/utils";
 
 function schemeKey(extraId: string) { return `extra:${extraId}`; }
@@ -78,6 +78,16 @@ function ExtraOrder({ extra, project }: { extra: ExtraItem; project: NonNullable
     </div>
   );
 }
+function CompactColors({ value, onChange }: { value: string; onChange: (hex: string) => void }) {
+  return (
+    <div className="mt-3 flex flex-wrap gap-1.5">
+      {PROFILE_COLORS.map((c) => {
+        const on = profileCanonicalHex(c.hex).toLowerCase() === profileCanonicalHex(value).toLowerCase();
+        return <button key={c.id} type="button" title={c.name} aria-label={c.name} aria-pressed={on} onClick={() => onChange(c.hex)} className="size-6 rounded-full border border-border" style={{ background: c.hex, boxShadow: on ? "0 0 0 2px #141816, 0 0 0 4px #8ec8c4" : undefined }} />;
+      })}
+    </div>
+  );
+}
 function ExtraCard({ extra, onChange, onRemove }: { extra: ExtraItem; onChange: (patch: Partial<ExtraItem>) => void; onRemove: () => void }) {
   const project = useProject();
   const patch = useWorkspace((s) => s.patchProject);
@@ -128,8 +138,16 @@ function ExtraCard({ extra, onChange, onRemove }: { extra: ExtraItem; onChange: 
       <label className="mt-3 grid gap-1.5"><Label>Название</Label><Input value={extra.name} onChange={(ev) => onChange({ name: ev.target.value })} /></label>
       <div className="mt-3 grid grid-cols-2 gap-2">
         <Num label="Длина" value={extra.length} onChange={(n) => onChange({ length: n })} />
-        <Num label="Кол-во" value={extra.qty} suffix="шт" min={1} onChange={(n) => onChange({ qty: n })} />
+        <div className="grid gap-1.5">
+          <Label>Кол-во</Label>
+          <div className="flex h-11 items-center gap-1">
+            <Button type="button" size="icon-sm" variant="secondary" aria-label="Меньше" onClick={() => onChange({ qty: Math.max(1, extra.qty - 1) })}><Minus /></Button>
+            <span className="min-w-8 flex-1 text-center tabular">{extra.qty}</span>
+            <Button type="button" size="icon-sm" variant="secondary" aria-label="Больше" onClick={() => onChange({ qty: extra.qty + 1 })}><Plus /></Button>
+          </div>
+        </div>
       </div>
+      {project ? <CompactColors value={profileColorOf(project, key)} onChange={(hex) => useWorkspace.getState().setProfileColor(key, hex)} /> : null}
       <div className="mt-4 border-t border-border pt-3">
         <p className="mb-2 text-xs uppercase tracking-[0.14em] text-steel">Чертёж</p>
         <PhotoStrip ids={schemeIds} onChange={(ids) => setSchemeIds(key, ids)} variant="scheme" extraActions={<Button type="button" variant="outline" className="h-11" onClick={hasDrawing ? editDrawing : openBlank}><Pencil /> {hasDrawing ? "Редактировать" : "Начертить"}</Button>} previewAside={project ? <ExtraOrder extra={extra} project={project} /> : undefined} shareCard={project ? extraShare(extra, project) : undefined} onEdit={openExisting} />
