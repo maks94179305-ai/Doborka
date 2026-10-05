@@ -337,21 +337,15 @@ export function DrawingEditor({ drawing, onChange, compact = false }: { drawing:
     clearHold();
     if (e) pointers.current.delete(e.pointerId);
     if (pointers.current.size < 2) pinchRef.current = null;
-    if (endDrag.current) {
-      const world = toWorld(local(e).x, local(e).y);
-      const drag = endDrag.current;
-      objectsRef.current = objectsRef.current.map((o) => {
-        if (o.id !== drag.id || o.type !== "line") return o;
-        const fixed = drag.end === "start" ? { x: o.x2, y: o.y2 } : { x: o.x1, y: o.y1 };
-        const next = snapAngle(fixed, world);
-        return drag.end === "start" ? { ...o, x1: next.x, y1: next.y } : { ...o, x2: next.x, y2: next.y };
-      });
-      paintSoon();
-      return;
-    }
     if (endHold.current) { window.clearTimeout(endHold.current); endHold.current = null; }
     pendingEnd.current = null;
-    if (endDrag.current) { const id = endDrag.current.id; endDrag.current = null; commit(objectsRef.current); setSelected([id]); return; }
+    if (endDrag.current) {
+      const id = endDrag.current.id;
+      endDrag.current = null;
+      commit(objectsRef.current);
+      setSelected([id]);
+      return;
+    }
     if (offsetDrag.current) { const id = offsetDrag.current; offsetDrag.current = null; setView(viewRef.current); commit(objectsRef.current); setSelected([id]); return; }
     if (panRef.current) { panRef.current = null; setView(viewRef.current); return; }
     const tap = downRef.current;
