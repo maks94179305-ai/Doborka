@@ -7,6 +7,8 @@ import { Num } from "@/components/num-field";
 import { PhotoStrip } from "@/components/photo-strip";
 import { SchemeDrawDialog } from "@/components/scheme-draw-dialog";
 import { mm } from "@/lib/format";
+import { plansByMaterial } from "@/lib/cutting";
+import { collectPieces } from "@/lib/pieces";
 import { deletePhoto, savePhoto } from "@/lib/photos";
 import { renderDrawingToBlob } from "@/lib/draw-render";
 import { schemeIdsOf, profileColorOf } from "@/lib/pieces";
@@ -59,6 +61,23 @@ export function ExtrasView() {
   );
 }
 
+
+function extraShare(extra: ExtraItem, project: NonNullable<ReturnType<typeof useProject>>) {
+  const key = schemeKey(extra.id);
+  const plan = plansByMaterial(collectPieces(project), project.settings.stockLengths, project.settings.kerf, project.settings.minRemainder, project.settings.strategy).find((m) => m.key === key)?.plan;
+  const color = profileColorOf(project, key);
+  return { heading: "Схема", title: extra.name, color, colorName: profileColorName(color), note: project.profileNotes?.[key] ?? "", bars: plan?.barCounts ?? [], totalBars: plan?.bars.length ?? 0 };
+}
+function ExtraOrder({ extra, project }: { extra: ExtraItem; project: NonNullable<ReturnType<typeof useProject>> }) {
+  const card = extraShare(extra, project);
+  return (
+    <div className="rounded-xl border border-border p-3">
+      <p className="font-medium">{card.title}</p>
+      <p className="text-sm text-muted-foreground">{card.colorName} · {card.totalBars} хлыст.</p>
+      {card.bars.length === 0 ? <p className="mt-2 text-sm text-muted-foreground">Нет хлыстов в заказе.</p> : <ul className="mt-2 space-y-1">{card.bars.map((c) => <li key={c.length} className="flex justify-between text-sm"><span>{mm(c.length)}</span><span>× {c.count}</span></li>)}</ul>}
+    </div>
+  );
+}
 function ExtraCard({ extra, onChange, onRemove }: { extra: ExtraItem; onChange: (patch: Partial<ExtraItem>) => void; onRemove: () => void }) {
   const project = useProject();
   const patch = useWorkspace((s) => s.patchProject);
@@ -113,7 +132,7 @@ function ExtraCard({ extra, onChange, onRemove }: { extra: ExtraItem; onChange: 
       </div>
       <div className="mt-4 border-t border-border pt-3">
         <p className="mb-2 text-xs uppercase tracking-[0.14em] text-steel">Чертёж</p>
-        <PhotoStrip ids={schemeIds} onChange={(ids) => setSchemeIds(key, ids)} variant="scheme" extraActions={<Button type="button" variant="outline" className="h-11" onClick={hasDrawing ? editDrawing : openBlank}><Pencil /> {hasDrawing ? "Редактировать" : "Начертить"}</Button>} shareCard={project ? { heading: "Схема", title: extra.name, color: profileColorOf(project, key), colorName: profileColorName(profileColorOf(project, key)), bars: [], totalBars: 0 } : undefined} onEdit={openExisting} />
+        <PhotoStrip ids={schemeIds} onChange={(ids) => setSchemeIds(key, ids)} variant="scheme" extraActions={<Button type="button" variant="outline" className="h-11" onClick={hasDrawing ? editDrawing : openBlank}><Pencil /> {hasDrawing ? "Редактировать" : "Начертить"}</Button>} previewAside={project ? <ExtraOrder extra={extra} project={project} /> : undefined} shareCard={project ? extraShare(extra, project) : undefined} onEdit={openExisting} />
       </div>
       {draft ? <SchemeDrawDialog open={drawOpen} title={extra.name} drawing={draft} onOpenChange={setDrawOpen} onDone={(d) => { void persistDraw(d); }} /> : null}
     </article>
