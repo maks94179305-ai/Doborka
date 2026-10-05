@@ -8,6 +8,39 @@ import { unpublishHistory } from "@/lib/team-sync";
 const sentFmt = new Intl.DateTimeFormat("ru-RU", { day: "numeric", month: "long", year: "numeric", hour: "2-digit", minute: "2-digit" });
 const dayFmt = new Intl.DateTimeFormat("ru-RU", { day: "numeric", month: "long", year: "numeric" });
 
+
+function SchemeZoom({ src, onClose }: { src: string; onClose: () => void }) {
+  const pointers = useRef(new Map<number, { x: number; y: number }>());
+  const pinch = useRef<{ dist: number; scale: number; x: number; y: number } | null>(null);
+  const [view, setView] = useState({ scale: 1, x: 0, y: 0 });
+  function onDown(e: React.PointerEvent) {
+    pointers.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    if (pointers.current.size === 2) {
+      const pts = [...pointers.current.values()];
+      pinch.current = { dist: Math.hypot(pts[0].x - pts[1].x, pts[0].y - pts[1].y) || 1, scale: view.scale, x: view.x, y: view.y };
+    }
+  }
+  function onMove(e: React.PointerEvent) {
+    if (!pointers.current.has(e.pointerId)) return;
+    pointers.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    if (pointers.current.size >= 2 && pinch.current) {
+      const pts = [...pointers.current.values()];
+      const dist = Math.hypot(pts[0].x - pts[1].x, pts[0].y - pts[1].y) || 1;
+      const scale = Math.min(6, Math.max(1, pinch.current.scale * (dist / pinch.current.dist)));
+      setView({ scale, x: (pts[0].x + pts[1].x) / 2 - window.innerWidth / 2, y: (pts[0].y + pts[1].y) / 2 - window.innerHeight / 2 });
+    }
+  }
+  function onUp(e: React.PointerEvent) {
+    pointers.current.delete(e.pointerId);
+    if (pointers.current.size < 2) pinch.current = null;
+  }
+  return (
+    <div className="fixed inset-0 z-[120] flex flex-col bg-[#161618] px-4 py-4 pt-[max(1.25rem,env(safe-area-inset-top))]" onPointerDown={onDown} onPointerMove={onMove} onPointerUp={onUp} onPointerCancel={onUp}>
+      <div className="flex justify-end"><button type="button" className="rounded-lg bg-[#e8e4d8] px-4 py-2 text-[#141816]" onClick={onClose}>Закрыть</button></div>
+      <img src={src} alt="" className="mt-3 max-h-[80vh] w-full object-contain" style={{ transform: `translate(${view.x}px, ${view.y}px) scale(${view.scale})`, transformOrigin: "center center", touchAction: "none" }} />
+    </div>
+  );
+}
 export function ArchiveView() {
   const project = useProject();
   const removeArchiveEntry = useWorkspace((s) => s.removeArchiveEntry);
@@ -92,7 +125,7 @@ export function ArchiveView() {
           ))}
         </div>
       )}
-      {preview ? <div className="fixed inset-0 z-[120] flex flex-col bg-[#161618] px-4 py-4 pt-[max(1.25rem,env(safe-area-inset-top))]"><div className="flex justify-end"><button type="button" className="rounded-lg bg-[#e8e4d8] px-4 py-2 text-[#141816]" onClick={() => setPreview(null)}>Закрыть</button></div><img src={preview} alt="" className="mt-3 max-h-[80vh] w-full object-contain" /></div> : null}
+      {preview ? <SchemeZoom src={preview} onClose={() => setPreview(null)} /> : null}
     </div>
   );
 }
