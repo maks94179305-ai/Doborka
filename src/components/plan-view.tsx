@@ -170,7 +170,7 @@ function OrderLine({ material, schemeIds, color, note, onSchemeChange, onColorCh
   );
 }
 
-function ColorChip({ hex, size = "md" }: { hex: string; size?: "sm" | "md" }) {
+export function ColorChip({ hex, size = "md" }: { hex: string; size?: "sm" | "md" }) {
   const uid = useId().replace(/:/g, "");
   const matte = profileFinish(hex) === "matte";
   const gloss = profileFinish(hex) === "gloss";
@@ -195,7 +195,7 @@ function ColorChip({ hex, size = "md" }: { hex: string; size?: "sm" | "md" }) {
   );
 }
 
-function ProfileColorPicker({ value, onChange }: { value: string; onChange: (hex: string) => void }) {
+export function ProfileColorPicker({ value, onChange }: { value: string; onChange: (hex: string) => void }) {
   return (
     <div className="flex flex-wrap gap-2">
       {PROFILE_COLORS.map((c) => {
