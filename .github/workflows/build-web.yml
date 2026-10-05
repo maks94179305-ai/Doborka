@@ -1,0 +1,42 @@
+name: Build web
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Build offline site
+        run: |
+          npm install
+          python3 -m pip install pillow
+          python3 scripts/make-icons.py
+          node scripts/embed-textures.mjs
+          npx vite build --config vite.apk.config.ts --base /Doborka/
+          rm -rf site
+          mkdir -p site
+          cp dist-apk/apk/index.html site/index.html
+          cp -a dist-apk/assets site/assets
+          sed -i 's|\./assets|assets|g; s|\.\./assets|assets|g' site/index.html
+          cp -a public/. site/ || true
+          python3 scripts/make-icons.py
+          cp public/icon-192.png public/icon-512.png site/ || true
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - id: deploy
+        uses: actions/deploy-pages@v4
