@@ -3,7 +3,6 @@ import { Link, Outlet, useRouterState } from "@tanstack/react-router";
 import { Archive, Boxes, LayoutGrid, Ruler, Settings2 } from "lucide-react";
 import { useWorkspace } from "@/lib/store";
 import { useTeamSync } from "@/lib/team-sync";
-import { PairGate } from "@/components/pair-gate";
 import { APP_ICON } from "@/lib/phone-assets";
 import { cn } from "@/lib/utils";
 
@@ -67,7 +66,6 @@ export function AppShell() {
 
   return (
     <div className="flex min-h-dvh flex-col bg-background text-foreground" style={{ paddingTop: "max(env(safe-area-inset-top), 28px)" }}>
-      <PairGate />
       <header className={cn("no-print px-3 pt-3 md:px-4", !onOpenings && "hidden md:block")}>
         <div className={cn("mx-auto flex max-w-5xl items-center gap-3 rounded-2xl border border-border/70 bg-card/85 px-3 py-2 shadow-panel backdrop-blur-md", onOpenings ? "justify-between" : "justify-end")}>
           {onOpenings ? (
