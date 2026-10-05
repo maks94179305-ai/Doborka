@@ -79,6 +79,26 @@ function ExtraOrder({ extra, project }: { extra: ExtraItem; project: NonNullable
     </div>
   );
 }
+
+function QtyField({ value, onChange }: { value: number; onChange: (n: number) => void }) {
+  const [draft, setDraft] = useState<string | null>(null);
+  const shown = draft ?? String(value);
+  function commit(text: string) {
+    const n = Number(text.replace(/\D/g, ""));
+    onChange(Number.isFinite(n) && n >= 1 ? n : 1);
+    setDraft(null);
+  }
+  return (
+    <div className="grid gap-1.5">
+      <Label>Кол-во</Label>
+      <div className="flex h-11 items-center gap-1">
+        <Button type="button" size="icon-sm" variant="secondary" aria-label="Меньше" onClick={() => { setDraft(null); onChange(Math.max(1, value - 1)); }}><Minus /></Button>
+        <Input className="h-11 min-w-0 flex-1 text-center tabular" inputMode="numeric" value={shown} onChange={(ev) => setDraft(ev.target.value.replace(/\D/g, ""))} onBlur={() => commit(shown)} onKeyDown={(ev) => { if (ev.key === "Enter") ev.currentTarget.blur(); }} />
+        <Button type="button" size="icon-sm" variant="secondary" aria-label="Больше" onClick={() => { setDraft(null); onChange(value + 1); }}><Plus /></Button>
+      </div>
+    </div>
+  );
+}
 function ExtraCard({ extra, onChange, onRemove }: { extra: ExtraItem; onChange: (patch: Partial<ExtraItem>) => void; onRemove: () => void }) {
   const project = useProject();
   const patch = useWorkspace((s) => s.patchProject);
@@ -129,14 +149,7 @@ function ExtraCard({ extra, onChange, onRemove }: { extra: ExtraItem; onChange: 
       <label className="mt-3 grid gap-1.5"><Label>Название</Label><Input value={extra.name} onChange={(ev) => onChange({ name: ev.target.value })} /></label>
       <div className="mt-3 grid grid-cols-2 gap-2">
         <Num label="Длина" value={extra.length} onChange={(n) => onChange({ length: n })} />
-        <div className="grid gap-1.5">
-          <Label>Кол-во</Label>
-          <div className="flex h-11 items-center gap-1">
-            <Button type="button" size="icon-sm" variant="secondary" aria-label="Меньше" onClick={() => onChange({ qty: Math.max(1, extra.qty - 1) })}><Minus /></Button>
-            <Input className="h-11 min-w-0 flex-1 text-center tabular" inputMode="numeric" value={String(extra.qty)} onChange={(ev) => { const n = Number(ev.target.value.replace(/\D/g, "")); if (Number.isFinite(n) && n >= 1) onChange({ qty: n }); }} />
-            <Button type="button" size="icon-sm" variant="secondary" aria-label="Больше" onClick={() => onChange({ qty: extra.qty + 1 })}><Plus /></Button>
-          </div>
-        </div>
+        <QtyField value={extra.qty} onChange={(n) => onChange({ qty: n })} />
       </div>
       <div className="mt-4 border-t border-border pt-3">
         <p className="mb-2 text-xs uppercase tracking-[0.14em] text-steel">Чертёж</p>
