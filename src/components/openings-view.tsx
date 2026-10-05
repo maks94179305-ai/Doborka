@@ -69,7 +69,7 @@ export function OpeningsView() {
       <header className="flex flex-col gap-3">
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0"><h1>Откосы проёмов:</h1></div>
-          <Button className="shrink-0" onClick={() => addOpening()}><Plus /> Проём</Button>
+          {project.openings.length === 0 ? <Button className="shrink-0" onClick={() => addOpening()}><Plus /> Проём</Button> : null}
         </div>
         <p className="text-sm text-muted-foreground">Размеры проёма и запас на каждый откос.</p>
       </header>
