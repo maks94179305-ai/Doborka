@@ -133,7 +133,7 @@ function ExtraCard({ extra, onChange, onRemove }: { extra: ExtraItem; onChange: 
           <Label>Кол-во</Label>
           <div className="flex h-11 items-center gap-1">
             <Button type="button" size="icon-sm" variant="secondary" aria-label="Меньше" onClick={() => onChange({ qty: Math.max(1, extra.qty - 1) })}><Minus /></Button>
-            <span className="min-w-8 flex-1 text-center tabular">{extra.qty}</span>
+            <Input className="h-11 min-w-0 flex-1 text-center tabular" inputMode="numeric" value={String(extra.qty)} onChange={(ev) => { const n = Number(ev.target.value.replace(/\D/g, "")); if (Number.isFinite(n) && n >= 1) onChange({ qty: n }); }} />
             <Button type="button" size="icon-sm" variant="secondary" aria-label="Больше" onClick={() => onChange({ qty: extra.qty + 1 })}><Plus /></Button>
           </div>
         </div>
