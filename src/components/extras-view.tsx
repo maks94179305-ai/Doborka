@@ -31,7 +31,7 @@ export function ExtrasView() {
             <p className="kicker">Добор</p>
             <h1 className="flex flex-col leading-[1.15]"><span>Другие</span><span>элементы</span></h1>
           </div>
-          <Button className="shrink-0" onClick={() => setOpen(true)}><Plus /> Элемент</Button>
+          {project.extras.length > 0 ? <Button className="shrink-0" onClick={() => setOpen(true)}><Plus /> Элемент</Button> : null}
         </div>
         <p className="text-sm text-muted-foreground">Углы, отливы, наличники и свои позиции — попадут в тот же раскрой хлыстов.</p>
       </header>
