@@ -20,28 +20,11 @@ export const Route = createRootRoute({
 });
 
 function Root() {
-  const native = typeof window !== "undefined" && "Capacitor" in window;
-  if (native) {
-    return (
-      <div className="min-h-dvh bg-background text-foreground antialiased">
-        <AuthProvider>
-          <AppShell />
-        </AuthProvider>
-      </div>
-    );
-  }
   return (
-    <html lang="ru" className="antialiased">
-      <head>
-        <HeadContent />
-      </head>
-      <body>
-        <PreviewHostBridge />
-        <AuthProvider>
-          <AppShell />
-        </AuthProvider>
-        <Scripts />
-      </body>
-    </html>
+    <div className="min-h-dvh bg-background text-foreground antialiased">
+      <AuthProvider>
+        <AppShell />
+      </AuthProvider>
+    </div>
   );
 }
