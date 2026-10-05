@@ -45,6 +45,27 @@ export function DrawingEditor({ drawing, onChange, compact = false }: { drawing:
   labelRef.current = labelBox;
   lengthStateRef.current = length;
   const offsetDrag = useRef<string | null>(null);
+  const endDrag = useRef<{ id: string; end: "start" | "end" } | null>(null);
+  function snapAngle(fixed: { x: number; y: number }, pointer: { x: number; y: number }, step = 5) {
+    const dx = pointer.x - fixed.x;
+    const dy = pointer.y - fixed.y;
+    const len = Math.hypot(dx, dy);
+    if (len < 1) return pointer;
+    const snapped = Math.round(Math.atan2(dy, dx) / (step * Math.PI / 180)) * (step * Math.PI / 180);
+    return { x: fixed.x + Math.cos(snapped) * len, y: fixed.y + Math.sin(snapped) * len };
+  }
+  function nearestEnd(world: { x: number; y: number }, tol: number) {
+    let best: { id: string; end: "start" | "end"; d: number } | null = null;
+    for (const o of objectsRef.current) {
+      if (o.type !== "line") continue;
+      for (const end of ["start", "end"] as const) {
+        const pt = end === "start" ? { x: o.x1, y: o.y1 } : { x: o.x2, y: o.y2 };
+        const d = Math.hypot(world.x - pt.x, world.y - pt.y);
+        if (d <= tol && (!best || d < best.d)) best = { id: o.id, end, d };
+      }
+    }
+    return best;
+  }
   const frame = useRef(0);
   function paintSoon() { if (frame.current) return; frame.current = requestAnimationFrame(() => { frame.current = 0; redraw(); }); }
   function clearHold() { if (holdRef.current) window.clearTimeout(holdRef.current); holdRef.current = null; }
@@ -185,6 +206,13 @@ export function DrawingEditor({ drawing, onChange, compact = false }: { drawing:
       return;
     }
     if (e.button === 1 || toolRef.current === "select" && e.shiftKey) return;
+    const endHit = nearestEnd(world, 22 / viewRef.current.scale);
+    if (endHit && toolRef.current !== "dim") {
+      endDrag.current = { id: endHit.id, end: endHit.end };
+      setSelected([endHit.id]);
+      setLabelBox(null);
+      return;
+    }
     const found = hit(world);
     if (found?.type === "dim") {
       const part = hitDimPart(found, world, 22 / viewRef.current.scale, viewRef.current.scale);
@@ -238,6 +266,18 @@ export function DrawingEditor({ drawing, onChange, compact = false }: { drawing:
       return;
     }
     if (downRef.current && Math.hypot(e.clientX - downRef.current.x, e.clientY - downRef.current.y) > 8) clearHold();
+    if (endDrag.current) {
+      const world = toWorld(local(e).x, local(e).y);
+      const drag = endDrag.current;
+      objectsRef.current = objectsRef.current.map((o) => {
+        if (o.id !== drag.id || o.type !== "line") return o;
+        const fixed = drag.end === "start" ? { x: o.x2, y: o.y2 } : { x: o.x1, y: o.y1 };
+        const next = snapAngle(fixed, world);
+        return drag.end === "start" ? { ...o, x1: next.x, y1: next.y } : { ...o, x2: next.x, y2: next.y };
+      });
+      paintSoon();
+      return;
+    }
     if (offsetDrag.current) {
       const world = toWorld(local(e).x, local(e).y);
       const id = offsetDrag.current;
@@ -263,15 +303,27 @@ export function DrawingEditor({ drawing, onChange, compact = false }: { drawing:
       paintSoon();
       return;
     }
-    const end = snapToDrawing(world, objectsRef.current, [draftRef.current.start], tol);
-    const ortho = Math.abs(end.x - draftRef.current.start.x) > Math.abs(end.y - draftRef.current.start.y) ? { x: end.x, y: draftRef.current.start.y } : { x: draftRef.current.start.x, y: end.y };
-    draftRef.current = { ...draftRef.current, end: ortho };
+    const end = snapAngle(draftRef.current.start, snapToDrawing(world, objectsRef.current, [draftRef.current.start], tol));
+    draftRef.current = { ...draftRef.current, end };
     paintSoon();
   }
   function onUp(e?: React.PointerEvent) {
     clearHold();
     if (e) pointers.current.delete(e.pointerId);
     if (pointers.current.size < 2) pinchRef.current = null;
+    if (endDrag.current) {
+      const world = toWorld(local(e).x, local(e).y);
+      const drag = endDrag.current;
+      objectsRef.current = objectsRef.current.map((o) => {
+        if (o.id !== drag.id || o.type !== "line") return o;
+        const fixed = drag.end === "start" ? { x: o.x2, y: o.y2 } : { x: o.x1, y: o.y1 };
+        const next = snapAngle(fixed, world);
+        return drag.end === "start" ? { ...o, x1: next.x, y1: next.y } : { ...o, x2: next.x, y2: next.y };
+      });
+      paintSoon();
+      return;
+    }
+    if (endDrag.current) { const id = endDrag.current.id; endDrag.current = null; commit(objectsRef.current); setSelected([id]); return; }
     if (offsetDrag.current) { const id = offsetDrag.current; offsetDrag.current = null; setView(viewRef.current); commit(objectsRef.current); setSelected([id]); return; }
     if (panRef.current) { panRef.current = null; setView(viewRef.current); return; }
     const tap = downRef.current;
@@ -376,7 +428,7 @@ export function DrawingEditor({ drawing, onChange, compact = false }: { drawing:
         </div>
       </div>
       <div ref={wrapRef} className="relative min-h-[22rem] flex-1 overflow-hidden rounded-xl border border-border">
-        <canvas ref={canvasRef} className="absolute inset-0 touch-none" style={{ touchAction: "none" }} onPointerDown={onDown} onPointerMove={onMove} onPointerUp={onUp} onPointerCancel={(e) => { clearHold(); pointers.current.delete(e.pointerId); pinchRef.current = null; panRef.current = null; offsetDrag.current = null; downRef.current = null; setDraft(null); }} onContextMenu={(e) => e.preventDefault()} />
+        <canvas ref={canvasRef} className="absolute inset-0 touch-none" style={{ touchAction: "none" }} onPointerDown={onDown} onPointerMove={onMove} onPointerUp={onUp} onPointerCancel={(e) => { clearHold(); pointers.current.delete(e.pointerId); pinchRef.current = null; panRef.current = null; offsetDrag.current = null; endDrag.current = null; downRef.current = null; setDraft(null); }} onContextMenu={(e) => e.preventDefault()} />
         {labelBox ? (
           <div className="absolute z-20 h-9 w-20 -translate-x-1/2 -translate-y-1/2 rounded-md border border-primary bg-background px-2 text-center text-sm leading-9 text-foreground shadow-float" style={{ left: labelBox.x, top: labelBox.y }}>{labelBox.value || "0"}</div>
         ) : null}
