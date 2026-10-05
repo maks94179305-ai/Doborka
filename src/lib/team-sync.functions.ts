@@ -2,7 +2,7 @@ import type { Project } from "@/lib/types";
 
 export type HistoryRow = { id: string; photoId: string; title: string; colorName: string | null; sentAt: number; hasImage: boolean };
 type Store = { project?: { payload: string; updatedAt: number }; history: Record<string, HistoryRow & { image: string }>; photos: Record<string, string> };
-const ROOM = "https://kv.doborka.app";
+const ROOM = "https://kvs.ix.workers.dev/doborka";
 
 function localKey(pin: string) { return `doborka-shared:${pin}`; }
 function readLocal(pin: string): Store {
