@@ -216,7 +216,7 @@ export function DrawingEditor({ drawing, onChange, compact = false }: { drawing:
     }
     if (e.button === 1 || toolRef.current === "select" && e.shiftKey) return;
     const endHit = nearestEnd(world, 22 / viewRef.current.scale);
-    if (endHit && toolRef.current === "line") {
+    if (endHit && toolRef.current !== "dim") {
       pendingEnd.current = { ...endHit, x: e.clientX, y: e.clientY };
       if (endHold.current) window.clearTimeout(endHold.current);
       endHold.current = window.setTimeout(() => {
@@ -227,6 +227,9 @@ export function DrawingEditor({ drawing, onChange, compact = false }: { drawing:
       }, 480);
     }
     const found = hit(world);
+    if (!found && !endHit) {
+      holdRef.current = window.setTimeout(() => { setSelected(objectsRef.current.map((o) => o.id)); setDraft(null); setTool("select"); }, 520);
+    }
     if (found?.type === "dim") {
       const part = hitDimPart(found, world, 22 / viewRef.current.scale, viewRef.current.scale);
       if (part === "label") {
@@ -246,9 +249,14 @@ export function DrawingEditor({ drawing, onChange, compact = false }: { drawing:
       }
     }
     downRef.current = { x: e.clientX, y: e.clientY, empty: !found };
+    if (found && (found.type === "line" || found.type === "dim") && !endHit) {
+      setSelected([found.id]);
+      if (found.type === "line") { setLength(String(Math.round(dist({ x: found.x1, y: found.y1 }, { x: found.x2, y: found.y2 })))); freshRef.current = true; }
+      setLabelBox(null);
+      if (toolRef.current !== "line") return;
+    }
     if (toolRef.current === "select") {
       setSelected(found ? [found.id] : []);
-      if (found?.type === "line") { setLength(String(Math.round(dist({ x: found.x1, y: found.y1 }, { x: found.x2, y: found.y2 })))); freshRef.current = true; }
       setLabelBox(null);
       return;
     }
@@ -285,12 +293,15 @@ export function DrawingEditor({ drawing, onChange, compact = false }: { drawing:
     }
     if (downRef.current && Math.hypot(e.clientX - downRef.current.x, e.clientY - downRef.current.y) > 8) clearHold();
     if (endDrag.current) {
-      const id = endDrag.current.id;
-      endDrag.current = null;
-      if (endHold.current) { window.clearTimeout(endHold.current); endHold.current = null; }
-      pendingEnd.current = null;
-      commit(objectsRef.current);
-      setSelected([id]);
+      const world = toWorld(local(e).x, local(e).y);
+      const drag = endDrag.current;
+      objectsRef.current = objectsRef.current.map((o) => {
+        if (o.id !== drag.id || o.type !== "line") return o;
+        const fixed = drag.end === "start" ? { x: o.x2, y: o.y2 } : { x: o.x1, y: o.y1 };
+        const next = snapAngle(fixed, world);
+        return drag.end === "start" ? { ...o, x1: next.x, y1: next.y } : { ...o, x2: next.x, y2: next.y };
+      });
+      paintSoon();
       return;
     }
     if (offsetDrag.current) {
