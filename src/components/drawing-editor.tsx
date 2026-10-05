@@ -291,7 +291,15 @@ export function DrawingEditor({ drawing, onChange, compact = false }: { drawing:
     if (pendingEnd.current && Math.hypot(e.clientX - pendingEnd.current.x, e.clientY - pendingEnd.current.y) > 8) {
       if (endHold.current) window.clearTimeout(endHold.current);
       endHold.current = null;
+      const hit = pendingEnd.current;
       pendingEnd.current = null;
+      const obj = objectsRef.current.find((o) => o.id === hit.id && o.type === "line");
+      if (obj && obj.type === "line") {
+        const start = hit.end === "start" ? { x: obj.x1, y: obj.y1 } : { x: obj.x2, y: obj.y2 };
+        const world = toWorld(local(e).x, local(e).y);
+        setDraft({ start, end: snapAngle(start, world) });
+        setTool("line");
+      }
     }
     if (downRef.current && Math.hypot(e.clientX - downRef.current.x, e.clientY - downRef.current.y) > 8) clearHold();
     if (endDrag.current) {
