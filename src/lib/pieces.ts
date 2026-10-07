@@ -108,12 +108,14 @@ export function groupElements(pieces: NeedPiece[]): GroupedElement[] {
 }
 
 export function materialKey(piece: NeedPiece): string {
+  if (piece.kind === "slope" && piece.side === "bottom") return `slope:bottom:${piece.profileMm ?? 18}`;
   if (piece.kind === "slope") return piece.profileMm ? `slope:${piece.profileMm}` : "slope:bottom";
   if (piece.extraId) return `extra:${piece.extraId}`;
   return `extra:custom:${piece.extraName ?? "custom"}`;
 }
 
 export function materialTitle(piece: NeedPiece): string {
+  if (piece.kind === "slope" && piece.side === "bottom") return "Нижний откос";
   if (piece.kind === "slope") return "Откос";
   if (piece.extraName?.trim()) return piece.extraName.trim();
   if (piece.extraKind) return extraPreset(piece.extraKind).name;
