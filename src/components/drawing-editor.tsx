@@ -255,7 +255,7 @@ export function DrawingEditor({ drawing, onChange, compact = false }: { drawing:
       setSelected([found.id]);
       if (found.type === "line") { setLength(String(Math.round(dist({ x: found.x1, y: found.y1 }, { x: found.x2, y: found.y2 })))); freshRef.current = true; }
       setLabelBox(null);
-      if (toolRef.current !== "line") return;
+      if (toolRef.current !== "line" && toolRef.current !== "dim") return;
     }
     if (toolRef.current === "select") {
       setSelected(found ? [found.id] : []);
