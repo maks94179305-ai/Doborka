@@ -92,7 +92,8 @@ function SlopeColumn({ label, title, thickness, onThickness, schemeKey, empty = 
       const blob = await renderDrawingToBlob(next);
       if (blob) await savePhoto(photoId, blob);
     }
-    patch((p) => ({ ...p, drawings: [...p.drawings.filter((d) => d.id !== next.id), { ...next, previewPhotoId: photoId || undefined }], schemeDrawings: { ...(p.schemeDrawings ?? {}), [key]: next.id }, schemes: { ...(p.schemes ?? {}), [key]: photoId ? [photoId] : [] } }));
+    const cutKey = key.startsWith("slope:bottom:") ? `slope:bottom:${thickness}` : key;
+    patch((p) => ({ ...p, drawings: [...p.drawings.filter((d) => d.id !== next.id), { ...next, previewPhotoId: photoId || undefined }], schemeDrawings: { ...(p.schemeDrawings ?? {}), [key]: next.id, [cutKey]: next.id }, schemes: { ...(p.schemes ?? {}), [key]: photoId ? [photoId] : [], [cutKey]: photoId ? [photoId] : [] } }));
   }
   return (
     <div className="h-full">
