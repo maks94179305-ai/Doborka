@@ -11,16 +11,6 @@ export function slopeLength(opening: Opening, side: "left" | "right" | "top" | "
   return opening.width + a;
 }
 
-
-function dripSignature(project: Project, openingId: string): string {
-  const drawingId = project.schemeDrawings?.[`slope:bottom:${openingId}`];
-  const drawing = project.drawings.find((d) => d.id === drawingId);
-  if (!drawing || drawing.objects.length === 0) return "default";
-  const body = drawing.objects.map((o) => o.type === "line" || o.type === "dim" ? `${o.type}:${Math.round(o.x1)}:${Math.round(o.y1)}:${Math.round(o.x2)}:${Math.round(o.y2)}:${o.offset ?? ""}:${o.label ?? ""}` : o.type).join("|");
-  let h = 0;
-  for (const c of body) h = Math.imul(h, 31) + c.charCodeAt(0) | 0;
-  return (h >>> 0).toString(36);
-}
 export function collectPieces(project: Project): NeedPiece[] {
   const pieces: NeedPiece[] = [];
   const { defaultAllowance } = project.settings;
@@ -43,7 +33,7 @@ export function collectPieces(project: Project): NeedPiece[] {
           color,
           label: `${opening.name}${tag}${profileMm ? ` · ${profileMm} мм` : ""}`,
           photoIds: opening.photoIds,
-          drawingId: side === "bottom" ? dripSignature(project, opening.id) : opening.drawingId,
+          drawingId: opening.drawingId,
           profileMm,
         });
       });
@@ -118,7 +108,7 @@ export function groupElements(pieces: NeedPiece[]): GroupedElement[] {
 }
 
 export function materialKey(piece: NeedPiece): string {
-  if (piece.kind === "slope" && piece.side === "bottom") return `slope:bottom:${piece.profileMm ?? 18}:${piece.drawingId ?? "default"}`;
+  if (piece.kind === "slope" && piece.side === "bottom") return `slope:bottom:${piece.profileMm ?? 18}`;
   if (piece.kind === "slope") return piece.profileMm ? `slope:${piece.profileMm}` : "slope:bottom";
   if (piece.extraId) return `extra:${piece.extraId}`;
   return `extra:custom:${piece.extraName ?? "custom"}`;
