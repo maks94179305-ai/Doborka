@@ -11,6 +11,15 @@ export function slopeLength(opening: Opening, side: "left" | "right" | "top" | "
   return opening.width + a;
 }
 
+
+function dripIsDefault(project: Project, openingId: string, thickness: number): boolean {
+  const drawing = project.drawings.find((d) => d.id === project.schemeDrawings?.[`slope:bottom:${openingId}`]);
+  if (!drawing) return true;
+  const rise = Math.max(1, thickness);
+  const expected = [`line:0:0:0:50`, `line:0:50:40:50`, `line:40:50:40:49`, `line:40:49:20:49`, `line:20:49:20:${49 - rise}`, `line:20:${49 - rise}:70:${49 - rise}`, `dim:0:0:0:50:15:50`, `dim:0:50:40:50:15:40`, `dim:20:49:40:49:-15:20`, `dim:20:${49 - rise}:20:49:-50:${thickness}`, `dim:20:${49 - rise}:70:${49 - rise}:-15:50`];
+  const actual = drawing.objects.filter((o) => o.type === "line" || o.type === "dim").map((o) => o.type === "dim" ? `dim:${Math.round(o.x1)}:${Math.round(o.y1)}:${Math.round(o.x2)}:${Math.round(o.y2)}:${o.offset ?? ""}:${o.label ?? ""}` : `line:${Math.round(o.x1)}:${Math.round(o.y1)}:${Math.round(o.x2)}:${Math.round(o.y2)}`);
+  return actual.length === expected.length && actual.every((item, i) => item === expected[i]);
+}
 export function collectPieces(project: Project): NeedPiece[] {
   const pieces: NeedPiece[] = [];
   const { defaultAllowance } = project.settings;
@@ -33,7 +42,7 @@ export function collectPieces(project: Project): NeedPiece[] {
           color,
           label: `${opening.name}${tag}${profileMm ? ` · ${profileMm} мм` : ""}`,
           photoIds: opening.photoIds,
-          drawingId: opening.drawingId,
+          drawingId: side === "bottom" && dripIsDefault(project, opening.id, profileMm) ? "default-drip" : opening.drawingId,
           profileMm,
         });
       });
@@ -108,14 +117,15 @@ export function groupElements(pieces: NeedPiece[]): GroupedElement[] {
 }
 
 export function materialKey(piece: NeedPiece): string {
-  if (piece.kind === "slope" && piece.side === "bottom") return `slope:bottom:${piece.profileMm ?? 18}`;
+  if (piece.kind === "slope" && piece.side === "bottom" && piece.drawingId !== "default-drip") return `slope:bottom:${piece.profileMm ?? 18}`;
+  if (piece.kind === "slope" && piece.side === "bottom") return `slope:${piece.profileMm ?? 18}`;
   if (piece.kind === "slope") return piece.profileMm ? `slope:${piece.profileMm}` : "slope:bottom";
   if (piece.extraId) return `extra:${piece.extraId}`;
   return `extra:custom:${piece.extraName ?? "custom"}`;
 }
 
 export function materialTitle(piece: NeedPiece): string {
-  if (piece.kind === "slope" && piece.side === "bottom") return "Отлив";
+  if (piece.kind === "slope" && piece.side === "bottom" && piece.drawingId !== "default-drip") return "Отлив";
   if (piece.kind === "slope") return "Откос";
   if (piece.extraName?.trim()) return piece.extraName.trim();
   if (piece.extraKind) return extraPreset(piece.extraKind).name;
