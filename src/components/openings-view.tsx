@@ -14,16 +14,16 @@ import { SIDE_KEYS, SIDE_SHORT, type Opening, type SideKey, type SlopeSize } fro
 function OpeningEditor({ opening, fallback, onChange, onRemove }: { opening: Opening; fallback: number; onChange: (patch: Partial<Opening>) => void; onRemove: () => void }) {
   return (
     <div className="grid gap-4">
-      <Num label="Запас на элемент" value={opening.allowance ?? fallback} onChange={(n) => onChange({ allowance: n })} />
-      <div className="relative mx-auto w-full max-w-sm">
-        <WindowDiagram opening={opening} fallbackAllowance={fallback} className="h-52 w-full" />
-        <label className="absolute bottom-2 left-1/2 w-24 -translate-x-1/2 text-center text-[10px] text-steel">Ширина
-          <input inputMode="numeric" value={String(opening.width)} onChange={(e) => { const n = Number(e.target.value.replace(/\D/g, "")); if (n >= 1) onChange({ width: n }); }} className="mt-1 h-8 w-full rounded-md border border-border bg-background text-center text-sm text-foreground" />
+      <div className="grid grid-cols-[4.5rem_1fr] items-center gap-3">
+        <label className="grid gap-1 text-center text-[10px] uppercase tracking-[0.12em] text-steel">Высота
+          <input inputMode="numeric" value={String(opening.height)} onChange={(e) => { const n = Number(e.target.value.replace(/\D/g, "")); if (n >= 1) onChange({ height: n }); }} className="h-10 rounded-xl border border-border bg-background text-center text-sm text-foreground" />
         </label>
-        <label className="absolute left-2 top-1/2 w-20 -translate-y-1/2 text-center text-[10px] text-steel">Высота
-          <input inputMode="numeric" value={String(opening.height)} onChange={(e) => { const n = Number(e.target.value.replace(/\D/g, "")); if (n >= 1) onChange({ height: n }); }} className="mt-1 h-8 w-full rounded-md border border-border bg-background text-center text-sm text-foreground" />
-        </label>
+        <WindowDiagram opening={opening} fallbackAllowance={fallback} className="h-44 w-full" />
       </div>
+      <label className="mx-auto grid w-28 gap-1 text-center text-[10px] uppercase tracking-[0.12em] text-steel">Ширина
+        <input inputMode="numeric" value={String(opening.width)} onChange={(e) => { const n = Number(e.target.value.replace(/\D/g, "")); if (n >= 1) onChange({ width: n }); }} className="h-10 rounded-xl border border-border bg-background text-center text-sm text-foreground" />
+      </label>
+      <Num label="Запас на элемент" value={opening.allowance ?? fallback} onChange={(n) => onChange({ allowance: n })} />
       <div>
         <Label className="mb-2 block">Толщина облицовки фасада</Label>
         <div className="grid grid-cols-3 gap-2">
