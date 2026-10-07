@@ -67,8 +67,8 @@ export function MoreView() {
         </div>
       </section>
       <PairPanel />
-      <section className="space-y-3">
-        <h2 className="font-display text-lg">Как пользоваться</h2>
+      <details className="panel space-y-3 p-4">
+        <summary className="cursor-pointer font-display text-lg">Как пользоваться</summary>
         <div className="grid gap-3 text-sm leading-6 text-muted-foreground">
           <p><span className="text-foreground">Откосы.</span> Кнопка «Проём» добавляет окно. Название меняется нажатием на заголовок карточки. Ширина стоит над окном, высота слева. Если включён низ, его длина задаётся отдельно под окном.</p>
           <p><span className="text-foreground">Толщина фасада.</span> Слева, справа, сверху и снизу настраиваются отдельно. Схема стоит сразу под своим полем. Нажатие на схему открывает чертёж. Правка попадает в раскрой этой же толщины.</p>
