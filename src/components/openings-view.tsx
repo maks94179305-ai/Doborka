@@ -95,7 +95,22 @@ function SlopeColumn({ label, title, thickness, onThickness, schemeKey, empty = 
       if (blob) await savePhoto(photoId, blob);
     }
     const cutKey = key.startsWith("slope:bottom:") ? `slope:bottom:${thickness}` : key;
-    patch((p) => ({ ...p, drawings: [...p.drawings.filter((d) => d.id !== next.id), { ...next, previewPhotoId: photoId || undefined }], schemeDrawings: { ...(p.schemeDrawings ?? {}), [key]: next.id, [cutKey]: next.id }, schemes: { ...(p.schemes ?? {}), [key]: photoId ? [photoId] : [], [cutKey]: photoId ? [photoId] : [] } }));
+    patch((p) => {
+      const schemeDrawings = { ...(p.schemeDrawings ?? {}), [key]: next.id, [cutKey]: next.id };
+      const schemes = { ...(p.schemes ?? {}), [key]: photoId ? [photoId] : [], [cutKey]: photoId ? [photoId] : [] };
+      const openingId = key.startsWith("slope:bottom:") ? key.slice("slope:bottom:".length) : "";
+      const opening = p.openings.find((o) => o.id === openingId);
+      const root = opening?.sourceId || "";
+      if (root) {
+        for (const copy of p.openings) {
+          if (copy.id !== openingId && copy.sourceId !== root && copy.id !== root) continue;
+          if (copy.id === root) continue;
+          schemeDrawings[`slope:bottom:${copy.id}`] = next.id;
+          schemes[`slope:bottom:${copy.id}`] = photoId ? [photoId] : [];
+        }
+      }
+      return { ...p, drawings: [...p.drawings.filter((d) => d.id !== next.id), { ...next, previewPhotoId: photoId || undefined }], schemeDrawings, schemes };
+    });
   }
   return (
     <div className="h-full">
