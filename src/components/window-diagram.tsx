@@ -17,7 +17,7 @@ export function WindowDiagram({ opening, fallbackAllowance, className, onWidth, 
     if (apply && n >= 1) apply(n);
   }
   return (
-    <svg viewBox="-20 0 360 270" className={cn(className)} role="img" aria-label={`Проём ${opening.width} на ${opening.height}`}>
+    <svg viewBox="-12 0 352 255" className={cn(className)} role="img" aria-label={`Проём ${opening.width} на ${opening.height}`}>
       <defs>
         <pattern id="tex-wall" width="48" height="48" patternUnits="userSpaceOnUse"><image href={wall} width="48" height="48" preserveAspectRatio="xMidYMid slice" /></pattern>
         <pattern id="tex-wood" width="64" height="64" patternUnits="userSpaceOnUse"><image href={wood} width="64" height="64" preserveAspectRatio="xMidYMid slice" /></pattern>
@@ -40,7 +40,7 @@ export function WindowDiagram({ opening, fallbackAllowance, className, onWidth, 
       <foreignObject x="128" y="2" width="92" height="24">
         <input inputMode="numeric" aria-label="Ширина" value={String(opening.width)} onChange={(e) => set(e.target.value, onWidth)} style={{ width: "100%", height: "22px", borderRadius: "8px", border: "1px solid #3c463f", background: "#121614", color: "#f3f1ec", textAlign: "center", fontSize: "13px" }} />
       </foreignObject>
-      <foreignObject x="-8" y="150" width="92" height="24" transform="rotate(-90 38 162)">
+      <foreignObject x="-4" y="118" width="92" height="24" transform="rotate(-90 42 130)">
         <input inputMode="numeric" aria-label="Высота" value={String(opening.height)} onChange={(e) => set(e.target.value, onHeight)} style={{ width: "92px", height: "22px", borderRadius: "8px", border: "1px solid #3c463f", background: "#121614", color: "#f3f1ec", textAlign: "center", fontSize: "13px" }} />
       </foreignObject>
     </svg>
