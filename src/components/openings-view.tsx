@@ -14,7 +14,7 @@ import { SIDE_KEYS, SIDE_SHORT, type Opening, type SideKey, type SlopeSize } fro
 function OpeningEditor({ opening, fallback, onChange, onRemove }: { opening: Opening; fallback: number; onChange: (patch: Partial<Opening>) => void; onRemove: () => void }) {
   return (
     <div className="grid gap-4">
-      <WindowDiagram opening={opening} fallbackAllowance={fallback} className="mr-auto block h-48 w-full max-w-[16rem] -translate-x-3" onWidth={(n) => onChange({ width: n })} onHeight={(n) => onChange({ height: n })} />
+      <WindowDiagram opening={opening} fallbackAllowance={fallback} className="mr-auto block h-44 w-[92%] max-w-full" onWidth={(n) => onChange({ width: n })} onHeight={(n) => onChange({ height: n })} />
       <Num label="Запас на элемент" value={opening.allowance ?? fallback} onChange={(n) => onChange({ allowance: n })} />
       <div>
         <Label className="mb-2 block">Толщина облицовки фасада</Label>
@@ -92,7 +92,7 @@ export function OpeningsView() {
   if (!project) return <div className="mx-auto flex w-full max-w-5xl flex-col gap-3"><p className="kicker">Доборка</p><h1>Откосы проёмов:</h1><p className="text-sm text-muted-foreground">Загрузка объекта…</p></div>;
   const fallback = project.settings.defaultAllowance;
   return (
-    <div className="mx-auto flex w-full max-w-md flex-col gap-4 overflow-x-hidden px-1">
+    <div className="mx-auto flex w-full max-w-full flex-col gap-4 overflow-x-hidden">
       <header className="flex flex-col gap-3">
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0"><h1>Откосы проёмов:</h1></div>
@@ -111,7 +111,7 @@ export function OpeningsView() {
           {project.openings.map((o) => {
             const sides = SIDE_KEYS.filter((s) => o.sides[s]);
             return (
-              <li key={o.id} className="panel min-w-0 overflow-hidden px-3 pb-3 pt-2">
+              <li key={o.id} className="panel w-full min-w-0 overflow-hidden px-3 pb-3 pt-2">
                 <div className="flex items-start justify-between gap-2">
                   <input value={o.name} onChange={(e) => updateOpening(o.id, { name: e.target.value })} className="min-w-0 bg-transparent font-display text-2xl font-medium tracking-tight outline-none" aria-label="Название окна" />
                   <div className="flex gap-1">
