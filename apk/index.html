@@ -3,10 +3,17 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#161618" />
+  <meta name="mobile-web-app-capable" content="yes" />
   <title>Доборка</title>
+  <link rel="manifest" href="/Doborka/manifest.webmanifest" />
+  <link rel="icon" href="/Doborka/icon-192.png" />
 </head>
 <body>
   <div id="root"></div>
   <script type="module" src="/src/apk-entry.tsx"></script>
+  <script>
+    if ("serviceWorker" in navigator) navigator.serviceWorker.register("/Doborka/sw.js", { scope: "/Doborka/" });
+  </script>
 </body>
 </html>
