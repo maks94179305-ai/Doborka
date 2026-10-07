@@ -100,11 +100,10 @@ function SlopeColumn({ label, title, thickness, onThickness, schemeKey, empty = 
       const schemes = { ...(p.schemes ?? {}), [key]: photoId ? [photoId] : [], [cutKey]: photoId ? [photoId] : [] };
       const openingId = key.startsWith("slope:bottom:") ? key.slice("slope:bottom:".length) : "";
       const opening = p.openings.find((o) => o.id === openingId);
-      const root = opening?.sourceId || "";
+      const root = opening?.sourceId || openingId;
       if (root) {
         for (const copy of p.openings) {
-          if (copy.id !== openingId && copy.sourceId !== root && copy.id !== root) continue;
-          if (copy.id === root) continue;
+          if (copy.sourceId !== root || copy.id === openingId) continue;
           schemeDrawings[`slope:bottom:${copy.id}`] = next.id;
           schemes[`slope:bottom:${copy.id}`] = photoId ? [photoId] : [];
         }
