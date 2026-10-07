@@ -153,6 +153,8 @@ export function DrawingEditor({ drawing, onChange, compact = false }: { drawing:
     const next = fitView(objects, el.clientWidth, el.clientHeight);
     viewRef.current = next;
     setView(next);
+    // only the first open; later object edits must not recenter the sheet
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [drawing.id]);
 
   useEffect(() => {
@@ -210,7 +212,7 @@ export function DrawingEditor({ drawing, onChange, compact = false }: { drawing:
     const p = local(e);
     const world = toWorld(p.x, p.y);
     clearHold();
-    if (e.button === 2) {
+    if (e.button === 2 || (e.button === 0 && !pick(world) && toolRef.current !== "line" && toolRef.current !== "dim")) {
       panRef.current = { x: e.clientX, y: e.clientY, vx: viewRef.current.x, vy: viewRef.current.y };
       return;
     }
