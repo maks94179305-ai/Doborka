@@ -21,7 +21,7 @@ export function WindowDiagram({ opening, fallbackAllowance, className, onWidth, 
     if (apply && n >= 1) apply(n);
   }
   return (
-    <svg viewBox="-12 0 352 280" className={cn(className)} role="img" aria-label={`Проём ${opening.width} на ${opening.height}`}>
+    <svg viewBox="-12 0 352 292" className={cn(className)} role="img" aria-label={`Проём ${opening.width} на ${opening.height}`}>
       <defs>
         <pattern id="tex-wall" width="48" height="48" patternUnits="userSpaceOnUse"><image href={wall} width="48" height="48" preserveAspectRatio="xMidYMid slice" /></pattern>
         <pattern id="tex-wood" width="64" height="64" patternUnits="userSpaceOnUse"><image href={wood} width="64" height="64" preserveAspectRatio="xMidYMid slice" /></pattern>
@@ -38,6 +38,7 @@ export function WindowDiagram({ opening, fallbackAllowance, className, onWidth, 
       {top ? <rect x="116" y="58" width="116" height="14" fill="url(#tex-slope)" /> : null}
       {bottom ? <rect x="116" y="198" width="116" height="14" fill="url(#tex-slope)" /> : null}
       {top ? <text x="174" y="52" textAnchor="middle" fill="#c4a574" fontSize="11" fontFamily="IBM Plex Mono, monospace">{mm(top)}</text> : null}
+      {bottom ? <text x="174" y="224" textAnchor="middle" fill="#c4a574" fontSize="11" fontFamily="IBM Plex Mono, monospace">{mm(opening.bottomLength ?? bottom)}</text> : null}
       {bottom ? <foreignObject x="128" y="232" width="92" height="24">
         <input inputMode="numeric" aria-label="Низ" value={bottomDraft ?? String(opening.bottomLength ?? bottom)} onChange={(e) => setBottomDraft(e.target.value.replace(/\D/g, ""))} onBlur={() => { commit(bottomDraft ?? String(opening.bottomLength ?? bottom), onBottom); setBottomDraft(null); }} style={{ width: "100%", height: "22px", borderRadius: "8px", border: "1px solid #3c463f", background: "#121614", color: "#f3f1ec", textAlign: "center", fontSize: "13px" }} />
       </foreignObject> : null}
