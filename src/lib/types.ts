@@ -122,6 +122,7 @@ export type Opening = {
   drawingId: string | null;
   profileMm?: number;
   bottomLength?: number;
+  dripAllowance?: number;
 };
 
 export type ExtraItem = {
@@ -135,6 +136,7 @@ export type ExtraItem = {
   drawingId: string | null;
   profileMm?: number;
   bottomLength?: number;
+  dripAllowance?: number;
 };
 
 export type DashStyle = "solid" | "dash" | "dot";
@@ -200,6 +202,7 @@ export type NeedPiece = {
   drawingId: string | null;
   profileMm?: number;
   bottomLength?: number;
+  dripAllowance?: number;
 };
 
 export type CutSegment = { pieceId: string; length: number; label: string; color: string; openingName?: string };
