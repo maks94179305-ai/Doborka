@@ -33,17 +33,17 @@ function OpeningEditor({ opening, fallback, onChange, onRemove }: { opening: Ope
         <details open className="mb-2 w-full rounded-xl border border-steel/50 bg-card px-3 py-2">
           <summary className="cursor-pointer text-base font-medium text-foreground">Толщина облицовки фасада</summary>
           <div className={"mb-2 grid gap-2 " + (opening.sides.bottom ? "grid-cols-4" : "grid-cols-3")}>
-            <Num label="Слева" value={opening.facade?.left ?? 18} onChange={(n) => onChange({ facade: { ...opening.facade, left: n } })} />
-            <Num label="Справа" value={opening.facade?.right ?? 18} onChange={(n) => onChange({ facade: { ...opening.facade, right: n } })} />
-            <Num label="Сверху" value={opening.facade?.top ?? 18} onChange={(n) => onChange({ facade: { ...opening.facade, top: n } })} />
-            {opening.sides.bottom ? <Num label="Отлив" value={opening.facade?.bottom ?? 18} onChange={(n) => onChange({ facade: { ...opening.facade, bottom: n } })} /> : null}
+            <Num label="Слева" value={opening.facade?.left ?? 18} onChange={(n) => onChange({ facade: { left: n, right: opening.facade?.right ?? 18, top: opening.facade?.top ?? 18, bottom: opening.facade?.bottom ?? 18 } })} />
+            <Num label="Справа" value={opening.facade?.right ?? 18} onChange={(n) => onChange({ facade: { left: opening.facade?.left ?? 18, right: n, top: opening.facade?.top ?? 18, bottom: opening.facade?.bottom ?? 18 } })} />
+            <Num label="Сверху" value={opening.facade?.top ?? 18} onChange={(n) => onChange({ facade: { left: opening.facade?.left ?? 18, right: opening.facade?.right ?? 18, top: n, bottom: opening.facade?.bottom ?? 18 } })} />
+            {opening.sides.bottom ? <Num label="Отлив" value={opening.facade?.bottom ?? 18} onChange={(n) => onChange({ facade: { left: opening.facade?.left ?? 18, right: opening.facade?.right ?? 18, top: opening.facade?.top ?? 18, bottom: n } })} /> : null}
           </div>
         </details>
         <div className="grid w-full grid-cols-2 items-stretch gap-2 sm:grid-cols-4">
-          {opening.sides.left ? <SlopeColumn label="Слева" title="Левый" thickness={opening.facade?.left ?? 18} schemeKey={sideKey("left", opening.facade?.left ?? 18)} onThickness={(n) => onChange({ facade: { ...opening.facade, left: n } })} /> : null}
-          {opening.sides.right ? <SlopeColumn label="Справа" title="Правый" thickness={opening.facade?.right ?? 18} schemeKey={sideKey("right", opening.facade?.right ?? 18)} onThickness={(n) => onChange({ facade: { ...opening.facade, right: n } })} /> : null}
-          {opening.sides.top ? <SlopeColumn label="Сверху" title="Верхний" thickness={opening.facade?.top ?? 18} schemeKey={sideKey("top", opening.facade?.top ?? 18)} onThickness={(n) => onChange({ facade: { ...opening.facade, top: n } })} /> : null}
-          {opening.sides.bottom ? <SlopeColumn label="Отлив" title="Отлив" thickness={opening.facade?.bottom ?? 18} schemeKey={`slope:bottom:${opening.id}`} onThickness={(n) => onChange({ facade: { ...opening.facade, bottom: n } })} /> : null}
+          {opening.sides.left ? <SlopeColumn label="Слева" title="Левый" thickness={opening.facade?.left ?? 18} schemeKey={sideKey("left", opening.facade?.left ?? 18)} onThickness={(n) => onChange({ facade: { left: n, right: opening.facade?.right ?? 18, top: opening.facade?.top ?? 18, bottom: opening.facade?.bottom ?? 18 } })} /> : null}
+          {opening.sides.right ? <SlopeColumn label="Справа" title="Правый" thickness={opening.facade?.right ?? 18} schemeKey={sideKey("right", opening.facade?.right ?? 18)} onThickness={(n) => onChange({ facade: { left: opening.facade?.left ?? 18, right: n, top: opening.facade?.top ?? 18, bottom: opening.facade?.bottom ?? 18 } })} /> : null}
+          {opening.sides.top ? <SlopeColumn label="Сверху" title="Верхний" thickness={opening.facade?.top ?? 18} schemeKey={sideKey("top", opening.facade?.top ?? 18)} onThickness={(n) => onChange({ facade: { left: opening.facade?.left ?? 18, right: opening.facade?.right ?? 18, top: n, bottom: opening.facade?.bottom ?? 18 } })} /> : null}
+          {opening.sides.bottom ? <SlopeColumn label="Отлив" title="Отлив" thickness={opening.facade?.bottom ?? 18} schemeKey={`slope:bottom:${opening.id}`} onThickness={(n) => onChange({ facade: { left: opening.facade?.left ?? 18, right: opening.facade?.right ?? 18, top: opening.facade?.top ?? 18, bottom: n } })} /> : null}
         </div>
       </div>
       <div>
@@ -101,14 +101,15 @@ function SlopeColumn({ label, title, thickness, onThickness, schemeKey, empty = 
       const openingId = key.startsWith("slope:bottom:") ? key.slice("slope:bottom:".length) : "";
       const opening = p.openings.find((o) => o.id === openingId);
       const root = opening?.sourceId || openingId;
-      if (root) {
-        for (const copy of p.openings) {
-          if (copy.sourceId !== root || copy.id === openingId) continue;
-          schemeDrawings[`slope:bottom:${copy.id}`] = next.id;
-          schemes[`slope:bottom:${copy.id}`] = photoId ? [photoId] : [];
-        }
-      }
-      return { ...p, drawings: [...p.drawings.filter((d) => d.id !== next.id), { ...next, previewPhotoId: photoId || undefined }], schemeDrawings, schemes };
+      const openings = p.openings.map((copy) => {
+        if (copy.id === openingId) return copy;
+        const linked = copy.sourceId === root || copy.sourceId === openingId || (!copy.sourceId && opening && copy.name.startsWith(`${opening.name} копия`));
+        if (!linked) return copy;
+        schemeDrawings[`slope:bottom:${copy.id}`] = next.id;
+        schemes[`slope:bottom:${copy.id}`] = photoId ? [photoId] : [];
+        return copy.sourceId ? copy : { ...copy, sourceId: root };
+      });
+      return { ...p, openings, drawings: [...p.drawings.filter((d) => d.id !== next.id), { ...next, previewPhotoId: photoId || undefined }], schemeDrawings, schemes };
     });
   }
   return (
