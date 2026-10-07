@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Num } from "@/components/num-field";
 import { SchemeDrawDialog } from "@/components/scheme-draw-dialog";
 import { WindowDiagram } from "@/components/window-diagram";
-import { renderDrawingToBlob } from "@/lib/draw-render";
+import { dimLabelWorld, renderDrawingToBlob } from "@/lib/draw-render";
 import { getPhoto, savePhoto } from "@/lib/photos";
 import { uid } from "@/lib/utils";
 import type { Drawing } from "@/lib/types";
@@ -123,7 +123,8 @@ function SavedScheme({ drawing }: { drawing: Drawing }) {
         {dims.map((o) => {
           const dx = o.x2 - o.x1, dy = o.y2 - o.y1, len = Math.hypot(dx, dy) || 1;
           const ox = (-dy / len) * (o.offset || 15), oy = (dx / len) * (o.offset || 15);
-          return <g key={o.id}><path d={`M${o.x1} ${o.y1} L${o.x1 + ox} ${o.y1 + oy} M${o.x2} ${o.y2} L${o.x2 + ox} ${o.y2 + oy} M${o.x1 + ox} ${o.y1 + oy} L${o.x2 + ox} ${o.y2 + oy}`} fill="none" stroke="#c46a45" strokeWidth="0.6" strokeDasharray="2 2" /><text x={(o.x1 + o.x2) / 2 + ox} y={(o.y1 + o.y2) / 2 + oy - 3} fill="#f3f1ec" fontSize="11" textAnchor="middle">{o.label || ""}</text></g>;
+          const label = dimLabelWorld(o, 1.4);
+          return <g key={o.id}><path d={`M${o.x1} ${o.y1} L${o.x1 + ox} ${o.y1 + oy} M${o.x2} ${o.y2} L${o.x2 + ox} ${o.y2 + oy} M${o.x1 + ox} ${o.y1 + oy} L${o.x2 + ox} ${o.y2 + oy}`} fill="none" stroke="#c46a45" strokeWidth="0.6" strokeDasharray="2 2" /><text x={label.x} y={label.y} fill="#f3f1ec" fontSize="9" textAnchor="middle">{o.label || ""}</text></g>;
         })}
       </svg>
     </figure>
