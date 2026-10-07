@@ -78,7 +78,7 @@ export function MoreView() {
           <p><span className="text-foreground">История.</span> Сюда попадают отправленные схемы. Нажатие открывает схему, двумя пальцами её можно увеличить.</p>
           <p><span className="text-foreground">Синхронизация.</span> В настройках создайте пин-код и введите тот же код на втором устройстве. Объект, чертежи и история станут общими. Проект также хранится на этом устройстве и не пропадает после выхода.</p>
         </div>
-      </section>
+      </details>
 
       <section className="space-y-3">
         <h2 className="font-display text-lg">Объект</h2>
