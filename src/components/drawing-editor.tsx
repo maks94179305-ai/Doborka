@@ -150,7 +150,7 @@ export function DrawingEditor({ drawing, onChange, compact = false }: { drawing:
   const fitted = useRef("");
   useEffect(() => {
     const el = wrapRef.current;
-    if (!el || objects.length === 0 || fitted.current === drawing.id) return;
+    if (!el || objects.length === 0 || fitted.current === drawing.id || toolRef.current === "line") return;
     fitted.current = drawing.id;
     const next = fitView(objects, el.clientWidth, el.clientHeight);
     viewRef.current = next;
