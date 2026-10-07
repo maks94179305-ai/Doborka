@@ -150,18 +150,18 @@ function SlopeProfile({ thickness, label }: { thickness: number; label: string }
         <path d={line} fill="none" stroke="#f3f1ec" strokeWidth="1.6" />
         <Dim x1={x0} y1={y0} x2={x0} y2={yb} dx={-15} dy={0} text="50" />
         <Dim x1={x0} y1={yb} x2={xTail} y2={yb} dx={0} dy={15} text="40" />
-        <Dim x1={xShelf} y1={yHook} x2={xTail} y2={yHook} dx={0} dy={-15} textDy={20} text="20" />
-        <Dim x1={xShelf} y1={yTop} x2={xShelf} y2={yHook} dx={xTop - xShelf} dy={0} textDy={14} text={String(thickness)} />
+        <Dim x1={xShelf} y1={yHook} x2={xTail} y2={yHook} dx={0} dy={-15} textDy={-6} text="20" />
+        <Dim x1={xShelf} y1={yTop} x2={xShelf} y2={yHook} dx={xTop - xShelf} dy={0} textDx={10} textDy={-2} text={String(thickness)} />
         <Dim x1={xShelf} y1={yTop} x2={xTop} y2={yTop} dx={0} dy={-15} text="50" />
       </svg>
     </figure>
   );
 }
-function Dim({ x1, y1, x2, y2, dx, dy, text, textDy = 0 }: { x1: number; y1: number; x2: number; y2: number; dx: number; dy: number; text: string; textDy?: number }) {
+function Dim({ x1, y1, x2, y2, dx, dy, text, textDx = 0, textDy = 0 }: { x1: number; y1: number; x2: number; y2: number; dx: number; dy: number; text: string; textDx?: number; textDy?: number }) {
   return (
     <g fill="none" stroke="#c46a45" strokeWidth="0.6" strokeDasharray="2 2">
       <path d={`M${x1} ${y1} L${x1 + dx} ${y1 + dy} M${x2} ${y2} L${x2 + dx} ${y2 + dy} M${x1 + dx} ${y1 + dy} L${x2 + dx} ${y2 + dy}`} />
-      <text x={(x1 + x2) / 2 + dx} y={(y1 + y2) / 2 + dy - 4 + textDy} fill="#f3f1ec" stroke="none" fontSize="8" textAnchor="middle" fontFamily="IBM Plex Mono, monospace">{text}</text>
+      <text x={(x1 + x2) / 2 + dx + textDx} y={(y1 + y2) / 2 + dy - 4 + textDy} fill="#f3f1ec" stroke="none" fontSize="8" textAnchor="middle" fontFamily="IBM Plex Mono, monospace">{text}</text>
     </g>
   );
 }
