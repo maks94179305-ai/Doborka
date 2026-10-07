@@ -6,7 +6,7 @@ import { PhotoStrip } from "@/components/photo-strip";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { mergePlans, plansByMaterial, type MaterialPlan } from "@/lib/cutting";
-import { renderDrawingToBlob } from "@/lib/draw-render";
+import { renderDrawingToBlob, type Drawing } from "@/lib/draw-render";
 import { meters, mm, pct } from "@/lib/format";
 import { deletePhoto, savePhoto } from "@/lib/photos";
 import { collectPieces, profileColorOf, schemeIdsOf } from "@/lib/pieces";
