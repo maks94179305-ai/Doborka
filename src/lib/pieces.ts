@@ -49,7 +49,7 @@ export function collectPieces(project: Project): NeedPiece[] {
           color,
           label: `${opening.name}${tag}${profileMm ? ` · ${profileMm} мм` : ""}`,
           photoIds: opening.photoIds,
-          drawingId: side === "bottom" ? (dripIsDefault(project, opening.id, profileMm) ? "default-drip" : dripSignature(project, opening.id)) : opening.drawingId,
+          drawingId: side === "bottom" ? (dripIsDefault(project, opening.id, profileMm) ? "default-drip" : opening.sourceId ? `copy:${opening.sourceId}:${dripSignature(project, opening.id)}` : `added:${opening.id}`) : opening.drawingId,
           profileMm,
         });
       });

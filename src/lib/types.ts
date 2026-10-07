@@ -120,6 +120,7 @@ export type Opening = {
   note: string;
   photoIds: string[];
   drawingId: string | null;
+  sourceId?: string;
   profileMm?: number;
   bottomLength?: number;
   dripAllowance?: number;
