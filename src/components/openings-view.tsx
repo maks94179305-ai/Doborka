@@ -22,12 +22,20 @@ function OpeningEditor({ opening, fallback, onChange, onRemove }: { opening: Ope
       <WindowDiagram opening={opening} fallbackAllowance={fallback} className="mr-auto mt-3 block h-44 w-[92%] max-w-full" onWidth={(n) => onChange({ width: n })} onHeight={(n) => onChange({ height: n })} onBottom={(n) => onChange({ bottomLength: n })} />
       <Num label="Запас на элемент" value={opening.allowance ?? fallback} onChange={(n) => onChange({ allowance: n })} />
       <div>
-        <Label className="mb-2 block">Толщина облицовки фасада</Label>
+        <details>
+          <summary className="mb-2 cursor-pointer text-sm">Толщина облицовки фасада</summary>
+          <div className={"mb-2 grid gap-2 " + (opening.sides.bottom ? "grid-cols-4" : "grid-cols-3")}>
+            <Num label="Слева" value={opening.facade?.left ?? 18} onChange={(n) => onChange({ facade: { ...opening.facade, left: n } })} />
+            <Num label="Справа" value={opening.facade?.right ?? 18} onChange={(n) => onChange({ facade: { ...opening.facade, right: n } })} />
+            <Num label="Сверху" value={opening.facade?.top ?? 18} onChange={(n) => onChange({ facade: { ...opening.facade, top: n } })} />
+            {opening.sides.bottom ? <Num label="Отлив" value={opening.facade?.bottom ?? 18} onChange={(n) => onChange({ facade: { ...opening.facade, bottom: n } })} /> : null}
+          </div>
+        </details>
         <div className={"grid gap-2 " + (opening.sides.bottom ? "grid-cols-4" : "grid-cols-3")}>
           <SlopeColumn label="Слева" title="Левый" thickness={opening.facade?.left ?? 18} schemeKey={`slope:${opening.facade?.left ?? 18}`} onThickness={(n) => onChange({ facade: { ...opening.facade, left: n } })} />
           <SlopeColumn label="Справа" title="Правый" thickness={opening.facade?.right ?? 18} schemeKey={`slope:${opening.facade?.right ?? 18}`} onThickness={(n) => onChange({ facade: { ...opening.facade, right: n } })} />
           <SlopeColumn label="Сверху" title="Верхний" thickness={opening.facade?.top ?? 18} schemeKey={`slope:${opening.facade?.top ?? 18}`} onThickness={(n) => onChange({ facade: { ...opening.facade, top: n } })} />
-          {opening.sides.bottom ? <SlopeColumn label="Снизу" title="Нижний" thickness={opening.facade?.bottom ?? 18} schemeKey={`slope:bottom:${opening.facade?.bottom ?? 18}`} onThickness={(n) => onChange({ facade: { ...opening.facade, bottom: n } })} /> : null}
+          {opening.sides.bottom ? <SlopeColumn label="Отлив" title="Отлив" thickness={opening.facade?.bottom ?? 18} schemeKey={`slope:bottom:${opening.facade?.bottom ?? 18}`} onThickness={(n) => onChange({ facade: { ...opening.facade, bottom: n } })} /> : null}
         </div>
       </div>
       <div>
@@ -80,7 +88,6 @@ function SlopeColumn({ label, title, thickness, onThickness, schemeKey }: { labe
   }
   return (
     <div>
-      <Num label={label} value={thickness} onChange={onThickness} />
       <button type="button" className="mt-1 w-full" onClick={() => setOpen(true)} aria-label={`Править ${title}`}><SlopeProfile thickness={thickness} label={title} /></button>
       {open ? <SchemeDrawDialog open={open} title={title} drawing={draft} onOpenChange={setOpen} onDone={(d) => { void done(d); }} /> : null}
     </div>
