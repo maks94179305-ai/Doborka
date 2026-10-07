@@ -1,4 +1,4 @@
-import { useId, useMemo, useState } from "react";
+import { useEffect, useId, useMemo, useState } from "react";
 import { Download, Pencil, Printer, Trash2 } from "lucide-react";
 import { BarScheme } from "@/components/bar-scheme";
 import { SchemeDrawDialog } from "@/components/scheme-draw-dialog";
@@ -84,6 +84,21 @@ export function PlanView() {
   );
 }
 
+
+function slopeProfileDrawing(thickness: number): Drawing {
+  const rise = Math.max(1, thickness);
+  const segs: Array<[number, number, number, number]> = [[0, 0, 0, 50], [0, 50, 40, 50], [40, 50, 40, 49], [40, 49, 20, 49], [20, 49, 20, 49 - rise], [20, 49 - rise, 70, 49 - rise]];
+  const dims: Array<[number, number, number, number, number, string]> = [[0, 0, 0, 50, -12, "50"], [0, 50, 40, 50, 12, "40"], [20, 49, 40, 49, -10, "20"], [20, 49 - rise, 20, 49, -12, String(thickness)], [20, 49 - rise, 70, 49 - rise, -12, "50"]];
+  return {
+    id: uid("dr"),
+    name: `Откос · ${thickness} мм`,
+    updatedAt: Date.now(),
+    objects: [
+      ...segs.map((s, i) => ({ id: uid("ln"), type: "line" as const, x1: s[0], y1: s[1], x2: s[2], y2: s[3], color: "#f3f1ec", width: 2, dash: "solid" as const })),
+      ...dims.map((d) => ({ id: uid("dm"), type: "dim" as const, x1: d[0], y1: d[1], x2: d[2], y2: d[3], offset: d[4], color: "#c46a45", label: d[5] })),
+    ],
+  };
+}
 function OrderLine({ material, schemeIds, color, note, onSchemeChange, onColorChange, onNoteChange }: { material: MaterialPlan; schemeIds: string[]; color: string; note: string; onSchemeChange: (ids: string[]) => void; onColorChange: (hex: string) => void; onNoteChange: (note: string) => void }) {
   const project = useProject();
   const patch = useWorkspace((s) => s.patchProject);
@@ -92,7 +107,22 @@ function OrderLine({ material, schemeIds, color, note, onSchemeChange, onColorCh
   const [draft, setDraft] = useState<Drawing | null>(null);
   const colorName = profileColorName(color);
   const savedDrawing = project?.drawings.find((d) => d.id === project.schemeDrawings?.[material.key]);
+  const profileMm = Number(material.key.startsWith("slope:") ? material.key.slice(6) : "");
   const hasDrawing = !!savedDrawing && savedDrawing.objects.length > 0 && !!savedDrawing.previewPhotoId && schemeIds.includes(savedDrawing.previewPhotoId);
+  useEffect(() => {
+    if (!Number.isFinite(profileMm) || profileMm <= 0 || savedDrawing) return;
+    const next = slopeProfileDrawing(profileMm);
+    void (async () => {
+      const blob = await renderDrawingToBlob(next);
+      if (!blob) return;
+      const photoId = uid("ph");
+      await savePhoto(photoId, blob);
+      patch((p) => {
+        if (p.schemeDrawings?.[material.key]) return p;
+        return { ...p, drawings: [...p.drawings, { ...next, previewPhotoId: photoId }], schemeDrawings: { ...(p.schemeDrawings ?? {}), [material.key]: next.id }, schemes: { ...(p.schemes ?? {}), [material.key]: [...(p.schemes?.[material.key] ?? []), photoId] } };
+      });
+    })();
+  }, [material.key, profileMm, savedDrawing, patch]);
   function removeLine() {
     const extraIds = new Set(pieces.map((p) => p.extraId).filter((id): id is string => !!id));
     const openingIds = new Set(pieces.map((p) => p.openingId).filter((id): id is string => !!id));
@@ -112,7 +142,7 @@ function OrderLine({ material, schemeIds, color, note, onSchemeChange, onColorCh
       return { ...p, openings: openingIds.size ? p.openings.filter((o) => !openingIds.has(o.id)) : p.openings, extras: extraIds.size ? p.extras.filter((e) => !extraIds.has(e.id)) : p.extras, drawings: drawingId ? p.drawings.filter((d) => d.id !== drawingId) : p.drawings, schemes, schemeDrawings, profileColors, profileNotes };
     });
   }
-  function openBlank() { setDraft({ id: uid("dr"), name: `Схема · ${title}`, objects: [], updatedAt: Date.now() }); setDrawOpen(true); }
+  function openBlank() { setDraft(Number.isFinite(profileMm) && profileMm > 0 ? slopeProfileDrawing(profileMm) : { id: uid("dr"), name: `Схема · ${title}`, objects: [], updatedAt: Date.now() }); setDrawOpen(true); }
   function editDrawing() {
     if (!savedDrawing) { openBlank(); return; }
     setDraft({ ...savedDrawing, objects: savedDrawing.objects.map((o) => ({ ...o })), view: savedDrawing.view ? { ...savedDrawing.view } : undefined });
