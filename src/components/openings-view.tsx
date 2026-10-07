@@ -96,7 +96,7 @@ function Dim({ x1, y1, x2, y2, dx, dy, text }: { x1: number; y1: number; x2: num
   return (
     <g fill="none" stroke="#c46a45" strokeWidth="1" strokeDasharray="3 2">
       <path d={`M${x1} ${y1} L${x1 + dx} ${y1 + dy} M${x2} ${y2} L${x2 + dx} ${y2 + dy} M${x1 + dx} ${y1 + dy} L${x2 + dx} ${y2 + dy}`} />
-      <text x={(x1 + x2) / 2 + dx} y={(y1 + y2) / 2 + dy - 4} fill="#f3f1ec" stroke="none" fontSize="11" textAnchor="middle" fontFamily="IBM Plex Mono, monospace">{text}</text>
+      <text x={(x1 + x2) / 2 + dx} y={(y1 + y2) / 2 + dy - 4} fill="#f3f1ec" stroke="none" fontSize="18" textAnchor="middle" fontFamily="IBM Plex Mono, monospace">{text}</text>
     </g>
   );
 }
