@@ -88,7 +88,7 @@ export function PlanView() {
 function slopeProfileDrawing(thickness: number): Drawing {
   const rise = Math.max(1, thickness);
   const segs: Array<[number, number, number, number]> = [[0, 0, 0, 50], [0, 50, 40, 50], [40, 50, 40, 49], [40, 49, 20, 49], [20, 49, 20, 49 - rise], [20, 49 - rise, 70, 49 - rise]];
-  const dims: Array<[number, number, number, number, number, string]> = [[0, 0, 0, 50, -28, "50"], [0, 50, 40, 50, 22, "40"], [20, 49, 40, 49, -16, "20"], [70, 49 - rise, 70, 50, 18, String(thickness)], [20, 49 - rise, 70, 49 - rise, -20, "50"]];
+  const dims: Array<[number, number, number, number, number, string]> = [[0, 0, 0, 50, -15, "50"], [0, 50, 40, 50, 22, "40"], [20, 49, 40, 49, -16, "20"], [20, 49 - rise, 20, 49, -50, String(thickness)], [20, 49 - rise, 70, 49 - rise, -20, "50"]];
   return {
     id: uid("dr"),
     name: `Откос · ${thickness} мм`,
@@ -110,7 +110,7 @@ function OrderLine({ material, schemeIds, color, note, onSchemeChange, onColorCh
   const profileMm = Number(material.key.startsWith("slope:") ? material.key.split(":")[1] : "");
   const hasDrawing = !!savedDrawing && savedDrawing.objects.length > 0 && !!savedDrawing.previewPhotoId && schemeIds.includes(savedDrawing.previewPhotoId);
   useEffect(() => {
-    if (!Number.isFinite(profileMm) || profileMm <= 0 || savedDrawing?.objects.some((o) => o.type === "dim" && o.label === String(profileMm) && o.x1 === 70)) return;
+    if (!Number.isFinite(profileMm) || profileMm <= 0 || savedDrawing?.objects.some((o) => o.type === "dim" && o.label === "50" && o.offset === -15)) return;
     const next = slopeProfileDrawing(profileMm);
     void (async () => {
       const blob = await renderDrawingToBlob(next);
