@@ -9,19 +9,17 @@ export function WindowDiagram({ opening, fallbackAllowance, className }: { openi
   const top = opening.sides.top ? slopeLength(opening, "top", fallbackAllowance) : 0;
   const bottom = opening.sides.bottom ? slopeLength(opening, "bottom", fallbackAllowance) : 0;
   return (
-    <svg viewBox="0 0 280 180" className={cn(className)} role="img" aria-label={`Проём ${opening.width} на ${opening.height}`}>
-      <rect x="78" y="36" width="124" height="96" fill="#1c2420" stroke="#8fa39a" strokeWidth="3" />
-      <rect x="92" y="48" width="96" height="72" fill="#163038" stroke="#6d8b94" />
-      {left ? <rect x="62" y="36" width="12" height="96" fill="#d7dfd9" stroke="#8fa39a" /> : null}
-      {right ? <rect x="206" y="36" width="12" height="96" fill="#d7dfd9" stroke="#8fa39a" /> : null}
-      {top ? <rect x="78" y="20" width="124" height="12" fill="#d7dfd9" stroke="#8fa39a" /> : null}
-      {bottom ? <rect x="78" y="136" width="124" height="12" fill="#d7dfd9" stroke="#8fa39a" /> : null}
-      <text x="140" y="168" textAnchor="middle" fill="#f3f1ec" fontSize="13" fontFamily="IBM Plex Mono, monospace">{opening.width} мм</text>
-      <text x="28" y="88" textAnchor="middle" fill="#f3f1ec" fontSize="13" fontFamily="IBM Plex Mono, monospace" transform="rotate(-90 28 88)">{opening.height} мм</text>
-      {left ? <text x="68" y="84" textAnchor="middle" fill="#c4a574" fontSize="10" fontFamily="IBM Plex Mono, monospace" transform="rotate(-90 68 84)">{mm(left)}</text> : null}
-      {right ? <text x="212" y="84" textAnchor="middle" fill="#c4a574" fontSize="10" fontFamily="IBM Plex Mono, monospace" transform="rotate(-90 212 84)">{mm(right)}</text> : null}
-      {top ? <text x="140" y="16" textAnchor="middle" fill="#c4a574" fontSize="10" fontFamily="IBM Plex Mono, monospace">{mm(top)}</text> : null}
-      {bottom ? <text x="140" y="146" textAnchor="middle" fill="#c4a574" fontSize="10" fontFamily="IBM Plex Mono, monospace">{mm(bottom)}</text> : null}
+    <svg viewBox="0 0 320 220" className={cn(className)} role="img" aria-label={`Проём ${opening.width} на ${opening.height}`}>
+      <rect x="108" y="48" width="104" height="108" rx="4" fill="#1b2421" stroke="#9aafa6" strokeWidth="2.5" />
+      <rect x="122" y="62" width="76" height="80" rx="2" fill="#14343c" stroke="#6d8b94" />
+      {left ? <rect x="92" y="48" width="12" height="108" rx="2" fill="#e7eeea" /> : null}
+      {right ? <rect x="216" y="48" width="12" height="108" rx="2" fill="#e7eeea" /> : null}
+      {top ? <rect x="108" y="32" width="104" height="12" rx="2" fill="#e7eeea" /> : null}
+      {bottom ? <rect x="108" y="160" width="104" height="12" rx="2" fill="#e7eeea" /> : null}
+      {top ? <text x="160" y="22" textAnchor="middle" fill="#c4a574" fontSize="11" fontFamily="IBM Plex Mono, monospace">{mm(top)}</text> : null}
+      {bottom ? <text x="160" y="188" textAnchor="middle" fill="#c4a574" fontSize="11" fontFamily="IBM Plex Mono, monospace">{mm(bottom)}</text> : null}
+      {left ? <text x="78" y="104" textAnchor="middle" fill="#c4a574" fontSize="11" fontFamily="IBM Plex Mono, monospace" transform="rotate(-90 78 104)">{mm(left)}</text> : null}
+      {right ? <text x="246" y="104" textAnchor="middle" fill="#c4a574" fontSize="11" fontFamily="IBM Plex Mono, monospace" transform="rotate(-90 246 104)">{mm(right)}</text> : null}
     </svg>
   );
 }
