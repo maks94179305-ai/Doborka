@@ -68,17 +68,24 @@ function OpeningEditor({ opening, fallback, onChange, onRemove }: { opening: Ope
 }
 
 function SlopeProfile({ thickness, label }: { thickness: number; label: string }) {
-  const step = Math.max(8, Math.min(40, thickness));
   return (
-    <figure className="rounded-xl border border-border bg-background/40 p-2">
-      <figcaption className="text-center text-[10px] uppercase tracking-[0.12em] text-steel">{label} {thickness} мм</figcaption>
-      <svg viewBox="0 0 120 90" className="mt-1 h-16 w-full" aria-label={`Профиль ${label}, толщина ${thickness}`}>
-        <path d={`M18 12 V62 H58 V${62 - step} H78 V${62 - step - 14} H108`} fill="none" stroke="#f3f1ec" strokeWidth="2" />
-        <path d="M14 12 V62 H58" fill="none" stroke="#c4a574" strokeDasharray="2 2" />
-        <text x="8" y="40" fill="#c4a574" fontSize="8">50</text>
-        <text x="30" y="74" fill="#c4a574" fontSize="8">40</text>
-        <text x="60" y={62 - step - 4} fill="#c4a574" fontSize="8">20</text>
-        <text x="100" y={62 - step / 2} fill="#f3f1ec" fontSize="8">{thickness}</text>
+    <figure className="rounded-xl border border-border bg-[#141816] p-2">
+      <figcaption className="text-center text-[10px] uppercase tracking-[0.12em] text-steel">{label}</figcaption>
+      <svg viewBox="0 0 280 200" className="mt-1 h-28 w-full" aria-label={`${label}, толщина ${thickness}`}>
+        <g fill="none" stroke="#c46a45" strokeWidth="1.4" strokeDasharray="4 3">
+          <path d="M28 18 V132 H40" />
+          <path d="M48 168 H138 V180" />
+          <path d="M112 46 H236 V58" />
+          <path d="M128 96 H176 V108" />
+          <path d="M206 58 V132 H218" />
+        </g>
+        <path d="M40 18 V132 H138 V108 H176" fill="none" stroke="#f3f1ec" strokeWidth="2.4" />
+        <path d="M112 58 H236" fill="none" stroke="#f3f1ec" strokeWidth="2.4" />
+        <text x="16" y="80" fill="#f3f1ec" fontSize="16" fontFamily="IBM Plex Mono, monospace">50</text>
+        <text x="78" y="194" fill="#f3f1ec" fontSize="16" fontFamily="IBM Plex Mono, monospace">40</text>
+        <text x="158" y="42" fill="#f3f1ec" fontSize="16" fontFamily="IBM Plex Mono, monospace">50</text>
+        <text x="140" y="92" fill="#f3f1ec" fontSize="16" fontFamily="IBM Plex Mono, monospace">20</text>
+        <text x="222" y="102" fill="#f3f1ec" fontSize="16" fontFamily="IBM Plex Mono, monospace">{thickness}</text>
       </svg>
     </figure>
   );
