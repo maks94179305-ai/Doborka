@@ -17,7 +17,7 @@ export function WindowDiagram({ opening, fallbackAllowance, className, onWidth, 
     if (apply && n >= 1) apply(n);
   }
   return (
-    <svg viewBox="0 0 340 260" className={cn(className)} role="img" aria-label={`Проём ${opening.width} на ${opening.height}`}>
+    <svg viewBox="0 0 300 240" className={cn(className)} role="img" aria-label={`Проём ${opening.width} на ${opening.height}`}>
       <defs>
         <pattern id="tex-wall" width="48" height="48" patternUnits="userSpaceOnUse"><image href={wall} width="48" height="48" preserveAspectRatio="xMidYMid slice" /></pattern>
         <pattern id="tex-wood" width="64" height="64" patternUnits="userSpaceOnUse"><image href={wood} width="64" height="64" preserveAspectRatio="xMidYMid slice" /></pattern>
@@ -33,14 +33,14 @@ export function WindowDiagram({ opening, fallbackAllowance, className, onWidth, 
       {right ? <rect x="244" y="68" width="16" height="130" fill="url(#tex-slope)" /> : null}
       {top ? <rect x="102" y="46" width="136" height="16" fill="url(#tex-slope)" /> : null}
       {bottom ? <rect x="102" y="204" width="136" height="16" fill="url(#tex-slope)" /> : null}
-      {top ? <text x="170" y="24" textAnchor="middle" fill="#c4a574" fontSize="11" fontFamily="IBM Plex Mono, monospace">{mm(top)}</text> : null}
+      {top ? <text x="150" y="34" textAnchor="middle" fill="#c4a574" fontSize="11" fontFamily="IBM Plex Mono, monospace">{mm(top)}</text> : null}
       {bottom ? <text x="170" y="234" textAnchor="middle" fill="#c4a574" fontSize="11" fontFamily="IBM Plex Mono, monospace">{mm(bottom)}</text> : null}
       {left ? <text x="64" y="134" textAnchor="middle" fill="#c4a574" fontSize="11" fontFamily="IBM Plex Mono, monospace" transform="rotate(-90 64 134)">{mm(left)}</text> : null}
       {right ? <text x="276" y="134" textAnchor="middle" fill="#c4a574" fontSize="11" fontFamily="IBM Plex Mono, monospace" transform="rotate(-90 276 134)">{mm(right)}</text> : null}
-      <foreignObject x="118" y="4" width="104" height="28">
+      <foreignObject x="104" y="2" width="92" height="26">
         <input inputMode="numeric" aria-label="Ширина" value={String(opening.width)} onChange={(e) => set(e.target.value, onWidth)} style={{ width: "100%", height: "26px", borderRadius: "8px", border: "1px solid #3c463f", background: "#121614", color: "#f3f1ec", textAlign: "center", fontSize: "13px" }} />
       </foreignObject>
-      <foreignObject x="4" y="112" width="58" height="28" transform="rotate(-90 33 126)">
+      <foreignObject x="6" y="104" width="52" height="26" transform="rotate(-90 32 117)">
         <input inputMode="numeric" aria-label="Высота" value={String(opening.height)} onChange={(e) => set(e.target.value, onHeight)} style={{ width: "58px", height: "26px", borderRadius: "8px", border: "1px solid #3c463f", background: "#121614", color: "#f3f1ec", textAlign: "center", fontSize: "13px" }} />
       </foreignObject>
     </svg>
