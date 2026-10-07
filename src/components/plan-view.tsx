@@ -106,11 +106,14 @@ function OrderLine({ material, schemeIds, color, note, onSchemeChange, onColorCh
   const [drawOpen, setDrawOpen] = useState(false);
   const [draft, setDraft] = useState<Drawing | null>(null);
   const colorName = profileColorName(color);
-  const savedDrawing = project?.drawings.find((d) => d.id === project.schemeDrawings?.[material.key]);
-  const profileMm = Number(material.key.startsWith("slope:") ? material.key.split(":").pop() : "");
+  const dripOpeningId = material.key.startsWith("slope:bottom:") ? material.pieces.find((piece) => piece.openingId)?.openingId : "";
+  const schemeKey = dripOpeningId ? `slope:bottom:${dripOpeningId}` : material.key;
+  const savedDrawing = project?.drawings.find((d) => d.id === project.schemeDrawings?.[schemeKey]) ?? project?.drawings.find((d) => d.id === project.schemeDrawings?.[material.key]);
+  const profileMm = Number(material.key.startsWith("slope:bottom:") ? material.key.split(":")[2] : material.key.startsWith("slope:") ? material.key.split(":").pop() : "");
+  const shownSchemeIds = schemeIds.length ? schemeIds : savedDrawing?.previewPhotoId ? [savedDrawing.previewPhotoId] : schemeIds;
   const hasDrawing = !!savedDrawing && savedDrawing.objects.length > 0 && !!savedDrawing.previewPhotoId && schemeIds.includes(savedDrawing.previewPhotoId);
   useEffect(() => {
-    if (!Number.isFinite(profileMm) || profileMm <= 0 || savedDrawing?.objects.some((o) => o.type === "dim" && o.label === "50" && o.offset === 15 && savedDrawing.objects.some((d) => d.type === "dim" && d.label === String(profileMm) && d.offset === -50))) return;
+    if ((material.key.startsWith("slope:bottom:") && savedDrawing) || !Number.isFinite(profileMm) || profileMm <= 0 || savedDrawing?.objects.some((o) => o.type === "dim" && o.label === "50" && o.offset === 15 && savedDrawing.objects.some((d) => d.type === "dim" && d.label === String(profileMm) && d.offset === -50))) return;
     const next = slopeProfileDrawing(profileMm);
     void (async () => {
       const blob = await renderDrawingToBlob(next);
@@ -193,7 +196,7 @@ function OrderLine({ material, schemeIds, color, note, onSchemeChange, onColorCh
       {plan.remainderMm > 0 ? <p className="mt-3 text-sm text-muted-foreground">Пригодный остаток: {mm(plan.remainderMm)}</p> : null}
       <div className="mt-4 border-t border-border pt-3">
         <p className="mb-2 text-xs uppercase tracking-[0.14em] text-steel">Схема профиля</p>
-        <PhotoStrip ids={schemeIds} onChange={onSchemeChange} variant="scheme" extraActions={<Button type="button" variant="outline" className="h-11" onClick={hasDrawing ? editDrawing : openBlank}><Pencil /> {hasDrawing ? "Редактировать" : "Начертить"}</Button>} previewAside={<BarOrderPanel title={title} color={color} colorName={colorName} note={note} barCounts={plan.barCounts} totalBars={plan.bars.length} />} shareCard={{ heading: "Схема", title, color, colorName, note, bars: plan.barCounts, totalBars: plan.bars.length }} onEdit={openExisting} />
+        <PhotoStrip ids={shownSchemeIds} onChange={onSchemeChange} variant="scheme" extraActions={<Button type="button" variant="outline" className="h-11" onClick={hasDrawing ? editDrawing : openBlank}><Pencil /> {hasDrawing ? "Редактировать" : "Начертить"}</Button>} previewAside={<BarOrderPanel title={title} color={color} colorName={colorName} note={note} barCounts={plan.barCounts} totalBars={plan.bars.length} />} shareCard={{ heading: "Схема", title, color, colorName, note, bars: plan.barCounts, totalBars: plan.bars.length }} onEdit={openExisting} />
       </div>
       {draft ? <SchemeDrawDialog open={drawOpen} title={title} drawing={draft} onOpenChange={setDrawOpen} onDone={(d) => { void persistDraw(d); }} /> : null}
     </article>

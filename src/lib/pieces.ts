@@ -12,6 +12,13 @@ export function slopeLength(opening: Opening, side: "left" | "right" | "top" | "
 }
 
 
+function dripSignature(project: Project, openingId: string): string {
+  const drawing = project.drawings.find((d) => d.id === project.schemeDrawings?.[`slope:bottom:${openingId}`]);
+  const body = (drawing?.objects ?? []).map((o) => o.type === "line" || o.type === "dim" ? `${o.type}:${Math.round(o.x1)}:${Math.round(o.y1)}:${Math.round(o.x2)}:${Math.round(o.y2)}:${o.offset ?? ""}:${o.label ?? ""}` : o.type).join("|");
+  let h = 0;
+  for (const c of body) h = Math.imul(h, 31) + c.charCodeAt(0) | 0;
+  return (h >>> 0).toString(36);
+}
 function dripIsDefault(project: Project, openingId: string, thickness: number): boolean {
   const drawing = project.drawings.find((d) => d.id === project.schemeDrawings?.[`slope:bottom:${openingId}`]);
   if (!drawing) return true;
@@ -42,7 +49,7 @@ export function collectPieces(project: Project): NeedPiece[] {
           color,
           label: `${opening.name}${tag}${profileMm ? ` · ${profileMm} мм` : ""}`,
           photoIds: opening.photoIds,
-          drawingId: side === "bottom" && dripIsDefault(project, opening.id, profileMm) ? "default-drip" : opening.drawingId,
+          drawingId: side === "bottom" ? (dripIsDefault(project, opening.id, profileMm) ? "default-drip" : dripSignature(project, opening.id)) : opening.drawingId,
           profileMm,
         });
       });
@@ -117,7 +124,7 @@ export function groupElements(pieces: NeedPiece[]): GroupedElement[] {
 }
 
 export function materialKey(piece: NeedPiece): string {
-  if (piece.kind === "slope" && piece.side === "bottom" && piece.drawingId !== "default-drip") return `slope:bottom:${piece.profileMm ?? 18}`;
+  if (piece.kind === "slope" && piece.side === "bottom" && piece.drawingId !== "default-drip") return `slope:bottom:${piece.profileMm ?? 18}:${piece.drawingId}`;
   if (piece.kind === "slope" && piece.side === "bottom") return `slope:${piece.profileMm ?? 18}`;
   if (piece.kind === "slope") return piece.profileMm ? `slope:${piece.profileMm}` : "slope:bottom";
   if (piece.extraId) return `extra:${piece.extraId}`;
