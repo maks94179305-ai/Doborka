@@ -150,7 +150,7 @@ export function DrawingEditor({ drawing, onChange, compact = false }: { drawing:
   const fitted = useRef("");
   useEffect(() => {
     const el = wrapRef.current;
-    if (!el || objects.length === 0 || fitted.current === drawing.id || toolRef.current === "line") return;
+    if (!el || objects.length === 0 || fitted.current === drawing.id) return;
     fitted.current = drawing.id;
     const next = fitView(objects, el.clientWidth, el.clientHeight);
     viewRef.current = next;
@@ -348,7 +348,7 @@ export function DrawingEditor({ drawing, onChange, compact = false }: { drawing:
   function onUp(e?: React.PointerEvent) {
     clearHold();
     if (e) pointers.current.delete(e.pointerId);
-    if (pointers.current.size < 2) pinchRef.current = null;
+    if (pointers.current.size < 2) { if (pinchRef.current) setView(viewRef.current); pinchRef.current = null; }
     if (endHold.current) { window.clearTimeout(endHold.current); endHold.current = null; }
     pendingEnd.current = null;
     if (endDrag.current) {
