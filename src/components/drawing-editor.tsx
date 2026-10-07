@@ -149,7 +149,7 @@ export function DrawingEditor({ drawing, onChange, compact = false }: { drawing:
   useEffect(() => { redraw(); }, [redraw, objects, view, draft, color]);
   useEffect(() => {
     const el = wrapRef.current;
-    if (!el || objects.length === 0) return;
+    if (!el || objects.length === 0 || viewRef.current.scale !== SCALE_DEFAULT) return;
     const next = fitView(objects, el.clientWidth, el.clientHeight);
     viewRef.current = next;
     setView(next);
@@ -363,7 +363,7 @@ export function DrawingEditor({ drawing, onChange, compact = false }: { drawing:
     const d = draftRef.current;
     setDraft(null);
     const moved = e && tap ? Math.hypot(e.clientX - tap.x, e.clientY - tap.y) : d ? dist(d.start, d.end) : 0;
-    if (tap?.empty && moved < 8) { endDrag.current = null; pendingEnd.current = null; confirmTyped(); }
+    if (tap?.empty && moved < 8) { endDrag.current = null; pendingEnd.current = null; setDraft(null); return; }
     if (!d || dist(d.start, d.end) < 2) return;
     if (toolRef.current === "dim") {
       commit([...objectsRef.current, { id: uid("dr"), type: "dim", x1: d.start.x, y1: d.start.y, x2: d.end.x, y2: d.end.y, offset: d.offset ?? 40, color: activeColor("dim"), width: 2, dash: "dash" }]);
