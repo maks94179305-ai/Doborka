@@ -118,7 +118,7 @@ function SavedScheme({ drawing }: { drawing: Drawing }) {
         {dims.map((o) => {
           const dx = o.x2 - o.x1, dy = o.y2 - o.y1, len = Math.hypot(dx, dy) || 1;
           const ox = (-dy / len) * (o.offset || 15), oy = (dx / len) * (o.offset || 15);
-          return <g key={o.id}><path d={`M${o.x1} ${o.y1} L${o.x1 + ox} ${o.y1 + oy} M${o.x2} ${o.y2} L${o.x2 + ox} ${o.y2 + oy} M${o.x1 + ox} ${o.y1 + oy} L${o.x2 + ox} ${o.y2 + oy}`} fill="none" stroke="#c46a45" strokeWidth="1" strokeDasharray="3 2" /><text x={(o.x1 + o.x2) / 2 + ox} y={(o.y1 + o.y2) / 2 + oy - 3} fill="#f3f1ec" fontSize="8" textAnchor="middle">{o.label || ""}</text></g>;
+          return <g key={o.id}><path d={`M${o.x1} ${o.y1} L${o.x1 + ox} ${o.y1 + oy} M${o.x2} ${o.y2} L${o.x2 + ox} ${o.y2 + oy} M${o.x1 + ox} ${o.y1 + oy} L${o.x2 + ox} ${o.y2 + oy}`} fill="none" stroke="#c46a45" strokeWidth="0.6" strokeDasharray="2 2" /><text x={(o.x1 + o.x2) / 2 + ox} y={(o.y1 + o.y2) / 2 + oy - 3} fill="#f3f1ec" fontSize="8" textAnchor="middle">{o.label || ""}</text></g>;
         })}
       </svg>
     </figure>
@@ -159,7 +159,7 @@ function SlopeProfile({ thickness, label }: { thickness: number; label: string }
 }
 function Dim({ x1, y1, x2, y2, dx, dy, text, textDy = 0 }: { x1: number; y1: number; x2: number; y2: number; dx: number; dy: number; text: string; textDy?: number }) {
   return (
-    <g fill="none" stroke="#c46a45" strokeWidth="1" strokeDasharray="3 2">
+    <g fill="none" stroke="#c46a45" strokeWidth="0.6" strokeDasharray="2 2">
       <path d={`M${x1} ${y1} L${x1 + dx} ${y1 + dy} M${x2} ${y2} L${x2 + dx} ${y2 + dy} M${x1 + dx} ${y1 + dy} L${x2 + dx} ${y2 + dy}`} />
       <text x={(x1 + x2) / 2 + dx} y={(y1 + y2) / 2 + dy - 4 + textDy} fill="#f3f1ec" stroke="none" fontSize="8" textAnchor="middle" fontFamily="IBM Plex Mono, monospace">{text}</text>
     </g>
