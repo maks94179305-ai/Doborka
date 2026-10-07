@@ -108,9 +108,14 @@ function SlopeColumn({ label, title, thickness, onThickness, schemeKey, empty = 
 function SavedScheme({ drawing }: { drawing: Drawing }) {
   const lines = drawing.objects.filter((o) => o.type === "line");
   const dims = drawing.objects.filter((o) => o.type === "dim");
-  const pts = [...lines, ...dims].flatMap((o) => [o.x1, o.y1, o.x2, o.y2]);
+  const pts = [...lines, ...dims].flatMap((o) => {
+    if (o.type !== "dim") return [o.x1, o.y1, o.x2, o.y2];
+    const dx = o.x2 - o.x1, dy = o.y2 - o.y1, len = Math.hypot(dx, dy) || 1;
+    const ox = (-dy / len) * (o.offset || 15), oy = (dx / len) * (o.offset || 15);
+    return [o.x1 + ox, o.y1 + oy, o.x2 + ox, o.y2 + oy];
+  });
   if (!pts.length) return null;
-  const minX = Math.min(...pts) - 24, minY = Math.min(...pts) - 24, maxX = Math.max(...pts) + 24, maxY = Math.max(...pts) + 24;
+  const minX = Math.min(...pts) - 28, minY = Math.min(...pts) - 28, maxX = Math.max(...pts) + 28, maxY = Math.max(...pts) + 28;
   return (
     <figure className="mx-auto w-full rounded-xl border border-border bg-[#141816] p-1.5">
       <svg viewBox={`${minX} ${minY} ${maxX - minX} ${maxY - minY}`} className="mx-auto block h-auto w-full">
@@ -118,7 +123,7 @@ function SavedScheme({ drawing }: { drawing: Drawing }) {
         {dims.map((o) => {
           const dx = o.x2 - o.x1, dy = o.y2 - o.y1, len = Math.hypot(dx, dy) || 1;
           const ox = (-dy / len) * (o.offset || 15), oy = (dx / len) * (o.offset || 15);
-          return <g key={o.id}><path d={`M${o.x1} ${o.y1} L${o.x1 + ox} ${o.y1 + oy} M${o.x2} ${o.y2} L${o.x2 + ox} ${o.y2 + oy} M${o.x1 + ox} ${o.y1 + oy} L${o.x2 + ox} ${o.y2 + oy}`} fill="none" stroke="#c46a45" strokeWidth="0.6" strokeDasharray="2 2" /><text x={(o.x1 + o.x2) / 2 + ox} y={(o.y1 + o.y2) / 2 + oy - 3} fill="#f3f1ec" fontSize="8" textAnchor="middle">{o.label || ""}</text></g>;
+          return <g key={o.id}><path d={`M${o.x1} ${o.y1} L${o.x1 + ox} ${o.y1 + oy} M${o.x2} ${o.y2} L${o.x2 + ox} ${o.y2 + oy} M${o.x1 + ox} ${o.y1 + oy} L${o.x2 + ox} ${o.y2 + oy}`} fill="none" stroke="#c46a45" strokeWidth="0.6" strokeDasharray="2 2" /><text x={(o.x1 + o.x2) / 2 + ox} y={(o.y1 + o.y2) / 2 + oy - 3} fill="#f3f1ec" fontSize="11" textAnchor="middle">{o.label || ""}</text></g>;
         })}
       </svg>
     </figure>
