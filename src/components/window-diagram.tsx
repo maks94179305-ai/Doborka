@@ -35,7 +35,7 @@ export function WindowDiagram({ opening, fallbackAllowance, className, onWidth, 
       {bottom ? <rect x="116" y="198" width="116" height="14" fill="url(#tex-slope)" /> : null}
       {top ? <text x="174" y="52" textAnchor="middle" fill="#c4a574" fontSize="11" fontFamily="IBM Plex Mono, monospace">{mm(top)}</text> : null}
       {bottom ? <text x="174" y="226" textAnchor="middle" fill="#c4a574" fontSize="11" fontFamily="IBM Plex Mono, monospace">{mm(bottom)}</text> : null}
-      {left ? <text x="78" y="136" textAnchor="middle" fill="#c4a574" fontSize="11" fontFamily="IBM Plex Mono, monospace" transform="rotate(-90 78 136)">{mm(left)}</text> : null}
+      {left ? <text x="88" y="136" textAnchor="middle" fill="#c4a574" fontSize="11" fontFamily="IBM Plex Mono, monospace" transform="rotate(-90 88 136)">{mm(left)}</text> : null}
       {right ? <text x="268" y="136" textAnchor="middle" fill="#c4a574" fontSize="11" fontFamily="IBM Plex Mono, monospace" transform="rotate(-90 268 136)">{mm(right)}</text> : null}
       <foreignObject x="128" y="2" width="92" height="24">
         <input inputMode="numeric" aria-label="Ширина" value={String(opening.width)} onChange={(e) => set(e.target.value, onWidth)} style={{ width: "100%", height: "22px", borderRadius: "8px", border: "1px solid #3c463f", background: "#121614", color: "#f3f1ec", textAlign: "center", fontSize: "13px" }} />
