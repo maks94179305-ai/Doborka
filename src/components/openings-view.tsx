@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { Copy, Pencil, Plus, Trash2 } from "lucide-react";
+import { Copy, Plus, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -83,11 +83,11 @@ function SlopeProfile({ thickness, label }: { thickness: number; label: string }
       <figcaption className="text-center text-[10px] uppercase tracking-[0.12em] text-steel">{label}</figcaption>
       <svg viewBox={`${minX} ${minY} ${maxX - minX} ${maxY - minY}`} preserveAspectRatio="xMidYMid meet" className="mx-auto mt-1 block h-auto w-full" aria-label={`${label}, толщина ${thickness}`}>
         <path d={line} fill="none" stroke="#f3f1ec" strokeWidth="1.6" />
-        <Dim x1={x0} y1={y0} x2={x0} y2={yb} dx={15} dy={0} text="50" />
-        <Dim x1={x0} y1={yb} x2={xTail} y2={yb} dx={0} dy={12} text="40" />
-        <Dim x1={xShelf} y1={yHook} x2={xTail} y2={yHook} dx={0} dy={-8} text="20" />
-        <Dim x1={xShelf} y1={yTop} x2={xShelf} y2={yHook} dx={xTop - xShelf} dy={0} text={String(thickness)} />
-        <Dim x1={xShelf} y1={yTop} x2={xTop} y2={yTop} dx={0} dy={-10} text="50" />
+        <Dim x1={x0} y1={y0} x2={x0} y2={yb} dx={-15} dy={0} text="50" />
+        <Dim x1={x0} y1={yb} x2={xTail} y2={yb} dx={0} dy={15} text="40" />
+        <Dim x1={xShelf} y1={yHook} x2={xTail} y2={yHook} dx={0} dy={-15} text="20" />
+        <Dim x1={xShelf} y1={yTop} x2={xShelf} y2={yHook} dx={-15} dy={0} text={String(thickness)} />
+        <Dim x1={xShelf} y1={yTop} x2={xTop} y2={yTop} dx={0} dy={-15} text="50" />
       </svg>
     </figure>
   );
@@ -137,33 +137,18 @@ export function OpeningsView() {
                     <p className="tabular text-sm text-muted-foreground">{o.width}×{o.height} мм · {o.qty} шт</p>
                   </div>
                   <div className="flex gap-1">
-                    <Button size="icon-sm" variant="ghost" onClick={() => setEditId(o.id)} aria-label="Править"><Pencil /></Button>
                     <Button size="icon-sm" variant="ghost" onClick={() => duplicateOpening(o.id)} aria-label="Копия"><Copy /></Button>
                     <Button size="icon-sm" variant="ghost" onClick={() => removeOpening(o.id)} aria-label="Удалить"><Trash2 /></Button>
                   </div>
                 </div>
-                <WindowDiagram opening={o} fallbackAllowance={fallback} className="mt-3 h-48 w-full" />
-                <div className="mx-auto mt-2 grid w-full max-w-md grid-cols-3 gap-2">
-                  <SlopeProfile thickness={o.facade?.left ?? 18} label="Слева" />
-                  <SlopeProfile thickness={o.facade?.right ?? 18} label="Справа" />
-                  <SlopeProfile thickness={o.facade?.top ?? 18} label="Сверху" />
-                </div>
-                <div className="mt-2 flex flex-wrap gap-1">
-                  {sides.map((s) => <Badge key={s} tone="steel">{SIDE_SHORT[s]} {mm(slopeLength(o, s as SideKey, fallback))}</Badge>)}
+                <div className="mt-4">
+                  <OpeningEditor opening={o} fallback={fallback} onChange={(patch) => updateOpening(o.id, patch)} onRemove={() => removeOpening(o.id)} />
                 </div>
               </li>
             );
           })}
         </ul>
       )}
-      {editing ? (
-        <div className="fixed inset-0 z-[120] overflow-y-auto bg-[#161618] px-4 py-6 pt-[max(1.5rem,env(safe-area-inset-top))]">
-          <div className="mx-auto flex max-w-lg items-center justify-between"><h2 className="font-medium text-[#f3f1ec]">{editing.name}</h2><Button type="button" onClick={() => setEditId(null)}>Закрыть</Button></div>
-          <div className="mx-auto mt-4 max-w-lg">
-            <OpeningEditor opening={editing} fallback={fallback} onChange={(patch) => updateOpening(editing.id, patch)} onRemove={() => { removeOpening(editing.id); setEditId(null); }} />
-          </div>
-        </div>
-      ) : null}
     </div>
   );
 }
