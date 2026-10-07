@@ -107,7 +107,7 @@ function OrderLine({ material, schemeIds, color, note, onSchemeChange, onColorCh
   const [draft, setDraft] = useState<Drawing | null>(null);
   const colorName = profileColorName(color);
   const savedDrawing = project?.drawings.find((d) => d.id === project.schemeDrawings?.[material.key]);
-  const profileMm = Number(material.key.startsWith("slope:") ? material.key.split(":")[2] : "");
+  const profileMm = Number(material.key.startsWith("slope:") ? material.key.split(":")[1] : "");
   const hasDrawing = !!savedDrawing && savedDrawing.objects.length > 0 && !!savedDrawing.previewPhotoId && schemeIds.includes(savedDrawing.previewPhotoId);
   useEffect(() => {
     if (!Number.isFinite(profileMm) || profileMm <= 0 || savedDrawing) return;
