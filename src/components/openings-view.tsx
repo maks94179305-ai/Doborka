@@ -5,7 +5,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Num } from "@/components/num-field";
-import { PhotoStrip } from "@/components/photo-strip";
 import { WindowDiagram } from "@/components/window-diagram";
 import { mm } from "@/lib/format";
 import { slopeLength } from "@/lib/pieces";
@@ -20,10 +19,17 @@ function OpeningEditor({ opening, fallback, onChange, onRemove }: { opening: Ope
         <Input value={opening.name} onChange={(e) => onChange({ name: e.target.value })} />
       </label>
       <div className="grid grid-cols-2 gap-3">
-        <Num label="Ширина проёма" value={opening.width} onChange={(n) => onChange({ width: n })} />
-        <Num label="Высота проёма" value={opening.height} onChange={(n) => onChange({ height: n })} />
         <Num label="Количество" value={opening.qty} suffix="шт" min={1} onChange={(n) => onChange({ qty: n })} />
         <Num label="Запас на элемент" value={opening.allowance ?? fallback} onChange={(n) => onChange({ allowance: n })} />
+      </div>
+      <div className="relative mx-auto w-full max-w-sm">
+        <WindowDiagram opening={opening} fallbackAllowance={fallback} className="h-52 w-full" />
+        <label className="absolute bottom-2 left-1/2 w-24 -translate-x-1/2 text-center text-[10px] text-steel">Ширина
+          <input inputMode="numeric" value={String(opening.width)} onChange={(e) => { const n = Number(e.target.value.replace(/\D/g, "")); if (n >= 1) onChange({ width: n }); }} className="mt-1 h-8 w-full rounded-md border border-border bg-background text-center text-sm text-foreground" />
+        </label>
+        <label className="absolute left-2 top-1/2 w-20 -translate-y-1/2 text-center text-[10px] text-steel">Высота
+          <input inputMode="numeric" value={String(opening.height)} onChange={(e) => { const n = Number(e.target.value.replace(/\D/g, "")); if (n >= 1) onChange({ height: n }); }} className="mt-1 h-8 w-full rounded-md border border-border bg-background text-center text-sm text-foreground" />
+        </label>
       </div>
       <div>
         <Label className="mb-2 block">Толщина облицовки фасада</Label>
@@ -53,15 +59,6 @@ function OpeningEditor({ opening, fallback, onChange, onRemove }: { opening: Ope
           })}
         </div>
       </div>
-      <WindowDiagram opening={opening} fallbackAllowance={fallback} className="mx-auto h-52 w-full max-w-sm" />
-      <div>
-        <Label className="mb-2 block">Фото проёма</Label>
-        <PhotoStrip ids={opening.photoIds} onChange={(photoIds) => onChange({ photoIds })} />
-      </div>
-      <label className="grid gap-1.5">
-        <Label>Заметка</Label>
-        <Input value={opening.note} onChange={(e) => onChange({ note: e.target.value })} />
-      </label>
       <Button variant="destructive" onClick={onRemove}><Trash2 /> Удалить проём</Button>
     </div>
   );
