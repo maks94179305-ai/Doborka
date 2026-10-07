@@ -30,7 +30,7 @@ export function collectPieces(project: Project): NeedPiece[] {
           openingName: opening.name,
           instance,
           color,
-          label: `${opening.name}${tag} · ${SIDE_SHORT[side]}${profileMm ? ` · ${profileMm} мм` : ""}`,
+          label: `${opening.name}${tag}`,
           photoIds: opening.photoIds,
           drawingId: opening.drawingId,
           profileMm,
@@ -107,16 +107,13 @@ export function groupElements(pieces: NeedPiece[]): GroupedElement[] {
 }
 
 export function materialKey(piece: NeedPiece): string {
-  if (piece.kind === "slope") return piece.side && piece.profileMm ? `slope:${piece.side}:${piece.profileMm}` : "slope:bottom";
+  if (piece.kind === "slope") return piece.profileMm ? `slope:${piece.profileMm}` : "slope:bottom";
   if (piece.extraId) return `extra:${piece.extraId}`;
   return `extra:custom:${piece.extraName ?? "custom"}`;
 }
 
 export function materialTitle(piece: NeedPiece): string {
-  if (piece.kind === "slope") {
-    const side = piece.side === "left" ? "Левый откос" : piece.side === "right" ? "Правый откос" : piece.side === "top" ? "Верхний откос" : "Откос низ";
-    return piece.profileMm ? `${side} · ${piece.profileMm} мм` : side;
-  }
+  if (piece.kind === "slope") return "Откос";
   if (piece.extraName?.trim()) return piece.extraName.trim();
   if (piece.extraKind) return extraPreset(piece.extraKind).name;
   return "Свой элемент";
