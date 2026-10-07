@@ -7,7 +7,8 @@ import { formatPin, generatePin, readPairPin, setPairPin } from "@/lib/pair-pin"
 export function PairConnectForm({ autoFocus, onDone }: { autoFocus?: boolean; onDone?: () => void }) {
   const [join, setJoin] = useState("");
   const [error, setError] = useState("");
-  function create() { setError(""); setPairPin(generatePin()); onDone?.(); }
+  function create() {
+    if (typeof Notification !== "undefined" && Notification.permission === "default") void Notification.requestPermission(); setError(""); setPairPin(generatePin()); onDone?.(); }
   function connect() {
     const digits = join.replace(/\D/g, "");
     if (!/^\d{4}$/.test(digits)) { setError("Введите 4 цифры"); return; }
