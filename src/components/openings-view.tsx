@@ -17,6 +17,8 @@ import { useProject, useWorkspace } from "@/lib/store";
 import { SIDE_KEYS, SIDE_SHORT, type Opening, type SideKey, type SlopeSize } from "@/lib/types";
 
 function OpeningEditor({ opening, fallback, onChange, onRemove }: { opening: Opening; fallback: number; onChange: (patch: Partial<Opening>) => void; onRemove: () => void }) {
+  const project = useProject();
+  const sideKey = (side: "left" | "right" | "top", thickness: number) => project?.schemeDrawings?.[`slope:${opening.id}:${side}`] ? `slope:${opening.id}:${side}` : `slope:${thickness}`;
   return (
     <div className="grid gap-4">
       <WindowDiagram opening={opening} fallbackAllowance={fallback} className="mr-auto mt-3 block h-44 w-[92%] max-w-full" onWidth={(n) => onChange({ width: n })} onHeight={(n) => onChange({ height: n })} onBottom={(n) => onChange({ bottomLength: n })} />
@@ -38,9 +40,9 @@ function OpeningEditor({ opening, fallback, onChange, onRemove }: { opening: Ope
           </div>
         </details>
         <div className="grid w-full grid-cols-2 items-stretch gap-2 sm:grid-cols-4">
-          {opening.sides.left ? <SlopeColumn label="Слева" title="Левый" thickness={opening.facade?.left ?? 18} schemeKey={`slope:${opening.facade?.left ?? 18}`} onThickness={(n) => onChange({ facade: { ...opening.facade, left: n } })} /> : null}
-          {opening.sides.right ? <SlopeColumn label="Справа" title="Правый" thickness={opening.facade?.right ?? 18} schemeKey={`slope:${opening.facade?.right ?? 18}`} onThickness={(n) => onChange({ facade: { ...opening.facade, right: n } })} /> : null}
-          {opening.sides.top ? <SlopeColumn label="Сверху" title="Верхний" thickness={opening.facade?.top ?? 18} schemeKey={`slope:${opening.facade?.top ?? 18}`} onThickness={(n) => onChange({ facade: { ...opening.facade, top: n } })} /> : null}
+          {opening.sides.left ? <SlopeColumn label="Слева" title="Левый" thickness={opening.facade?.left ?? 18} schemeKey={sideKey("left", opening.facade?.left ?? 18)} onThickness={(n) => onChange({ facade: { ...opening.facade, left: n } })} /> : null}
+          {opening.sides.right ? <SlopeColumn label="Справа" title="Правый" thickness={opening.facade?.right ?? 18} schemeKey={sideKey("right", opening.facade?.right ?? 18)} onThickness={(n) => onChange({ facade: { ...opening.facade, right: n } })} /> : null}
+          {opening.sides.top ? <SlopeColumn label="Сверху" title="Верхний" thickness={opening.facade?.top ?? 18} schemeKey={sideKey("top", opening.facade?.top ?? 18)} onThickness={(n) => onChange({ facade: { ...opening.facade, top: n } })} /> : null}
           {opening.sides.bottom ? <SlopeColumn label="Отлив" title="Отлив" thickness={opening.facade?.bottom ?? 18} schemeKey={`slope:bottom:${opening.id}`} onThickness={(n) => onChange({ facade: { ...opening.facade, bottom: n } })} /> : null}
         </div>
       </div>

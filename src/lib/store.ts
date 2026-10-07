@@ -131,11 +131,28 @@ export const useWorkspace = create<Workspace>()(
       duplicateOpening: (id) => get().patchProject((p) => {
         const src = p.openings.find((o) => o.id === id);
         if (!src) return p;
-        const copy: Opening = { ...src, id: uid("op"), name: `${src.name} копия`, photoIds: [...src.photoIds], sides: { ...src.sides } };
+        const copyId = uid("op");
+        const copy: Opening = { ...src, id: copyId, name: `${src.name} копия`, photoIds: [...src.photoIds], sides: { ...src.sides }, facade: src.facade ? { ...src.facade } : src.facade };
         const i = p.openings.findIndex((o) => o.id === id);
         const openings = [...p.openings];
         openings.splice(i + 1, 0, copy);
-        return { ...p, openings };
+        const drawings = [...p.drawings];
+        const schemeDrawings = { ...(p.schemeDrawings ?? {}) };
+        const schemes = { ...(p.schemes ?? {}) };
+        const cloneKey = (from: string, to: string) => {
+          const drawing = drawings.find((d) => d.id === schemeDrawings[from]);
+          if (!drawing) return;
+          const next = { ...drawing, id: uid("dr"), updatedAt: Date.now(), objects: drawing.objects.map((o) => ({ ...o, id: uid("ob") })) };
+          drawings.push(next);
+          schemeDrawings[to] = next.id;
+          if (schemes[from]) schemes[to] = [...schemes[from]];
+        };
+        const left = src.facade?.left ?? 18, right = src.facade?.right ?? 18, top = src.facade?.top ?? 18;
+        cloneKey(schemeDrawings[`slope:${src.id}:left`] ? `slope:${src.id}:left` : `slope:${left}`, `slope:${copyId}:left`);
+        cloneKey(schemeDrawings[`slope:${src.id}:right`] ? `slope:${src.id}:right` : `slope:${right}`, `slope:${copyId}:right`);
+        cloneKey(schemeDrawings[`slope:${src.id}:top`] ? `slope:${src.id}:top` : `slope:${top}`, `slope:${copyId}:top`);
+        cloneKey(`slope:bottom:${src.id}`, `slope:bottom:${copyId}`);
+        return { ...p, openings, drawings, schemeDrawings, schemes };
       }),
       removeOpening: (id) => get().patchProject((p) => ({ ...p, openings: p.openings.filter((o) => o.id !== id) })),
       addExtra: (partial) => {
