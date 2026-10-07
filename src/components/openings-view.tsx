@@ -14,7 +14,7 @@ import { SIDE_KEYS, SIDE_SHORT, type Opening, type SideKey, type SlopeSize } fro
 function OpeningEditor({ opening, fallback, onChange, onRemove }: { opening: Opening; fallback: number; onChange: (patch: Partial<Opening>) => void; onRemove: () => void }) {
   return (
     <div className="grid gap-4">
-      <WindowDiagram opening={opening} fallbackAllowance={fallback} className="mx-auto h-52 w-full max-w-[18rem]" onWidth={(n) => onChange({ width: n })} onHeight={(n) => onChange({ height: n })} />
+      <WindowDiagram opening={opening} fallbackAllowance={fallback} className="mx-auto block h-48 w-full max-w-full" onWidth={(n) => onChange({ width: n })} onHeight={(n) => onChange({ height: n })} />
       <Num label="Запас на элемент" value={opening.allowance ?? fallback} onChange={(n) => onChange({ allowance: n })} />
       <div>
         <Label className="mb-2 block">Толщина облицовки фасада</Label>
@@ -23,7 +23,7 @@ function OpeningEditor({ opening, fallback, onChange, onRemove }: { opening: Ope
           <Num label="Справа" value={opening.facade?.right ?? 18} onChange={(n) => onChange({ facade: { left: opening.facade?.left ?? 18, right: n, top: opening.facade?.top ?? 18 } })} />
           <Num label="Сверху" value={opening.facade?.top ?? 18} onChange={(n) => onChange({ facade: { left: opening.facade?.left ?? 18, right: opening.facade?.right ?? 18, top: n } })} />
         </div>
-        <div className="mx-auto mt-8 grid w-full max-w-md grid-cols-3 gap-2">
+        <div className="mx-auto mt-8 grid w-full min-w-0 grid-cols-3 gap-1">
           <SlopeProfile thickness={opening.facade?.left ?? 18} label="Левый" />
           <SlopeProfile thickness={opening.facade?.right ?? 18} label="Правый" />
           <SlopeProfile thickness={opening.facade?.top ?? 18} label="Верхний" />
@@ -92,7 +92,7 @@ export function OpeningsView() {
   if (!project) return <div className="mx-auto flex w-full max-w-5xl flex-col gap-3"><p className="kicker">Доборка</p><h1>Откосы проёмов:</h1><p className="text-sm text-muted-foreground">Загрузка объекта…</p></div>;
   const fallback = project.settings.defaultAllowance;
   return (
-    <div className="mx-auto flex w-full max-w-5xl flex-col gap-6">
+    <div className="mx-auto flex w-full max-w-md flex-col gap-4 overflow-x-hidden px-1">
       <header className="flex flex-col gap-3">
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0"><h1>Откосы проёмов:</h1></div>
@@ -107,11 +107,11 @@ export function OpeningsView() {
           <Button className="mt-4" onClick={() => addOpening({ name: "Окно 1", width: 1650, height: 2050 })}>Добавить 1650×2050</Button>
         </div>
       ) : (
-        <ul className="mx-auto grid w-full max-w-md gap-3">
+        <ul className="grid w-full min-w-0 gap-3">
           {project.openings.map((o) => {
             const sides = SIDE_KEYS.filter((s) => o.sides[s]);
             return (
-              <li key={o.id} className="panel p-3">
+              <li key={o.id} className="panel min-w-0 overflow-hidden p-3">
                 <div className="flex items-start justify-between gap-2">
                   <input value={o.name} onChange={(e) => updateOpening(o.id, { name: e.target.value })} className="min-w-0 bg-transparent font-display text-2xl font-medium tracking-tight outline-none" aria-label="Название окна" />
                   <div className="flex gap-1">
