@@ -14,7 +14,7 @@ import { SIDE_KEYS, SIDE_SHORT, type Opening, type SideKey, type SlopeSize } fro
 function OpeningEditor({ opening, fallback, onChange, onRemove }: { opening: Opening; fallback: number; onChange: (patch: Partial<Opening>) => void; onRemove: () => void }) {
   return (
     <div className="grid gap-4">
-      <WindowDiagram opening={opening} fallbackAllowance={fallback} className="mx-auto block h-48 w-full max-w-[16rem]" onWidth={(n) => onChange({ width: n })} onHeight={(n) => onChange({ height: n })} />
+      <WindowDiagram opening={opening} fallbackAllowance={fallback} className="mr-auto block h-48 w-full max-w-[16rem] -translate-x-3" onWidth={(n) => onChange({ width: n })} onHeight={(n) => onChange({ height: n })} />
       <Num label="Запас на элемент" value={opening.allowance ?? fallback} onChange={(n) => onChange({ allowance: n })} />
       <div>
         <Label className="mb-2 block">Толщина облицовки фасада</Label>
