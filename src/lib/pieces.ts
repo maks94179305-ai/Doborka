@@ -20,16 +20,18 @@ export function collectPieces(project: Project): NeedPiece[] {
       const tag = qty > 1 ? ` · ${instance}` : "";
       (["left", "right", "top", "bottom"] as const).forEach((side) => {
         if (!opening.sides[side]) return;
+        const thickness = side === "bottom" ? 0 : (opening.facade?.[side] ?? 18);
+        const unfolded = side === "bottom" ? slopeLength(opening, side, defaultAllowance) : 50 + 40 + 1 + 20 + thickness + 50;
         pieces.push({
           id: `${opening.id}_${instance}_${side}`,
-          length: slopeLength(opening, side, defaultAllowance),
+          length: unfolded,
           kind: "slope",
           side,
           openingId: opening.id,
           openingName: opening.name,
           instance,
           color,
-          label: `${opening.name}${tag} · ${SIDE_SHORT[side]}`,
+          label: `${opening.name}${tag} · ${SIDE_SHORT[side]}${side === "bottom" ? "" : ` · ${thickness} мм`}`,
           photoIds: opening.photoIds,
           drawingId: opening.drawingId,
         });
