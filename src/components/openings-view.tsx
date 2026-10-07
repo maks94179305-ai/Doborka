@@ -6,14 +6,13 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Num } from "@/components/num-field";
 import { PhotoStrip } from "@/components/photo-strip";
-import { SchemeDrawDialog } from "@/components/scheme-draw-dialog";
 import { WindowDiagram } from "@/components/window-diagram";
 import { mm } from "@/lib/format";
 import { slopeLength } from "@/lib/pieces";
 import { useProject, useWorkspace } from "@/lib/store";
 import { SIDE_KEYS, SIDE_SHORT, type Opening, type SideKey, type SlopeSize } from "@/lib/types";
 
-function OpeningEditor({ opening, fallback, onChange, onRemove, onOpenProfile }: { opening: Opening; fallback: number; onChange: (patch: Partial<Opening>) => void; onRemove: () => void; onOpenProfile: (label: string, thickness: number) => void }) {
+function OpeningEditor({ opening, fallback, onChange, onRemove }: { opening: Opening; fallback: number; onChange: (patch: Partial<Opening>) => void; onRemove: () => void }) {
   return (
     <div className="grid gap-4">
       <label className="grid gap-1.5">
@@ -34,9 +33,9 @@ function OpeningEditor({ opening, fallback, onChange, onRemove, onOpenProfile }:
           <Num label="Сверху" value={opening.facade?.top ?? 18} onChange={(n) => onChange({ facade: { left: opening.facade?.left ?? 18, right: opening.facade?.right ?? 18, top: n } })} />
         </div>
         <div className="mt-3 grid grid-cols-3 gap-2">
-          <SlopeProfile thickness={opening.facade?.left ?? 18} label="Левый" onOpen={() => onOpenProfile("Левый", opening.facade?.left ?? 18)} />
-          <SlopeProfile thickness={opening.facade?.right ?? 18} label="Правый" onOpen={() => onOpenProfile("Правый", opening.facade?.right ?? 18)} />
-          <SlopeProfile thickness={opening.facade?.top ?? 18} label="Верхний" onOpen={() => onOpenProfile("Верхний", opening.facade?.top ?? 18)} />
+          <SlopeProfile thickness={opening.facade?.left ?? 18} label="Левый" />
+          <SlopeProfile thickness={opening.facade?.right ?? 18} label="Правый" />
+          <SlopeProfile thickness={opening.facade?.top ?? 18} label="Верхний" />
         </div>
       </div>
       <div>
@@ -68,42 +67,36 @@ function OpeningEditor({ opening, fallback, onChange, onRemove, onOpenProfile }:
   );
 }
 
-function profileDrawing(label: string, thickness: number): Drawing {
+function SlopeProfile({ thickness, label }: { thickness: number; label: string }) {
   const rise = Math.max(1, thickness);
-  const segs = [[0,0,0,50],[0,50,40,50],[40,50,40,49],[40,49,20,49],[20,49,20,49-rise],[20,49-rise,70,49-rise]];
-  return {
-    id: `slope-${label}-${thickness}`,
-    name: `${label} · ${thickness} мм`,
-    updatedAt: Date.now(),
-    objects: segs.map((s, i) => ({ id: `l${i}`, type: "line" as const, x1: s[0], y1: s[1], x2: s[2], y2: s[3], color: "#f3f1ec", width: 2, dash: "solid" as const })),
-  };
-}
-function SlopeProfile({ thickness, label, onOpen }: { thickness: number; label: string; onOpen?: () => void }) {
-  const rise = Math.max(1, thickness);
-  const s = 1;
-  const x0 = 0, y0 = 0;
-  const yb = 50 * s, xTail = 40 * s, yHook = yb - s, xShelf = xTail - 20 * s, yTop = yHook - rise * s, xTop = xShelf + 50 * s;
-  const pad = 22;
-  const minX = x0 - pad, minY = yTop - pad, maxX = xTop + pad, maxY = yb + pad;
+  const s = 90 / Math.max(50, rise + 20, 40);
+  const x0 = 42, y0 = 28;
+  const yb = y0 + 50 * s;
+  const xTail = x0 + 40 * s;
+  const yHook = yb - s;
+  const xShelf = xTail - 20 * s;
+  const yTop = yHook - rise * s;
+  const xTop = xShelf + 50 * s;
+  const line = `M${x0} ${y0} V${yb} H${xTail} V${yHook} H${xShelf} V${yTop} H${xTop}`;
   return (
-    <button type="button" className="rounded-xl border border-border bg-[#141816] p-2 text-left" onClick={onOpen}>
+    <figure className="rounded-xl border border-border bg-[#141816] p-2">
       <figcaption className="text-center text-[10px] uppercase tracking-[0.12em] text-steel">{label}</figcaption>
-      <svg viewBox={`${minX} ${minY} ${maxX - minX} ${maxY - minY}`} preserveAspectRatio="xMidYMid meet" className="h-40 w-full" aria-label={`${label}, толщина ${thickness}`}>
-        <path d={`M${x0} ${y0} V${yb} H${xTail} V${yHook} H${xShelf} V${yTop} H${xTop}`} fill="none" stroke="#f3f1ec" strokeWidth="1.6" />
-        <Dim x1={x0} y1={y0} x2={x0} y2={yb} dx={-8} dy={0} text="50" />
-        <Dim x1={x0} y1={yb} x2={xTail} y2={yb} dx={0} dy={8} text="40" />
-        <Dim x1={xShelf} y1={yHook} x2={xTail} y2={yHook} dx={0} dy={-6} text="20" />
-        <Dim x1={xShelf} y1={yTop} x2={xShelf} y2={yHook} dx={-8} dy={0} text={String(thickness)} />
-        <Dim x1={xShelf} y1={yTop} x2={xTop} y2={yTop} dx={0} dy={-7} text="50" />
+      <svg viewBox="0 0 260 190" className="mt-1 h-32 w-full" aria-label={`${label}, толщина ${thickness}`}>
+        <path d={line} fill="none" stroke="#f3f1ec" strokeWidth="2.2" />
+        <Dim x1={x0} y1={y0} x2={x0} y2={yb} dx={-16} dy={0} text="50" />
+        <Dim x1={x0} y1={yb} x2={xTail} y2={yb} dx={0} dy={16} text="40" />
+        <Dim x1={xShelf} y1={yHook} x2={xTail} y2={yHook} dx={0} dy={-12} text="20" />
+        <Dim x1={xShelf} y1={yTop} x2={xShelf} y2={yHook} dx={-16} dy={0} text={String(thickness)} />
+        <Dim x1={xShelf} y1={yTop} x2={xTop} y2={yTop} dx={0} dy={-14} text="50" />
       </svg>
-    </button>
+    </figure>
   );
 }
 function Dim({ x1, y1, x2, y2, dx, dy, text }: { x1: number; y1: number; x2: number; y2: number; dx: number; dy: number; text: string }) {
   return (
-    <g fill="none" stroke="#c46a45" strokeWidth="0.6" strokeDasharray="1.5 1">
+    <g fill="none" stroke="#c46a45" strokeWidth="1" strokeDasharray="3 2">
       <path d={`M${x1} ${y1} L${x1 + dx} ${y1 + dy} M${x2} ${y2} L${x2 + dx} ${y2 + dy} M${x1 + dx} ${y1 + dy} L${x2 + dx} ${y2 + dy}`} />
-      <text x={(x1 + x2) / 2 + dx} y={(y1 + y2) / 2 + dy - 1.5} fill="#f3f1ec" stroke="none" fontSize="5" textAnchor="middle" fontFamily="IBM Plex Mono, monospace">{text}</text>
+      <text x={(x1 + x2) / 2 + dx} y={(y1 + y2) / 2 + dy - 4} fill="#f3f1ec" stroke="none" fontSize="18" textAnchor="middle" fontFamily="IBM Plex Mono, monospace">{text}</text>
     </g>
   );
 }
@@ -114,12 +107,6 @@ export function OpeningsView() {
   const duplicateOpening = useWorkspace((s) => s.duplicateOpening);
   const removeOpening = useWorkspace((s) => s.removeOpening);
   const [editId, setEditId] = useState<string | null>(null);
-  const [draft, setDraft] = useState<Drawing | null>(null);
-  const patch = useWorkspace((s) => s.patchProject);
-  function openProfile(opening: Opening, label: string) {
-    const thickness = label === "Слева" ? opening.facade?.left ?? 18 : label === "Справа" ? opening.facade?.right ?? 18 : opening.facade?.top ?? 18;
-    setDraft(profileDrawing(`${opening.name} · ${label}`, thickness));
-  }
   const editing = useMemo(() => project?.openings.find((o) => o.id === editId) ?? null, [project, editId]);
   if (!project) return <div className="mx-auto flex w-full max-w-5xl flex-col gap-3"><p className="kicker">Доборка</p><h1>Откосы проёмов:</h1><p className="text-sm text-muted-foreground">Загрузка объекта…</p></div>;
   const fallback = project.settings.defaultAllowance;
@@ -157,9 +144,9 @@ export function OpeningsView() {
                 </div>
                 <WindowDiagram opening={o} fallbackAllowance={fallback} className="mt-3 h-48 w-full" />
                 <div className="mt-2 grid grid-cols-3 gap-2">
-                  <SlopeProfile thickness={o.facade?.left ?? 18} label="Слева" onOpen={() => openProfile(o, "Слева")} />
-                  <SlopeProfile thickness={o.facade?.right ?? 18} label="Справа" onOpen={() => openProfile(o, "Справа")} />
-                  <SlopeProfile thickness={o.facade?.top ?? 18} label="Сверху" onOpen={() => openProfile(o, "Сверху")} />
+                  <SlopeProfile thickness={o.facade?.left ?? 18} label="Слева" />
+                  <SlopeProfile thickness={o.facade?.right ?? 18} label="Справа" />
+                  <SlopeProfile thickness={o.facade?.top ?? 18} label="Сверху" />
                 </div>
                 <div className="mt-2 flex flex-wrap gap-1">
                   {sides.map((s) => <Badge key={s} tone="steel">{SIDE_SHORT[s]} {mm(slopeLength(o, s as SideKey, fallback))}</Badge>)}
@@ -169,12 +156,11 @@ export function OpeningsView() {
           })}
         </ul>
       )}
-      {draft ? <SchemeDrawDialog open title={draft.name} drawing={draft} onOpenChange={(v) => { if (!v) setDraft(null); }} onDone={(d) => { patch((p) => ({ ...p, drawings: [...p.drawings.filter((x) => x.id !== d.id), d] })); setDraft(null); }} /> : null}
       {editing ? (
         <div className="fixed inset-0 z-[120] overflow-y-auto bg-[#161618] px-4 py-6 pt-[max(1.5rem,env(safe-area-inset-top))]">
           <div className="mx-auto flex max-w-lg items-center justify-between"><h2 className="font-medium text-[#f3f1ec]">{editing.name}</h2><Button type="button" onClick={() => setEditId(null)}>Закрыть</Button></div>
           <div className="mx-auto mt-4 max-w-lg">
-            <OpeningEditor opening={editing} fallback={fallback} onChange={(patch) => updateOpening(editing.id, patch)} onRemove={() => { removeOpening(editing.id); setEditId(null); }} onOpenProfile={(label, thickness) => { setDraft(profileDrawing(label, thickness)); }} />
+            <OpeningEditor opening={editing} fallback={fallback} onChange={(patch) => updateOpening(editing.id, patch)} onRemove={() => { removeOpening(editing.id); setEditId(null); }} />
           </div>
         </div>
       ) : null}
