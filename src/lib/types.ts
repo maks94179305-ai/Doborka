@@ -105,6 +105,8 @@ export function profileChipSide(hex: string): string {
 export type Sides = Record<SideKey, boolean>;
 
 export type FacadeThickness = { left: number; right: number; top: number };
+export type SlopeSize = { leg: number; bottom: number; shelf: number; rise: number; top: number };
+export type SlopeSizes = { left: SlopeSize; right: SlopeSize; top: SlopeSize };
 export type Opening = {
   id: string;
   name: string;
@@ -114,6 +116,7 @@ export type Opening = {
   allowance: number | null;
   sides: Sides;
   facade: FacadeThickness;
+  slopes: SlopeSizes;
   note: string;
   photoIds: string[];
   drawingId: string | null;
