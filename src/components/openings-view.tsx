@@ -68,23 +68,12 @@ function OpeningEditor({ opening, fallback, onChange, onRemove }: { opening: Ope
 }
 
 function SlopeProfile({ thickness, label }: { thickness: number; label: string }) {
+  const step = Math.max(36, Math.min(78, 28 + thickness));
   return (
     <figure className="rounded-xl border border-border bg-[#141816] p-2">
-      <figcaption className="text-center text-[10px] uppercase tracking-[0.12em] text-steel">{label}</figcaption>
-      <svg viewBox="0 0 280 200" className="mt-1 h-28 w-full" aria-label={`${label}, толщина ${thickness}`}>
-        <g fill="none" stroke="#c46a45" strokeWidth="1.4" strokeDasharray="4 3">
-          <path d="M28 18 V132 H40" />
-          <path d="M48 168 H138 V180" />
-          <path d="M112 36 H236 V48" />
-          <path d="M150 96 H176 V108" />
-          <path d="M214 58 V132 H226" />
-        </g>
-        <path d="M40 18 V132 H138 V108 H176 V58 H236" fill="none" stroke="#f3f1ec" strokeWidth="2.4" />
-        <text x="16" y="80" fill="#f3f1ec" fontSize="16" fontFamily="IBM Plex Mono, monospace">50</text>
-        <text x="78" y="194" fill="#f3f1ec" fontSize="16" fontFamily="IBM Plex Mono, monospace">40</text>
-        <text x="158" y="30" fill="#f3f1ec" fontSize="16" fontFamily="IBM Plex Mono, monospace">50</text>
-        <text x="152" y="92" fill="#f3f1ec" fontSize="16" fontFamily="IBM Plex Mono, monospace">20</text>
-        <text x="230" y="100" fill="#f3f1ec" fontSize="16" fontFamily="IBM Plex Mono, monospace">{thickness}</text>
+      <figcaption className="text-center text-[10px] uppercase tracking-[0.12em] text-steel">{label} {thickness}</figcaption>
+      <svg viewBox="0 0 280 180" className="mt-1 h-28 w-full" aria-label={`${label}, толщина ${thickness}`}>
+        <path d={`M28 12 V150 H132 V142 H108 V${150 - step} H250`} fill="none" stroke="#f3f1ec" strokeWidth="2.2" />
       </svg>
     </figure>
   );
