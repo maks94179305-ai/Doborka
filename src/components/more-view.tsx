@@ -68,6 +68,19 @@ export function MoreView() {
       </section>
       <PairPanel />
       <section className="space-y-3">
+        <h2 className="font-display text-lg">Как пользоваться</h2>
+        <div className="grid gap-3 text-sm leading-6 text-muted-foreground">
+          <p><span className="text-foreground">Откосы.</span> Кнопка «Проём» добавляет окно. Название меняется нажатием на заголовок карточки. Ширина стоит над окном, высота слева. Если включён низ, его длина задаётся отдельно под окном.</p>
+          <p><span className="text-foreground">Толщина фасада.</span> Слева, справа, сверху и снизу настраиваются отдельно. Схема стоит сразу под своим полем. Нажатие на схему открывает чертёж. Правка попадает в раскрой этой же толщины.</p>
+          <p><span className="text-foreground">Чертёж.</span> Линия рисуется выбранным инструментом. Размер ставится так: включите разметку, нажмите прямо на линию и отведите палец в сторону. Цифру размера можно изменить нажатием на неё.</p>
+          <p><span className="text-foreground">Другие элементы.</span> Здесь добавляются доборные детали. Количество меняется плюсом и минусом или вручную. Цвет появляется после чертежа.</p>
+          <p><span className="text-foreground">Раскрой.</span> Одинаковые откосы собираются в одну карточку. На хлысте подписано, где 18 мм и где 23 мм. Кнопка «Редактировать» открывает тот же чертёж.</p>
+          <p><span className="text-foreground">История.</span> Сюда попадают отправленные схемы. Нажатие открывает схему, двумя пальцами её можно увеличить.</p>
+          <p><span className="text-foreground">Синхронизация.</span> В настройках создайте пин-код и введите тот же код на втором устройстве. Объект, чертежи и история станут общими. Проект также хранится на этом устройстве и не пропадает после выхода.</p>
+        </div>
+      </section>
+
+      <section className="space-y-3">
         <h2 className="font-display text-lg">Объект</h2>
         <label className="grid gap-1.5"><Label>Название</Label><Input value={project.name} onChange={(e) => ws.renameProject(project.id, e.target.value)} /></label>
         <div className="flex flex-wrap gap-2">
