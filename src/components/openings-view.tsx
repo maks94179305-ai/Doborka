@@ -95,7 +95,7 @@ function SlopeProfile({ thickness, label }: { thickness: number; label: string }
   const xShelf = xTail - 20;
   const yTop = yHook - rise;
   const xTop = xShelf + 50;
-  const minX = x0 - 28, minY = yTop - 24, maxX = xTop + 16, maxY = yb + 24;
+  const minX = x0 - 28, minY = yTop - 42, maxX = xTop + 28, maxY = yb + 24;
   const line = `M${x0} ${y0} V${yb} H${xTail} V${yHook} H${xShelf} V${yTop} H${xTop}`;
   return (
     <figure className="mx-auto w-full rounded-xl border border-border bg-[#141816] p-1.5">
@@ -103,18 +103,18 @@ function SlopeProfile({ thickness, label }: { thickness: number; label: string }
         <path d={line} fill="none" stroke="#f3f1ec" strokeWidth="1.6" />
         <Dim x1={x0} y1={y0} x2={x0} y2={yb} dx={-15} dy={0} text="50" />
         <Dim x1={x0} y1={yb} x2={xTail} y2={yb} dx={0} dy={15} text="40" />
-        <Dim x1={xShelf} y1={yHook} x2={xTail} y2={yHook} dx={0} dy={-15} text="20" />
-        <Dim x1={xShelf} y1={yTop} x2={xShelf} y2={yHook} dx={xTop - xShelf} dy={0} text={String(thickness)} />
+        <Dim x1={xShelf} y1={yHook} x2={xTail} y2={yHook} dx={0} dy={-15} textDy={8} text="20" />
+        <Dim x1={xShelf} y1={yTop} x2={xShelf} y2={yHook} dx={xTop - xShelf} dy={0} textDy={8} text={String(thickness)} />
         <Dim x1={xShelf} y1={yTop} x2={xTop} y2={yTop} dx={0} dy={-15} text="50" />
       </svg>
     </figure>
   );
 }
-function Dim({ x1, y1, x2, y2, dx, dy, text }: { x1: number; y1: number; x2: number; y2: number; dx: number; dy: number; text: string }) {
+function Dim({ x1, y1, x2, y2, dx, dy, text, textDy = 0 }: { x1: number; y1: number; x2: number; y2: number; dx: number; dy: number; text: string; textDy?: number }) {
   return (
     <g fill="none" stroke="#c46a45" strokeWidth="1" strokeDasharray="3 2">
       <path d={`M${x1} ${y1} L${x1 + dx} ${y1 + dy} M${x2} ${y2} L${x2 + dx} ${y2 + dy} M${x1 + dx} ${y1 + dy} L${x2 + dx} ${y2 + dy}`} />
-      <text x={(x1 + x2) / 2 + dx} y={(y1 + y2) / 2 + dy - 4} fill="#f3f1ec" stroke="none" fontSize="8" textAnchor="middle" fontFamily="IBM Plex Mono, monospace">{text}</text>
+      <text x={(x1 + x2) / 2 + dx} y={(y1 + y2) / 2 + dy - 4 + textDy} fill="#f3f1ec" stroke="none" fontSize="8" textAnchor="middle" fontFamily="IBM Plex Mono, monospace">{text}</text>
     </g>
   );
 }
