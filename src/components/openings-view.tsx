@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Copy, Plus, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -8,7 +8,7 @@ import { Num } from "@/components/num-field";
 import { SchemeDrawDialog } from "@/components/scheme-draw-dialog";
 import { WindowDiagram } from "@/components/window-diagram";
 import { renderDrawingToBlob } from "@/lib/draw-render";
-import { savePhoto } from "@/lib/photos";
+import { getPhoto, savePhoto } from "@/lib/photos";
 import { uid } from "@/lib/utils";
 import type { Drawing } from "@/lib/types";
 import { mm } from "@/lib/format";
@@ -22,8 +22,8 @@ function OpeningEditor({ opening, fallback, onChange, onRemove }: { opening: Ope
       <WindowDiagram opening={opening} fallbackAllowance={fallback} className="mr-auto mt-3 block h-44 w-[92%] max-w-full" onWidth={(n) => onChange({ width: n })} onHeight={(n) => onChange({ height: n })} onBottom={(n) => onChange({ bottomLength: n })} />
       <Num label="Запас на элемент" value={opening.allowance ?? fallback} onChange={(n) => onChange({ allowance: n })} />
       <div>
-        <details>
-          <summary className="mb-2 cursor-pointer text-sm">Толщина облицовки фасада</summary>
+        <details open className="rounded-xl border border-steel/50 bg-card px-3 py-2">
+          <summary className="cursor-pointer text-base font-medium text-foreground">Толщина облицовки фасада</summary>
           <div className={"mb-2 grid gap-2 " + (opening.sides.bottom ? "grid-cols-4" : "grid-cols-3")}>
             <Num label="Слева" value={opening.facade?.left ?? 18} onChange={(n) => onChange({ facade: { ...opening.facade, left: n } })} />
             <Num label="Справа" value={opening.facade?.right ?? 18} onChange={(n) => onChange({ facade: { ...opening.facade, right: n } })} />
@@ -88,10 +88,22 @@ function SlopeColumn({ label, title, thickness, onThickness, schemeKey }: { labe
   }
   return (
     <div>
-      <button type="button" className="mt-1 w-full" onClick={() => setOpen(true)} aria-label={`Править ${title}`}><SlopeProfile thickness={thickness} label={title} /></button>
+      <button type="button" className="mt-1 w-full" onClick={() => setOpen(true)} aria-label={`Править ${title}`}>
+        {saved?.previewPhotoId ? <SchemePreview photoId={saved.previewPhotoId} label={title} /> : <SlopeProfile thickness={thickness} label={title} />}
+      </button>
       {open ? <SchemeDrawDialog open={open} title={title} drawing={draft} onOpenChange={setOpen} onDone={(d) => { void done(d); }} /> : null}
     </div>
   );
+}
+
+function SchemePreview({ photoId, label }: { photoId: string; label: string }) {
+  const [url, setUrl] = useState("");
+  useEffect(() => {
+    let live = true;
+    void getPhoto(photoId).then((blob) => { if (live && blob) setUrl(URL.createObjectURL(blob)); });
+    return () => { live = false; };
+  }, [photoId]);
+  return <figure className="mx-auto w-full rounded-xl border border-border bg-[#141816] p-1.5">{url ? <img src={url} alt={label} className="mx-auto block h-24 w-full object-contain" /> : null}</figure>;
 }
 function SlopeProfile({ thickness, label }: { thickness: number; label: string }) {
   const rise = Math.max(1, thickness);
