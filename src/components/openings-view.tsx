@@ -37,7 +37,7 @@ function OpeningEditor({ opening, fallback, onChange, onRemove }: { opening: Ope
             {opening.sides.bottom ? <Num label="Отлив" value={opening.facade?.bottom ?? 18} onChange={(n) => onChange({ facade: { ...opening.facade, bottom: n } })} /> : null}
           </div>
         </details>
-        <div className="grid w-full grid-cols-2 gap-2 sm:grid-cols-4">
+        <div className="grid w-full grid-cols-2 items-stretch gap-2 sm:grid-cols-4">
           {opening.sides.left ? <SlopeColumn label="Слева" title="Левый" thickness={opening.facade?.left ?? 18} schemeKey={`slope:${opening.facade?.left ?? 18}`} onThickness={(n) => onChange({ facade: { ...opening.facade, left: n } })} /> : null}
           {opening.sides.right ? <SlopeColumn label="Справа" title="Правый" thickness={opening.facade?.right ?? 18} schemeKey={`slope:${opening.facade?.right ?? 18}`} onThickness={(n) => onChange({ facade: { ...opening.facade, right: n } })} /> : null}
           {opening.sides.top ? <SlopeColumn label="Сверху" title="Верхний" thickness={opening.facade?.top ?? 18} schemeKey={`slope:${opening.facade?.top ?? 18}`} onThickness={(n) => onChange({ facade: { ...opening.facade, top: n } })} /> : null}
@@ -95,9 +95,9 @@ function SlopeColumn({ label, title, thickness, onThickness, schemeKey, empty = 
     patch((p) => ({ ...p, drawings: [...p.drawings.filter((d) => d.id !== next.id), { ...next, previewPhotoId: photoId || undefined }], schemeDrawings: { ...(p.schemeDrawings ?? {}), [key]: next.id }, schemes: { ...(p.schemes ?? {}), [key]: photoId ? [photoId] : [] } }));
   }
   return (
-    <div>
-      <button type="button" className="mt-1 w-full" onClick={() => setOpen(true)} aria-label={`Править ${title}`}>
-        {saved ? (saved.objects.length ? <SavedScheme drawing={saved} /> : <figure className="mx-auto w-full rounded-xl border border-border bg-[#141816] p-1.5"><svg viewBox="8 17 126 85" className="mx-auto mt-1 block h-auto w-full" /></figure>) : empty ? <figure className="mx-auto w-full rounded-xl border border-border bg-[#141816] p-1.5"><svg viewBox="8 17 126 85" className="mx-auto mt-1 block h-auto w-full" /></figure> : <SlopeProfile thickness={thickness} label={title} />}
+    <div className="h-full">
+      <button type="button" className="mt-1 block h-full w-full" onClick={() => setOpen(true)} aria-label={`Править ${title}`}>
+        {saved ? (saved.objects.length ? <SavedScheme drawing={saved} /> : <figure className="mx-auto flex h-full min-h-[9.5rem] w-full rounded-xl border border-border bg-[#141816] p-1.5"><svg viewBox="8 17 126 85" className="mx-auto mt-1 block h-full w-full" /></figure>) : empty ? <figure className="mx-auto flex h-full min-h-[9.5rem] w-full rounded-xl border border-border bg-[#141816] p-1.5"><svg viewBox="8 17 126 85" className="mx-auto mt-1 block h-full w-full" /></figure> : <SlopeProfile thickness={thickness} label={title} />}
       </button>
       {open ? <SchemeDrawDialog open={open} title={title} drawing={draft} onOpenChange={setOpen} onDone={(d) => { void done(d); }} /> : null}
     </div>
@@ -150,8 +150,8 @@ function SlopeProfile({ thickness, label }: { thickness: number; label: string }
         <path d={line} fill="none" stroke="#f3f1ec" strokeWidth="1.6" />
         <Dim x1={x0} y1={y0} x2={x0} y2={yb} dx={-15} dy={0} text="50" />
         <Dim x1={x0} y1={yb} x2={xTail} y2={yb} dx={0} dy={15} text="40" />
-        <Dim x1={xShelf} y1={yHook} x2={xTail} y2={yHook} dx={0} dy={-15} textDy={-6} text="20" />
-        <Dim x1={xShelf} y1={yTop} x2={xShelf} y2={yHook} dx={xTop - xShelf} dy={0} textDx={10} textDy={-2} text={String(thickness)} />
+        <Dim x1={xShelf} y1={yHook} x2={xTail} y2={yHook} dx={0} dy={-15} textDy={-2} text="20" />
+        <Dim x1={xShelf} y1={yTop} x2={xShelf} y2={yHook} dx={xTop - xShelf} dy={0} textDx={10} textDy={2} text={String(thickness)} />
         <Dim x1={xShelf} y1={yTop} x2={xTop} y2={yTop} dx={0} dy={-15} text="50" />
       </svg>
     </figure>
