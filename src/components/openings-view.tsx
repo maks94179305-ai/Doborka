@@ -5,7 +5,12 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Num } from "@/components/num-field";
+import { SchemeDrawDialog } from "@/components/scheme-draw-dialog";
 import { WindowDiagram } from "@/components/window-diagram";
+import { renderDrawingToBlob } from "@/lib/draw-render";
+import { savePhoto } from "@/lib/photos";
+import { uid } from "@/lib/utils";
+import type { Drawing } from "@/lib/types";
 import { mm } from "@/lib/format";
 import { slopeLength } from "@/lib/pieces";
 import { useProject, useWorkspace } from "@/lib/store";
@@ -14,19 +19,15 @@ import { SIDE_KEYS, SIDE_SHORT, type Opening, type SideKey, type SlopeSize } fro
 function OpeningEditor({ opening, fallback, onChange, onRemove }: { opening: Opening; fallback: number; onChange: (patch: Partial<Opening>) => void; onRemove: () => void }) {
   return (
     <div className="grid gap-4">
-      <WindowDiagram opening={opening} fallbackAllowance={fallback} className="mr-auto mt-3 block h-44 w-[92%] max-w-full" onWidth={(n) => onChange({ width: n })} onHeight={(n) => onChange({ height: n })} />
+      <WindowDiagram opening={opening} fallbackAllowance={fallback} className="mr-auto mt-3 block h-44 w-[92%] max-w-full" onWidth={(n) => onChange({ width: n })} onHeight={(n) => onChange({ height: n })} onBottom={(n) => onChange({ bottomLength: n })} />
       <Num label="Запас на элемент" value={opening.allowance ?? fallback} onChange={(n) => onChange({ allowance: n })} />
       <div>
         <Label className="mb-2 block">Толщина облицовки фасада</Label>
-        <div className="grid grid-cols-3 gap-2">
-          <Num label="Слева" value={opening.facade?.left ?? 18} onChange={(n) => onChange({ facade: { left: n, right: opening.facade?.right ?? 18, top: opening.facade?.top ?? 18 } })} />
-          <Num label="Справа" value={opening.facade?.right ?? 18} onChange={(n) => onChange({ facade: { left: opening.facade?.left ?? 18, right: n, top: opening.facade?.top ?? 18 } })} />
-          <Num label="Сверху" value={opening.facade?.top ?? 18} onChange={(n) => onChange({ facade: { left: opening.facade?.left ?? 18, right: opening.facade?.right ?? 18, top: n } })} />
-        </div>
-        <div className="mx-auto mt-8 grid w-full min-w-0 max-w-[16rem] grid-cols-3 gap-1">
-          <SlopeProfile thickness={opening.facade?.left ?? 18} label="Левый" />
-          <SlopeProfile thickness={opening.facade?.right ?? 18} label="Правый" />
-          <SlopeProfile thickness={opening.facade?.top ?? 18} label="Верхний" />
+        <div className={"grid gap-2 " + (opening.sides.bottom ? "grid-cols-4" : "grid-cols-3")}>
+          <SlopeColumn label="Слева" title="Левый" thickness={opening.facade?.left ?? 18} onThickness={(n) => onChange({ facade: { ...opening.facade, left: n } })} />
+          <SlopeColumn label="Справа" title="Правый" thickness={opening.facade?.right ?? 18} onThickness={(n) => onChange({ facade: { ...opening.facade, right: n } })} />
+          <SlopeColumn label="Сверху" title="Верхний" thickness={opening.facade?.top ?? 18} onThickness={(n) => onChange({ facade: { ...opening.facade, top: n } })} />
+          {opening.sides.bottom ? <SlopeColumn label="Снизу" title="Нижний" thickness={opening.facade?.bottom ?? 18} onThickness={(n) => onChange({ facade: { ...opening.facade, bottom: n } })} /> : null}
         </div>
       </div>
       <div>
@@ -48,6 +49,30 @@ function OpeningEditor({ opening, fallback, onChange, onRemove }: { opening: Ope
   );
 }
 
+
+function SlopeColumn({ label, title, thickness, onThickness }: { label: string; title: string; thickness: number; onThickness: (n: number) => void }) {
+  const project = useProject();
+  const patch = useWorkspace((s) => s.patchProject);
+  const [open, setOpen] = useState(false);
+  const key = `slope:${thickness}`;
+  const saved = project?.drawings.find((d) => d.id === project.schemeDrawings?.[key]);
+  const draft = saved ?? { id: uid("dr"), name: `Откос · ${thickness} мм`, objects: [], updatedAt: Date.now() };
+  async function done(next: Drawing) {
+    const blob = await renderDrawingToBlob(next);
+    if (!blob) return;
+    const photoId = uid("ph");
+    await savePhoto(photoId, blob);
+    patch((p) => ({ ...p, drawings: [...p.drawings.filter((d) => d.id !== next.id), { ...next, previewPhotoId: photoId }], schemeDrawings: { ...(p.schemeDrawings ?? {}), [key]: next.id }, schemes: { ...(p.schemes ?? {}), [key]: [photoId] } }));
+  }
+  return (
+    <div>
+      <Num label={label} value={thickness} onChange={onThickness} />
+      <SlopeProfile thickness={thickness} label={title} />
+      <Button type="button" variant="outline" className="mt-1 h-8 w-full text-xs" onClick={() => setOpen(true)}>Править чертёж</Button>
+      {open ? <SchemeDrawDialog open={open} title={title} drawing={draft} onOpenChange={setOpen} onDone={(d) => { void done(d); }} /> : null}
+    </div>
+  );
+}
 function SlopeProfile({ thickness, label }: { thickness: number; label: string }) {
   const rise = Math.max(1, thickness);
   const x0 = 36, y0 = 28;
