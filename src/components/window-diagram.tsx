@@ -33,11 +33,11 @@ export function WindowDiagram({ opening, fallbackAllowance, className, onWidth, 
       {right ? <rect x="244" y="68" width="16" height="130" fill="url(#tex-slope)" /> : null}
       {top ? <rect x="102" y="46" width="136" height="16" fill="url(#tex-slope)" /> : null}
       {bottom ? <rect x="102" y="204" width="136" height="16" fill="url(#tex-slope)" /> : null}
-      {top ? <text x="150" y="34" textAnchor="middle" fill="#c4a574" fontSize="11" fontFamily="IBM Plex Mono, monospace">{mm(top)}</text> : null}
+      {top ? <text x="150" y="30" textAnchor="middle" fill="#c4a574" fontSize="11" fontFamily="IBM Plex Mono, monospace">{mm(top)}</text> : null}
       {bottom ? <text x="170" y="234" textAnchor="middle" fill="#c4a574" fontSize="11" fontFamily="IBM Plex Mono, monospace">{mm(bottom)}</text> : null}
       {left ? <text x="64" y="134" textAnchor="middle" fill="#c4a574" fontSize="11" fontFamily="IBM Plex Mono, monospace" transform="rotate(-90 64 134)">{mm(left)}</text> : null}
       {right ? <text x="276" y="134" textAnchor="middle" fill="#c4a574" fontSize="11" fontFamily="IBM Plex Mono, monospace" transform="rotate(-90 276 134)">{mm(right)}</text> : null}
-      <foreignObject x="104" y="2" width="92" height="26">
+      <foreignObject x="104" y="0" width="92" height="24">
         <input inputMode="numeric" aria-label="Ширина" value={String(opening.width)} onChange={(e) => set(e.target.value, onWidth)} style={{ width: "100%", height: "26px", borderRadius: "8px", border: "1px solid #3c463f", background: "#121614", color: "#f3f1ec", textAlign: "center", fontSize: "13px" }} />
       </foreignObject>
       <foreignObject x="6" y="104" width="52" height="26" transform="rotate(-90 32 117)">
