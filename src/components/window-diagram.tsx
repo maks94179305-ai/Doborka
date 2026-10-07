@@ -1,3 +1,7 @@
+import wood from "@/assets/wood.jpg";
+import glass from "@/assets/glass.jpg";
+import wall from "@/assets/wall.jpg";
+import slope from "@/assets/slope.jpg";
 import { mm } from "@/lib/format";
 import { slopeLength } from "@/lib/pieces";
 import type { Opening } from "@/lib/types";
@@ -15,21 +19,20 @@ export function WindowDiagram({ opening, fallbackAllowance, className, onWidth, 
   return (
     <svg viewBox="0 0 340 260" className={cn(className)} role="img" aria-label={`Проём ${opening.width} на ${opening.height}`}>
       <defs>
-        <pattern id="wall-grain" width="8" height="8" patternUnits="userSpaceOnUse"><rect width="8" height="8" fill="#3a403c" /><path d="M0 4 H8" stroke="#2c312e" strokeWidth="0.6" /></pattern>
-        <linearGradient id="frame" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stopColor="#efe2c4" /><stop offset="45%" stopColor="#c9ae78" /><stop offset="100%" stopColor="#8d7044" /></linearGradient>
-        <linearGradient id="glass" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stopColor="#d7eef4" /><stop offset="28%" stopColor="#7eb4c4" /><stop offset="100%" stopColor="#16343c" /></linearGradient>
-        <linearGradient id="slope" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="#f7f4ee" /><stop offset="100%" stopColor="#c9c2b6" /></linearGradient>
+        <pattern id="tex-wall" width="48" height="48" patternUnits="userSpaceOnUse"><image href={wall} width="48" height="48" preserveAspectRatio="xMidYMid slice" /></pattern>
+        <pattern id="tex-wood" width="64" height="64" patternUnits="userSpaceOnUse"><image href={wood} width="64" height="64" preserveAspectRatio="xMidYMid slice" /></pattern>
+        <pattern id="tex-glass" width="54" height="108" patternUnits="userSpaceOnUse"><image href={glass} width="54" height="108" preserveAspectRatio="xMidYMid slice" /></pattern>
+        <pattern id="tex-slope" width="40" height="40" patternUnits="userSpaceOnUse"><image href={slope} width="40" height="40" preserveAspectRatio="xMidYMid slice" /></pattern>
       </defs>
-      <rect x="92" y="58" width="156" height="150" fill="url(#wall-grain)" />
-      <rect x="102" y="68" width="136" height="130" fill="url(#frame)" stroke="#6d5430" strokeWidth="2" />
-      <rect x="112" y="78" width="54" height="108" fill="url(#glass)" stroke="#efe2c4" strokeWidth="3" />
-      <rect x="170" y="78" width="54" height="108" fill="url(#glass)" stroke="#efe2c4" strokeWidth="3" />
-      <path d="M116 82 H160 L146 132 Z" fill="#fff" opacity="0.22" />
-      <rect x="102" y="192" width="136" height="8" fill="#8d7044" />
-      {left ? <rect x="80" y="68" width="16" height="130" fill="url(#slope)" /> : null}
-      {right ? <rect x="244" y="68" width="16" height="130" fill="url(#slope)" /> : null}
-      {top ? <rect x="102" y="46" width="136" height="16" fill="url(#slope)" /> : null}
-      {bottom ? <rect x="102" y="204" width="136" height="16" fill="url(#slope)" /> : null}
+      <rect x="92" y="58" width="156" height="150" fill="url(#tex-wall)" />
+      <rect x="102" y="68" width="136" height="130" fill="url(#tex-wood)" stroke="#6d5430" strokeWidth="1.5" />
+      <rect x="112" y="78" width="54" height="108" fill="url(#tex-glass)" stroke="#efe2c4" strokeWidth="3" />
+      <rect x="170" y="78" width="54" height="108" fill="url(#tex-glass)" stroke="#efe2c4" strokeWidth="3" />
+      <path d="M116 82 H160 L146 132 Z" fill="#fff" opacity="0.18" />
+      {left ? <rect x="80" y="68" width="16" height="130" fill="url(#tex-slope)" /> : null}
+      {right ? <rect x="244" y="68" width="16" height="130" fill="url(#tex-slope)" /> : null}
+      {top ? <rect x="102" y="46" width="136" height="16" fill="url(#tex-slope)" /> : null}
+      {bottom ? <rect x="102" y="204" width="136" height="16" fill="url(#tex-slope)" /> : null}
       {top ? <text x="170" y="40" textAnchor="middle" fill="#c4a574" fontSize="11" fontFamily="IBM Plex Mono, monospace">{mm(top)}</text> : null}
       {bottom ? <text x="170" y="234" textAnchor="middle" fill="#c4a574" fontSize="11" fontFamily="IBM Plex Mono, monospace">{mm(bottom)}</text> : null}
       {left ? <text x="64" y="134" textAnchor="middle" fill="#c4a574" fontSize="11" fontFamily="IBM Plex Mono, monospace" transform="rotate(-90 64 134)">{mm(left)}</text> : null}
