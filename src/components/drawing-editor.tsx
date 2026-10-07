@@ -147,14 +147,14 @@ export function DrawingEditor({ drawing, onChange, compact = false }: { drawing:
   }, [selected]);
 
   useEffect(() => { redraw(); }, [redraw, objects, view, draft, color]);
+  const fitted = useRef("");
   useEffect(() => {
     const el = wrapRef.current;
-    if (!el || objects.length === 0 || viewRef.current.scale !== SCALE_DEFAULT) return;
+    if (!el || objects.length === 0 || fitted.current === drawing.id) return;
+    fitted.current = drawing.id;
     const next = fitView(objects, el.clientWidth, el.clientHeight);
     viewRef.current = next;
     setView(next);
-    // only the first open; later object edits must not recenter the sheet
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [drawing.id]);
 
   useEffect(() => {
@@ -212,7 +212,7 @@ export function DrawingEditor({ drawing, onChange, compact = false }: { drawing:
     const p = local(e);
     const world = toWorld(p.x, p.y);
     clearHold();
-    if (e.button === 2 || (e.button === 0 && !pick(world) && toolRef.current !== "line" && toolRef.current !== "dim")) {
+    if (e.button === 2) {
       panRef.current = { x: e.clientX, y: e.clientY, vx: viewRef.current.x, vy: viewRef.current.y };
       return;
     }
