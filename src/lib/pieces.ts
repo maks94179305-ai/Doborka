@@ -115,7 +115,7 @@ export function materialKey(piece: NeedPiece): string {
 }
 
 export function materialTitle(piece: NeedPiece): string {
-  if (piece.kind === "slope" && piece.side === "bottom") return "Нижний откос";
+  if (piece.kind === "slope" && piece.side === "bottom") return "Отлив";
   if (piece.kind === "slope") return "Откос";
   if (piece.extraName?.trim()) return piece.extraName.trim();
   if (piece.extraKind) return extraPreset(piece.extraKind).name;
