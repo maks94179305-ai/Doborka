@@ -56,7 +56,21 @@ function SlopeColumn({ label, title, thickness, onThickness }: { label: string; 
   const [open, setOpen] = useState(false);
   const key = `slope:${thickness}`;
   const saved = project?.drawings.find((d) => d.id === project.schemeDrawings?.[key]);
-  const draft = saved ?? { id: uid("dr"), name: `Откос · ${thickness} мм`, objects: [], updatedAt: Date.now() };
+  const rise = Math.max(1, thickness);
+  const generated = { id: uid("dr"), name: `Откос · ${thickness} мм`, updatedAt: Date.now(), objects: [
+    { id: uid("ln"), type: "line" as const, x1: 0, y1: 0, x2: 0, y2: 50, color: "#f3f1ec", width: 2, dash: "solid" as const },
+    { id: uid("ln"), type: "line" as const, x1: 0, y1: 50, x2: 40, y2: 50, color: "#f3f1ec", width: 2, dash: "solid" as const },
+    { id: uid("ln"), type: "line" as const, x1: 40, y1: 50, x2: 40, y2: 49, color: "#f3f1ec", width: 2, dash: "solid" as const },
+    { id: uid("ln"), type: "line" as const, x1: 40, y1: 49, x2: 20, y2: 49, color: "#f3f1ec", width: 2, dash: "solid" as const },
+    { id: uid("ln"), type: "line" as const, x1: 20, y1: 49, x2: 20, y2: 49 - rise, color: "#f3f1ec", width: 2, dash: "solid" as const },
+    { id: uid("ln"), type: "line" as const, x1: 20, y1: 49 - rise, x2: 70, y2: 49 - rise, color: "#f3f1ec", width: 2, dash: "solid" as const },
+    { id: uid("dm"), type: "dim" as const, x1: 0, y1: 0, x2: 0, y2: 50, offset: 15, color: "#c46a45", width: 1, label: "50" },
+    { id: uid("dm"), type: "dim" as const, x1: 0, y1: 50, x2: 40, y2: 50, offset: 15, color: "#c46a45", width: 1, label: "40" },
+    { id: uid("dm"), type: "dim" as const, x1: 20, y1: 49, x2: 40, y2: 49, offset: -15, color: "#c46a45", width: 1, label: "20" },
+    { id: uid("dm"), type: "dim" as const, x1: 20, y1: 49 - rise, x2: 20, y2: 49, offset: -50, color: "#c46a45", width: 1, label: String(thickness) },
+    { id: uid("dm"), type: "dim" as const, x1: 20, y1: 49 - rise, x2: 70, y2: 49 - rise, offset: -15, color: "#c46a45", width: 1, label: "50" },
+  ] };
+  const draft = saved?.objects.some((o) => o.type === "dim" && o.label === String(thickness) && o.offset === -50) ? saved : generated;
   async function done(next: Drawing) {
     const blob = await renderDrawingToBlob(next);
     if (!blob) return;
@@ -67,8 +81,7 @@ function SlopeColumn({ label, title, thickness, onThickness }: { label: string; 
   return (
     <div>
       <Num label={label} value={thickness} onChange={onThickness} />
-      <SlopeProfile thickness={thickness} label={title} />
-      <Button type="button" variant="outline" className="mt-1 h-8 w-full text-xs" onClick={() => setOpen(true)}>Править чертёж</Button>
+      <button type="button" className="mt-1 w-full" onClick={() => setOpen(true)} aria-label={`Править ${title}`}><SlopeProfile thickness={thickness} label={title} /></button>
       {open ? <SchemeDrawDialog open={open} title={title} drawing={draft} onOpenChange={setOpen} onDone={(d) => { void done(d); }} /> : null}
     </div>
   );
@@ -86,7 +99,6 @@ function SlopeProfile({ thickness, label }: { thickness: number; label: string }
   const line = `M${x0} ${y0} V${yb} H${xTail} V${yHook} H${xShelf} V${yTop} H${xTop}`;
   return (
     <figure className="mx-auto w-full rounded-xl border border-border bg-[#141816] p-1.5">
-      <figcaption className="text-center text-[10px] uppercase tracking-[0.12em] text-steel">{label}</figcaption>
       <svg viewBox={`${minX} ${minY} ${maxX - minX} ${maxY - minY}`} preserveAspectRatio="xMidYMid meet" className="mx-auto mt-1 block h-auto w-full" aria-label={`${label}, толщина ${thickness}`}>
         <path d={line} fill="none" stroke="#f3f1ec" strokeWidth="1.6" />
         <Dim x1={x0} y1={y0} x2={x0} y2={yb} dx={-15} dy={0} text="50" />
