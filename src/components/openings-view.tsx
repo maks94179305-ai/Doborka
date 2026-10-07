@@ -67,7 +67,7 @@ function SlopeProfile({ thickness, label }: { thickness: number; label: string }
         <Dim x1={x0} y1={y0} x2={x0} y2={yb} dx={-15} dy={0} text="50" />
         <Dim x1={x0} y1={yb} x2={xTail} y2={yb} dx={0} dy={15} text="40" />
         <Dim x1={xShelf} y1={yHook} x2={xTail} y2={yHook} dx={0} dy={-15} text="20" />
-        <Dim x1={xShelf} y1={yTop} x2={xShelf} y2={yHook} dx={-15} dy={0} text={String(thickness)} />
+        <Dim x1={xShelf} y1={yTop} x2={xShelf} y2={yHook} dx={xTop - xShelf} dy={0} text={String(thickness)} />
         <Dim x1={xShelf} y1={yTop} x2={xTop} y2={yTop} dx={0} dy={-15} text="50" />
       </svg>
     </figure>
