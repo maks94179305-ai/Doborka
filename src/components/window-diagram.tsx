@@ -33,7 +33,7 @@ export function WindowDiagram({ opening, fallbackAllowance, className, onWidth, 
       {right ? <rect x="244" y="68" width="16" height="130" fill="url(#tex-slope)" /> : null}
       {top ? <rect x="102" y="46" width="136" height="16" fill="url(#tex-slope)" /> : null}
       {bottom ? <rect x="102" y="204" width="136" height="16" fill="url(#tex-slope)" /> : null}
-      {top ? <text x="170" y="40" textAnchor="middle" fill="#c4a574" fontSize="11" fontFamily="IBM Plex Mono, monospace">{mm(top)}</text> : null}
+      {top ? <text x="170" y="24" textAnchor="middle" fill="#c4a574" fontSize="11" fontFamily="IBM Plex Mono, monospace">{mm(top)}</text> : null}
       {bottom ? <text x="170" y="234" textAnchor="middle" fill="#c4a574" fontSize="11" fontFamily="IBM Plex Mono, monospace">{mm(bottom)}</text> : null}
       {left ? <text x="64" y="134" textAnchor="middle" fill="#c4a574" fontSize="11" fontFamily="IBM Plex Mono, monospace" transform="rotate(-90 64 134)">{mm(left)}</text> : null}
       {right ? <text x="276" y="134" textAnchor="middle" fill="#c4a574" fontSize="11" fontFamily="IBM Plex Mono, monospace" transform="rotate(-90 276 134)">{mm(right)}</text> : null}
