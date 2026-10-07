@@ -68,6 +68,7 @@ export const useWorkspace = create<Workspace>()(
       activeId: null,
       markReady: () => {
         const s = get();
+        if (!useWorkspace.persist.hasHydrated()) return;
         if (s.projects.length === 0) {
           const demo = demoProject();
           set({ ready: true, projects: [demo], activeId: demo.id });
@@ -162,6 +163,7 @@ export const useWorkspace = create<Workspace>()(
       partialize: (s) => ({ projects: s.projects, activeId: s.activeId }),
       skipHydration: true,
       onRehydrateStorage: () => () => { useWorkspace.getState().markReady(); },
+      version: 1,
     },
   ),
 );
