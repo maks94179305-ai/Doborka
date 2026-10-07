@@ -187,7 +187,7 @@ function strokeDimMarks(ctx: CanvasRenderingContext2D, obj: Extract<DrawObject, 
 export function paintDim(ctx: CanvasRenderingContext2D, obj: Extract<DrawObject, { type: "dim" }>, scale: number, hi = false, hideLabel = false) {
   const g = dimGeom(obj); const s = 1 / scale; const tick = 12 * s;
   ctx.save(); ctx.lineCap = "round"; ctx.lineJoin = "round"; strokeDash(ctx, "dash", scale);
-  ctx.strokeStyle = obj.color; ctx.fillStyle = obj.color; ctx.lineWidth = (hi ? Math.max((obj.width ?? 2) + 1.2, 3) : (obj.width ?? 2)) / scale;
+  ctx.strokeStyle = obj.color; ctx.fillStyle = obj.color; ctx.lineWidth = (hi ? Math.max((obj.width ?? 1) + 0.6, 1.6) : (obj.width ?? 1)) / scale;
   if (hi) { ctx.shadowColor = obj.color; ctx.shadowBlur = 8; }
   strokeDimMarks(ctx, obj, g, tick); ctx.setLineDash([]);
   if (hideLabel) { ctx.restore(); return; }
