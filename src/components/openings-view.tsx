@@ -73,10 +73,9 @@ function SlopeProfile({ thickness, label }: { thickness: number; label: string }
       <figcaption className="text-center text-[10px] uppercase tracking-[0.12em] text-steel">{label} {thickness}</figcaption>
       <svg viewBox="0 0 300 170" className="mt-1 h-28 w-full" aria-label={`${label}, толщина ${thickness}`}>
         <path d="M24 10 V148 H118 V78 H268" fill="none" stroke="#f3f1ec" strokeWidth="2.2" />
-        <path d="M118 148 H156 V140" fill="none" stroke="#f3f1ec" strokeWidth="2.2" />
-        <path d="M160 148 H196" fill="none" stroke="#c46a45" strokeWidth="1.4" strokeDasharray="4 3" />
-        <text x="202" y="152" fill="#f3f1ec" fontSize="14" fontFamily="IBM Plex Mono, monospace">2</text>
-        <text x="128" y="116" fill="#f3f1ec" fontSize="13" fontFamily="IBM Plex Mono, monospace">{thickness}</text>
+        <path d="M118 148 H156 V140 H196 V78" fill="none" stroke="#f3f1ec" strokeWidth="2.2" />
+        <text x="164" y="136" fill="#f3f1ec" fontSize="13" fontFamily="IBM Plex Mono, monospace">2</text>
+        <text x="126" y="116" fill="#f3f1ec" fontSize="13" fontFamily="IBM Plex Mono, monospace">{thickness}</text>
       </svg>
     </figure>
   );
