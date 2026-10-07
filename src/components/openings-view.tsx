@@ -32,7 +32,7 @@ function OpeningEditor({ opening, fallback, onChange, onRemove }: { opening: Ope
           <Num label="Справа" value={opening.facade?.right ?? 18} onChange={(n) => onChange({ facade: { left: opening.facade?.left ?? 18, right: n, top: opening.facade?.top ?? 18 } })} />
           <Num label="Сверху" value={opening.facade?.top ?? 18} onChange={(n) => onChange({ facade: { left: opening.facade?.left ?? 18, right: opening.facade?.right ?? 18, top: n } })} />
         </div>
-        <div className="mt-3 grid grid-cols-3 gap-2">
+        <div className="mx-auto mt-3 grid w-full max-w-md grid-cols-3 gap-2">
           <SlopeProfile thickness={opening.facade?.left ?? 18} label="Левый" />
           <SlopeProfile thickness={opening.facade?.right ?? 18} label="Правый" />
           <SlopeProfile thickness={opening.facade?.top ?? 18} label="Верхний" />
@@ -69,25 +69,25 @@ function OpeningEditor({ opening, fallback, onChange, onRemove }: { opening: Ope
 
 function SlopeProfile({ thickness, label }: { thickness: number; label: string }) {
   const rise = Math.max(1, thickness);
-  const s = 90 / Math.max(50, rise + 20, 40);
-  const x0 = 42, y0 = 28;
-  const yb = y0 + 50 * s;
-  const xTail = x0 + 40 * s;
-  const yHook = yb - s;
-  const xShelf = xTail - 20 * s;
-  const yTop = yHook - rise * s;
-  const xTop = xShelf + 50 * s;
+  const x0 = 36, y0 = 28;
+  const yb = y0 + 50;
+  const xTail = x0 + 40;
+  const yHook = yb - 1;
+  const xShelf = xTail - 20;
+  const yTop = yHook - rise;
+  const xTop = xShelf + 50;
+  const minX = x0 - 28, minY = yTop - 24, maxX = xTop + 16, maxY = yb + 24;
   const line = `M${x0} ${y0} V${yb} H${xTail} V${yHook} H${xShelf} V${yTop} H${xTop}`;
   return (
-    <figure className="rounded-xl border border-border bg-[#141816] p-2">
+    <figure className="mx-auto w-full rounded-xl border border-border bg-[#141816] p-1.5">
       <figcaption className="text-center text-[10px] uppercase tracking-[0.12em] text-steel">{label}</figcaption>
-      <svg viewBox="0 0 260 190" className="mt-1 h-32 w-full" aria-label={`${label}, толщина ${thickness}`}>
-        <path d={line} fill="none" stroke="#f3f1ec" strokeWidth="2.2" />
-        <Dim x1={x0} y1={y0} x2={x0} y2={yb} dx={-16} dy={0} text="50" />
-        <Dim x1={x0} y1={yb} x2={xTail} y2={yb} dx={0} dy={16} text="40" />
-        <Dim x1={xShelf} y1={yHook} x2={xTail} y2={yHook} dx={0} dy={-12} text="20" />
-        <Dim x1={xShelf} y1={yTop} x2={xShelf} y2={yHook} dx={-16} dy={0} text={String(thickness)} />
-        <Dim x1={xShelf} y1={yTop} x2={xTop} y2={yTop} dx={0} dy={-14} text="50" />
+      <svg viewBox={`${minX} ${minY} ${maxX - minX} ${maxY - minY}`} preserveAspectRatio="xMidYMid meet" className="mx-auto mt-1 block h-auto w-full" aria-label={`${label}, толщина ${thickness}`}>
+        <path d={line} fill="none" stroke="#f3f1ec" strokeWidth="1.6" />
+        <Dim x1={x0} y1={y0} x2={x0} y2={yb} dx={-12} dy={0} text="50" />
+        <Dim x1={x0} y1={yb} x2={xTail} y2={yb} dx={0} dy={12} text="40" />
+        <Dim x1={xShelf} y1={yHook} x2={xTail} y2={yHook} dx={0} dy={-8} text="20" />
+        <Dim x1={xShelf} y1={yTop} x2={xShelf} y2={yHook} dx={-12} dy={0} text={String(thickness)} />
+        <Dim x1={xShelf} y1={yTop} x2={xTop} y2={yTop} dx={0} dy={-10} text="50" />
       </svg>
     </figure>
   );
@@ -96,7 +96,7 @@ function Dim({ x1, y1, x2, y2, dx, dy, text }: { x1: number; y1: number; x2: num
   return (
     <g fill="none" stroke="#c46a45" strokeWidth="1" strokeDasharray="3 2">
       <path d={`M${x1} ${y1} L${x1 + dx} ${y1 + dy} M${x2} ${y2} L${x2 + dx} ${y2 + dy} M${x1 + dx} ${y1 + dy} L${x2 + dx} ${y2 + dy}`} />
-      <text x={(x1 + x2) / 2 + dx} y={(y1 + y2) / 2 + dy - 4} fill="#f3f1ec" stroke="none" fontSize="18" textAnchor="middle" fontFamily="IBM Plex Mono, monospace">{text}</text>
+      <text x={(x1 + x2) / 2 + dx} y={(y1 + y2) / 2 + dy - 4} fill="#f3f1ec" stroke="none" fontSize="8" textAnchor="middle" fontFamily="IBM Plex Mono, monospace">{text}</text>
     </g>
   );
 }
@@ -143,7 +143,7 @@ export function OpeningsView() {
                   </div>
                 </div>
                 <WindowDiagram opening={o} fallbackAllowance={fallback} className="mt-3 h-48 w-full" />
-                <div className="mt-2 grid grid-cols-3 gap-2">
+                <div className="mx-auto mt-2 grid w-full max-w-md grid-cols-3 gap-2">
                   <SlopeProfile thickness={o.facade?.left ?? 18} label="Слева" />
                   <SlopeProfile thickness={o.facade?.right ?? 18} label="Справа" />
                   <SlopeProfile thickness={o.facade?.top ?? 18} label="Сверху" />
