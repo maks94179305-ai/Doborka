@@ -76,11 +76,7 @@ export const useWorkspace = create<Workspace>()(
         }
         set({
           ready: true,
-          projects: s.projects.map((p) => {
-            const n = normalizeProject(p);
-            if (n.name !== "Объект — пример") return n;
-            return { ...n, openings: n.openings.slice(0, 1), extras: n.extras.slice(0, 1) };
-          }),
+          projects: s.projects.map((p) => normalizeProject(p)),
           activeId: s.activeId && s.projects.some((p) => p.id === s.activeId) ? s.activeId : s.projects[0].id,
         });
       },
@@ -159,8 +155,12 @@ export const useWorkspace = create<Workspace>()(
     }),
     {
       name: "doborka-v1",
-      storage: createJSONStorage(() => localStorage),
-      partialize: (s) => ({ projects: s.projects, activeId: s.activeId }),
+      storage: createJSONStorage(() => ({
+        getItem: (name) => localStorage.getItem(name) ?? localStorage.getItem("doborka-backup"),
+        setItem: (name, value) => { localStorage.setItem(name, value); localStorage.setItem("doborka-backup", value); },
+        removeItem: (name) => { localStorage.removeItem(name); localStorage.removeItem("doborka-backup"); },
+      })),
+            partialize: (s) => ({ projects: s.projects, activeId: s.activeId }),
       skipHydration: true,
       onRehydrateStorage: () => () => { useWorkspace.getState().markReady(); },
       version: 1,
