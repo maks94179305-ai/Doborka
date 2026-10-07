@@ -10,6 +10,11 @@ let applyingRemote = false;
 let pushTimer = 0;
 let sessionDirty = false;
 let syncing = false;
+function notifySync(body: string) {
+  window.dispatchEvent(new CustomEvent("doborka-sync", { detail: body }));
+  if (typeof Notification === "undefined" || Notification.permission !== "granted") return;
+  try { new Notification("Доборка", { body }); } catch { /* ignore */ }
+}
 let photoCursor = 0;
 const publishedPhotos = new Set<string>();
 const photoMissUntil = new Map<string, number>();
@@ -133,6 +138,7 @@ async function pushProject() {
     if (latest && !sameSnapshot(latest, snapshot)) { writeBase(normalizeProject(JSON.parse(saved.payload) as Project), saved.updatedAt, pin); sessionDirty = true; schedulePush(); return; }
     sessionDirty = false;
     applyRemote(saved.payload, saved.updatedAt, pin);
+    notifySync("Изменения отправлены на связанные устройства");
   } catch { /* ignore */ }
 }
 function schedulePush() {
@@ -149,7 +155,7 @@ async function pullProject() {
   if (sessionDirty) { await pushProject(); return; }
   const base = readBase();
   if (!base || base.pin !== pin) { await pushProject(); return; }
-  if (remote.updatedAt !== base.updatedAt && !sessionDirty) applyRemote(remote.payload, remote.updatedAt, pin);
+  if (remote.updatedAt !== base.updatedAt && !sessionDirty) { applyRemote(remote.payload, remote.updatedAt, pin); notifySync("Получены изменения с другого устройства"); }
 }
 async function pullHistory() {
   const pin = readPairPin();
