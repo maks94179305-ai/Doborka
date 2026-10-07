@@ -97,7 +97,7 @@ function SlopeColumn({ label, title, thickness, onThickness, schemeKey, empty = 
   return (
     <div className="h-full">
       <button type="button" className="mt-1 block h-full w-full" onClick={() => setOpen(true)} aria-label={`Править ${title}`}>
-        {saved ? (saved.objects.length ? <SavedScheme drawing={saved} /> : <figure className="mx-auto flex h-full min-h-[9.5rem] w-full rounded-xl border border-border bg-[#141816] p-1.5"><svg viewBox="8 17 126 85" className="mx-auto mt-1 block h-full w-full" /></figure>) : empty ? <figure className="mx-auto flex h-full min-h-[9.5rem] w-full rounded-xl border border-border bg-[#141816] p-1.5"><svg viewBox="8 17 126 85" className="mx-auto mt-1 block h-full w-full" /></figure> : <SlopeProfile thickness={thickness} label={title} />}
+        {saved && saved.objects.length ? <SavedScheme drawing={saved} /> : empty || (saved && !saved.objects.length) ? <SlopeProfile thickness={thickness} label={title} blank /> : <SlopeProfile thickness={thickness} label={title} />}
       </button>
       {open ? <SchemeDrawDialog open={open} title={title} drawing={draft} onOpenChange={setOpen} onDone={(d) => { void done(d); }} /> : null}
     </div>
@@ -133,7 +133,7 @@ function SchemePreview({ photoId, label }: { photoId: string; label: string }) {
   }, [photoId]);
   return <figure className="mx-auto w-full rounded-xl border border-border bg-[#141816] p-1.5">{url ? <img src={url} alt={label} className="mx-auto block h-24 w-full object-contain" /> : null}</figure>;
 }
-function SlopeProfile({ thickness, label }: { thickness: number; label: string }) {
+function SlopeProfile({ thickness, label, blank = false }: { thickness: number; label: string; blank?: boolean }) {
   const rise = Math.max(1, thickness);
   const x0 = 36, y0 = 28;
   const yb = y0 + 50;
@@ -147,12 +147,8 @@ function SlopeProfile({ thickness, label }: { thickness: number; label: string }
   return (
     <figure className="mx-auto w-full rounded-xl border border-border bg-[#141816] p-1.5">
       <svg viewBox={`${minX} ${minY} ${maxX - minX} ${maxY - minY}`} preserveAspectRatio="xMidYMid meet" className="mx-auto mt-1 block h-auto w-full" aria-label={`${label}, толщина ${thickness}`}>
-        <path d={line} fill="none" stroke="#f3f1ec" strokeWidth="1.6" />
-        <Dim x1={x0} y1={y0} x2={x0} y2={yb} dx={-15} dy={0} text="50" />
-        <Dim x1={x0} y1={yb} x2={xTail} y2={yb} dx={0} dy={15} text="40" />
-        <Dim x1={xShelf} y1={yHook} x2={xTail} y2={yHook} dx={0} dy={-15} textDy={-2} text="20" />
-        <Dim x1={xShelf} y1={yTop} x2={xShelf} y2={yHook} dx={xTop - xShelf} dy={0} textDx={10} textDy={2} text={String(thickness)} />
-        <Dim x1={xShelf} y1={yTop} x2={xTop} y2={yTop} dx={0} dy={-15} text="50" />
+        {blank ? null : <path d={line} fill="none" stroke="#f3f1ec" strokeWidth="1.6" />}
+        {blank ? null : <><Dim x1={x0} y1={y0} x2={x0} y2={yb} dx={-15} dy={0} text="50" /><Dim x1={x0} y1={yb} x2={xTail} y2={yb} dx={0} dy={15} text="40" /><Dim x1={xShelf} y1={yHook} x2={xTail} y2={yHook} dx={0} dy={-15} textDy={6} text="20" /><Dim x1={xShelf} y1={yTop} x2={xShelf} y2={yHook} dx={xTop - xShelf} dy={0} textDx={10} textDy={8} text={String(thickness)} /><Dim x1={xShelf} y1={yTop} x2={xTop} y2={yTop} dx={0} dy={-15} text="50" /></>}
       </svg>
     </figure>
   );
