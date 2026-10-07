@@ -24,10 +24,10 @@ function OpeningEditor({ opening, fallback, onChange, onRemove }: { opening: Ope
       <div>
         <Label className="mb-2 block">Толщина облицовки фасада</Label>
         <div className={"grid gap-2 " + (opening.sides.bottom ? "grid-cols-4" : "grid-cols-3")}>
-          <SlopeColumn label="Слева" title="Левый" thickness={opening.facade?.left ?? 18} onThickness={(n) => onChange({ facade: { ...opening.facade, left: n } })} />
-          <SlopeColumn label="Справа" title="Правый" thickness={opening.facade?.right ?? 18} onThickness={(n) => onChange({ facade: { ...opening.facade, right: n } })} />
-          <SlopeColumn label="Сверху" title="Верхний" thickness={opening.facade?.top ?? 18} onThickness={(n) => onChange({ facade: { ...opening.facade, top: n } })} />
-          {opening.sides.bottom ? <SlopeColumn label="Снизу" title="Нижний" thickness={opening.facade?.bottom ?? 18} onThickness={(n) => onChange({ facade: { ...opening.facade, bottom: n } })} /> : null}
+          <SlopeColumn label="Слева" title="Левый" thickness={opening.facade?.left ?? 18} schemeKey={`slope:${opening.facade?.left ?? 18}`} onThickness={(n) => onChange({ facade: { ...opening.facade, left: n } })} />
+          <SlopeColumn label="Справа" title="Правый" thickness={opening.facade?.right ?? 18} schemeKey={`slope:${opening.facade?.right ?? 18}`} onThickness={(n) => onChange({ facade: { ...opening.facade, right: n } })} />
+          <SlopeColumn label="Сверху" title="Верхний" thickness={opening.facade?.top ?? 18} schemeKey={`slope:${opening.facade?.top ?? 18}`} onThickness={(n) => onChange({ facade: { ...opening.facade, top: n } })} />
+          {opening.sides.bottom ? <SlopeColumn label="Снизу" title="Нижний" thickness={opening.facade?.bottom ?? 18} schemeKey={`slope:bottom:${opening.facade?.bottom ?? 18}`} onThickness={(n) => onChange({ facade: { ...opening.facade, bottom: n } })} /> : null}
         </div>
       </div>
       <div>
@@ -50,11 +50,11 @@ function OpeningEditor({ opening, fallback, onChange, onRemove }: { opening: Ope
 }
 
 
-function SlopeColumn({ label, title, thickness, onThickness }: { label: string; title: string; thickness: number; onThickness: (n: number) => void }) {
+function SlopeColumn({ label, title, thickness, onThickness, schemeKey }: { label: string; title: string; thickness: number; onThickness: (n: number) => void; schemeKey: string }) {
   const project = useProject();
   const patch = useWorkspace((s) => s.patchProject);
   const [open, setOpen] = useState(false);
-  const key = `slope:${thickness}`;
+  const key = schemeKey;
   const saved = project?.drawings.find((d) => d.id === project.schemeDrawings?.[key]);
   const rise = Math.max(1, thickness);
   const generated = { id: uid("dr"), name: `Откос · ${thickness} мм`, updatedAt: Date.now(), objects: [
