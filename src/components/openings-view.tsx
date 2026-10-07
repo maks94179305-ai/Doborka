@@ -20,7 +20,13 @@ function OpeningEditor({ opening, fallback, onChange, onRemove }: { opening: Ope
   return (
     <div className="grid gap-4">
       <WindowDiagram opening={opening} fallbackAllowance={fallback} className="mr-auto mt-3 block h-44 w-[92%] max-w-full" onWidth={(n) => onChange({ width: n })} onHeight={(n) => onChange({ height: n })} onBottom={(n) => onChange({ bottomLength: n })} />
-      <Num label="Запас на элемент" value={opening.allowance ?? fallback} onChange={(n) => onChange({ allowance: n })} />
+      <details open className="w-full rounded-xl border border-steel/50 bg-card px-3 py-2">
+        <summary className="cursor-pointer text-base font-medium text-foreground">Запасы</summary>
+        <div className="mt-2 grid gap-2">
+          <Num label="Запас на элемент" value={opening.allowance ?? fallback} onChange={(n) => onChange({ allowance: n })} />
+          {opening.sides.bottom ? <Num label="Запас на отлив" value={opening.dripAllowance ?? fallback} onChange={(n) => onChange({ dripAllowance: n })} /> : null}
+        </div>
+      </details>
       <div>
         <details open className="mb-2 w-full rounded-xl border border-steel/50 bg-card px-3 py-2">
           <summary className="cursor-pointer text-base font-medium text-foreground">Толщина облицовки фасада</summary>
@@ -35,7 +41,7 @@ function OpeningEditor({ opening, fallback, onChange, onRemove }: { opening: Ope
           {opening.sides.left ? <SlopeColumn label="Слева" title="Левый" thickness={opening.facade?.left ?? 18} schemeKey={`slope:${opening.facade?.left ?? 18}`} onThickness={(n) => onChange({ facade: { ...opening.facade, left: n } })} /> : null}
           {opening.sides.right ? <SlopeColumn label="Справа" title="Правый" thickness={opening.facade?.right ?? 18} schemeKey={`slope:${opening.facade?.right ?? 18}`} onThickness={(n) => onChange({ facade: { ...opening.facade, right: n } })} /> : null}
           {opening.sides.top ? <SlopeColumn label="Сверху" title="Верхний" thickness={opening.facade?.top ?? 18} schemeKey={`slope:${opening.facade?.top ?? 18}`} onThickness={(n) => onChange({ facade: { ...opening.facade, top: n } })} /> : null}
-          {opening.sides.bottom ? <SlopeColumn label="Отлив" title="Отлив" thickness={opening.facade?.bottom ?? 18} schemeKey={`slope:bottom:${opening.facade?.bottom ?? 18}`} onThickness={(n) => onChange({ facade: { ...opening.facade, bottom: n } })} /> : null}
+          {opening.sides.bottom ? <SlopeColumn label="Отлив" title="Отлив" thickness={opening.facade?.bottom ?? 18} schemeKey={`slope:bottom:${opening.facade?.bottom ?? 18}`} empty onThickness={(n) => onChange({ facade: { ...opening.facade, bottom: n } })} /> : null}
         </div>
       </div>
       <div>
@@ -58,7 +64,7 @@ function OpeningEditor({ opening, fallback, onChange, onRemove }: { opening: Ope
 }
 
 
-function SlopeColumn({ label, title, thickness, onThickness, schemeKey }: { label: string; title: string; thickness: number; onThickness: (n: number) => void; schemeKey: string }) {
+function SlopeColumn({ label, title, thickness, onThickness, schemeKey, empty = false }: { label: string; title: string; thickness: number; onThickness: (n: number) => void; schemeKey: string; empty?: boolean }) {
   const project = useProject();
   const patch = useWorkspace((s) => s.patchProject);
   const [open, setOpen] = useState(false);
@@ -78,7 +84,8 @@ function SlopeColumn({ label, title, thickness, onThickness, schemeKey }: { labe
     { id: uid("dm"), type: "dim" as const, x1: 20, y1: 49 - rise, x2: 20, y2: 49, offset: -50, color: "#c46a45", width: 1, label: String(thickness) },
     { id: uid("dm"), type: "dim" as const, x1: 20, y1: 49 - rise, x2: 70, y2: 49 - rise, offset: -15, color: "#c46a45", width: 1, label: "50" },
   ] };
-  const draft = saved?.objects.some((o) => o.type === "dim" && o.label === String(thickness) && o.offset === -50) ? saved : generated;
+  const blank = { id: uid("dr"), name: "Отлив", objects: [], updatedAt: Date.now() };
+  const draft = empty ? (saved ?? blank) : (saved?.objects.some((o) => o.type === "dim" && o.label === String(thickness) && o.offset === -50) ? saved : generated);
   async function done(next: Drawing) {
     const blob = await renderDrawingToBlob(next);
     if (!blob) return;
@@ -89,7 +96,7 @@ function SlopeColumn({ label, title, thickness, onThickness, schemeKey }: { labe
   return (
     <div>
       <button type="button" className="mt-1 w-full" onClick={() => setOpen(true)} aria-label={`Править ${title}`}>
-        {saved?.previewPhotoId ? <SavedScheme drawing={saved} /> : <SlopeProfile thickness={thickness} label={title} />}
+        {empty && !saved?.objects.length ? <figure className="mx-auto h-24 w-full rounded-xl border border-border bg-[#141816]" /> : saved?.previewPhotoId ? <SavedScheme drawing={saved} /> : <SlopeProfile thickness={thickness} label={title} />}
       </button>
       {open ? <SchemeDrawDialog open={open} title={title} drawing={draft} onOpenChange={setOpen} onDone={(d) => { void done(d); }} /> : null}
     </div>
@@ -142,8 +149,8 @@ function SlopeProfile({ thickness, label }: { thickness: number; label: string }
         <path d={line} fill="none" stroke="#f3f1ec" strokeWidth="1.6" />
         <Dim x1={x0} y1={y0} x2={x0} y2={yb} dx={-15} dy={0} text="50" />
         <Dim x1={x0} y1={yb} x2={xTail} y2={yb} dx={0} dy={15} text="40" />
-        <Dim x1={xShelf} y1={yHook} x2={xTail} y2={yHook} dx={0} dy={-15} textDy={14} text="20" />
-        <Dim x1={xShelf} y1={yTop} x2={xShelf} y2={yHook} dx={xTop - xShelf} dy={0} textDy={8} text={String(thickness)} />
+        <Dim x1={xShelf} y1={yHook} x2={xTail} y2={yHook} dx={0} dy={-15} textDy={22} text="20" />
+        <Dim x1={xShelf} y1={yTop} x2={xShelf} y2={yHook} dx={xTop - xShelf} dy={0} textDy={16} text={String(thickness)} />
         <Dim x1={xShelf} y1={yTop} x2={xTop} y2={yTop} dx={0} dy={-15} text="50" />
       </svg>
     </figure>
