@@ -2,6 +2,7 @@ import wood from "@/assets/wood.jpg";
 import glass from "@/assets/glass.jpg";
 import wall from "@/assets/wall.jpg";
 import slope from "@/assets/slope.jpg";
+import { useState } from "react";
 import { mm } from "@/lib/format";
 import { slopeLength } from "@/lib/pieces";
 import type { Opening } from "@/lib/types";
@@ -12,7 +13,9 @@ export function WindowDiagram({ opening, fallbackAllowance, className, onWidth, 
   const right = opening.sides.right ? slopeLength(opening, "right", fallbackAllowance) : 0;
   const top = opening.sides.top ? slopeLength(opening, "top", fallbackAllowance) : 0;
   const bottom = opening.sides.bottom ? slopeLength(opening, "bottom", fallbackAllowance) : 0;
-  function set(raw: string, apply?: (n: number) => void) {
+  const [widthDraft, setWidthDraft] = useState<string | null>(null);
+  const [heightDraft, setHeightDraft] = useState<string | null>(null);
+  function commit(raw: string, apply?: (n: number) => void) {
     const n = Number(raw.replace(/\D/g, ""));
     if (apply && n >= 1) apply(n);
   }
@@ -38,10 +41,10 @@ export function WindowDiagram({ opening, fallbackAllowance, className, onWidth, 
       {left ? <text x="88" y="136" textAnchor="middle" fill="#c4a574" fontSize="11" fontFamily="IBM Plex Mono, monospace" transform="rotate(-90 88 136)">{mm(left)}</text> : null}
       {right ? <text x="268" y="136" textAnchor="middle" fill="#c4a574" fontSize="11" fontFamily="IBM Plex Mono, monospace" transform="rotate(-90 268 136)">{mm(right)}</text> : null}
       <foreignObject x="128" y="2" width="92" height="24">
-        <input inputMode="numeric" aria-label="Ширина" value={String(opening.width)} onChange={(e) => set(e.target.value, onWidth)} style={{ width: "100%", height: "22px", borderRadius: "8px", border: "1px solid #3c463f", background: "#121614", color: "#f3f1ec", textAlign: "center", fontSize: "13px" }} />
+        <input inputMode="numeric" aria-label="Ширина" value={widthDraft ?? String(opening.width)} onChange={(e) => setWidthDraft(e.target.value.replace(/\D/g, ""))} onBlur={() => { commit(widthDraft ?? String(opening.width), onWidth); setWidthDraft(null); }} style={{ width: "100%", height: "22px", borderRadius: "8px", border: "1px solid #3c463f", background: "#121614", color: "#f3f1ec", textAlign: "center", fontSize: "13px" }} />
       </foreignObject>
       <foreignObject x="-4" y="118" width="92" height="24" transform="rotate(-90 42 130)">
-        <input inputMode="numeric" aria-label="Высота" value={String(opening.height)} onChange={(e) => set(e.target.value, onHeight)} style={{ width: "92px", height: "22px", borderRadius: "8px", border: "1px solid #3c463f", background: "#121614", color: "#f3f1ec", textAlign: "center", fontSize: "13px" }} />
+        <input inputMode="numeric" aria-label="Высота" value={heightDraft ?? String(opening.height)} onChange={(e) => setHeightDraft(e.target.value.replace(/\D/g, ""))} onBlur={() => { commit(heightDraft ?? String(opening.height), onHeight); setHeightDraft(null); }} style={{ width: "92px", height: "22px", borderRadius: "8px", border: "1px solid #3c463f", background: "#121614", color: "#f3f1ec", textAlign: "center", fontSize: "13px" }} />
       </foreignObject>
     </svg>
   );
