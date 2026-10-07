@@ -2,16 +2,16 @@
   "name": "Доборка",
   "short_name": "Доборка",
   "description": "Офлайн-расчёт откосов, доборных элементов и раскроя хлыстов",
-  "id": "/",
-  "start_url": "/",
-  "scope": "/",
+  "id": "/Doborka/",
+  "start_url": "/Doborka/",
+  "scope": "/Doborka/",
   "display": "standalone",
   "orientation": "any",
   "background_color": "#161618",
   "theme_color": "#161618",
   "lang": "ru",
   "icons": [
-    { "src": "/icon-192.png", "sizes": "192x192", "type": "image/png" },
-    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png" }
+    { "src": "/Doborka/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/Doborka/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
   ]
 }
