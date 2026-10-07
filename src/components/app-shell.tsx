@@ -47,6 +47,15 @@ export function AppShell() {
   const markReady = useWorkspace((s) => s.markReady);
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   useTeamSync();
+  useEffect(() => {
+    const onSync = (e: Event) => {
+      const body = (e as CustomEvent<string>).detail || "Устройства синхронизированы";
+      setSyncNote(body);
+      window.setTimeout(() => setSyncNote(""), 4000);
+    };
+    window.addEventListener("doborka-sync", onSync);
+    return () => window.removeEventListener("doborka-sync", onSync);
+  }, []);
   const onOpenings = pathname === "/";
 
   useEffect(() => {
