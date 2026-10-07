@@ -104,7 +104,7 @@ export function profileChipSide(hex: string): string {
 
 export type Sides = Record<SideKey, boolean>;
 
-export type FacadeThickness = { left: number; right: number; top: number };
+export type FacadeThickness = { left: number; right: number; top: number; bottom?: number };
 export type SlopeSize = { leg: number; bottom: number; shelf: number; rise: number; top: number };
 export type SlopeSizes = { left: SlopeSize; right: SlopeSize; top: SlopeSize };
 export type Opening = {
@@ -121,6 +121,7 @@ export type Opening = {
   photoIds: string[];
   drawingId: string | null;
   profileMm?: number;
+  bottomLength?: number;
 };
 
 export type ExtraItem = {
@@ -133,6 +134,7 @@ export type ExtraItem = {
   photoIds: string[];
   drawingId: string | null;
   profileMm?: number;
+  bottomLength?: number;
 };
 
 export type DashStyle = "solid" | "dash" | "dot";
@@ -197,6 +199,7 @@ export type NeedPiece = {
   photoIds: string[];
   drawingId: string | null;
   profileMm?: number;
+  bottomLength?: number;
 };
 
 export type CutSegment = { pieceId: string; length: number; label: string; color: string; openingName?: string };
