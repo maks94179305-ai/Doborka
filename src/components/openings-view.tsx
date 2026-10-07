@@ -68,12 +68,15 @@ function OpeningEditor({ opening, fallback, onChange, onRemove }: { opening: Ope
 }
 
 function SlopeProfile({ thickness, label }: { thickness: number; label: string }) {
-  const step = Math.max(36, Math.min(78, 28 + thickness));
   return (
     <figure className="rounded-xl border border-border bg-[#141816] p-2">
       <figcaption className="text-center text-[10px] uppercase tracking-[0.12em] text-steel">{label} {thickness}</figcaption>
-      <svg viewBox="0 0 280 180" className="mt-1 h-28 w-full" aria-label={`${label}, толщина ${thickness}`}>
-        <path d={`M28 12 V150 H132 V142 H108 V${150 - step} H250`} fill="none" stroke="#f3f1ec" strokeWidth="2.2" />
+      <svg viewBox="0 0 300 170" className="mt-1 h-28 w-full" aria-label={`${label}, толщина ${thickness}`}>
+        <path d="M24 10 V148 H118 V78 H268" fill="none" stroke="#f3f1ec" strokeWidth="2.2" />
+        <path d="M118 148 H156 V140" fill="none" stroke="#f3f1ec" strokeWidth="2.2" />
+        <path d="M160 148 H196" fill="none" stroke="#c46a45" strokeWidth="1.4" strokeDasharray="4 3" />
+        <text x="202" y="152" fill="#f3f1ec" fontSize="14" fontFamily="IBM Plex Mono, monospace">2</text>
+        <text x="128" y="116" fill="#f3f1ec" fontSize="13" fontFamily="IBM Plex Mono, monospace">{thickness}</text>
       </svg>
     </figure>
   );
