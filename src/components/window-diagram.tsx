@@ -8,13 +8,14 @@ import { slopeLength } from "@/lib/pieces";
 import type { Opening } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
-export function WindowDiagram({ opening, fallbackAllowance, className, onWidth, onHeight }: { opening: Opening; fallbackAllowance: number; className?: string; onWidth?: (n: number) => void; onHeight?: (n: number) => void }) {
+export function WindowDiagram({ opening, fallbackAllowance, className, onWidth, onHeight }: { opening: Opening; fallbackAllowance: number; className?: string; onWidth?: (n: number) => void; onHeight?: (n: number) => void; onBottom?: (n: number) => void }) {
   const left = opening.sides.left ? slopeLength(opening, "left", fallbackAllowance) : 0;
   const right = opening.sides.right ? slopeLength(opening, "right", fallbackAllowance) : 0;
   const top = opening.sides.top ? slopeLength(opening, "top", fallbackAllowance) : 0;
   const bottom = opening.sides.bottom ? slopeLength(opening, "bottom", fallbackAllowance) : 0;
   const [widthDraft, setWidthDraft] = useState<string | null>(null);
   const [heightDraft, setHeightDraft] = useState<string | null>(null);
+  const [bottomDraft, setBottomDraft] = useState<string | null>(null);
   function commit(raw: string, apply?: (n: number) => void) {
     const n = Number(raw.replace(/\D/g, ""));
     if (apply && n >= 1) apply(n);
@@ -37,7 +38,9 @@ export function WindowDiagram({ opening, fallbackAllowance, className, onWidth, 
       {top ? <rect x="116" y="58" width="116" height="14" fill="url(#tex-slope)" /> : null}
       {bottom ? <rect x="116" y="198" width="116" height="14" fill="url(#tex-slope)" /> : null}
       {top ? <text x="174" y="52" textAnchor="middle" fill="#c4a574" fontSize="11" fontFamily="IBM Plex Mono, monospace">{mm(top)}</text> : null}
-      {bottom ? <text x="174" y="226" textAnchor="middle" fill="#c4a574" fontSize="11" fontFamily="IBM Plex Mono, monospace">{mm(bottom)}</text> : null}
+      {bottom ? <foreignObject x="128" y="216" width="92" height="24">
+        <input inputMode="numeric" aria-label="Низ" value={bottomDraft ?? String(opening.bottomLength ?? bottom)} onChange={(e) => setBottomDraft(e.target.value.replace(/\D/g, ""))} onBlur={() => { commit(bottomDraft ?? String(opening.bottomLength ?? bottom), onBottom); setBottomDraft(null); }} style={{ width: "100%", height: "22px", borderRadius: "8px", border: "1px solid #3c463f", background: "#121614", color: "#f3f1ec", textAlign: "center", fontSize: "13px" }} />
+      </foreignObject> : null}
       {left ? <text x="88" y="136" textAnchor="middle" fill="#c4a574" fontSize="11" fontFamily="IBM Plex Mono, monospace" transform="rotate(-90 88 136)">{mm(left)}</text> : null}
       {right ? <text x="268" y="136" textAnchor="middle" fill="#c4a574" fontSize="11" fontFamily="IBM Plex Mono, monospace" transform="rotate(-90 268 136)">{mm(right)}</text> : null}
       <foreignObject x="128" y="2" width="92" height="24">
