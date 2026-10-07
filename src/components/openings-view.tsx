@@ -14,7 +14,7 @@ import { SIDE_KEYS, SIDE_SHORT, type Opening, type SideKey, type SlopeSize } fro
 function OpeningEditor({ opening, fallback, onChange, onRemove }: { opening: Opening; fallback: number; onChange: (patch: Partial<Opening>) => void; onRemove: () => void }) {
   return (
     <div className="grid gap-4">
-      <WindowDiagram opening={opening} fallbackAllowance={fallback} className="mx-auto h-64 w-full max-w-sm" onWidth={(n) => onChange({ width: n })} onHeight={(n) => onChange({ height: n })} />
+      <WindowDiagram opening={opening} fallbackAllowance={fallback} className="mx-auto h-52 w-full max-w-[18rem]" onWidth={(n) => onChange({ width: n })} onHeight={(n) => onChange({ height: n })} />
       <Num label="Запас на элемент" value={opening.allowance ?? fallback} onChange={(n) => onChange({ allowance: n })} />
       <div>
         <Label className="mb-2 block">Толщина облицовки фасада</Label>
@@ -107,11 +107,11 @@ export function OpeningsView() {
           <Button className="mt-4" onClick={() => addOpening({ name: "Окно 1", width: 1650, height: 2050 })}>Добавить 1650×2050</Button>
         </div>
       ) : (
-        <ul className="grid gap-3 sm:grid-cols-2">
+        <ul className="mx-auto grid w-full max-w-md gap-3">
           {project.openings.map((o) => {
             const sides = SIDE_KEYS.filter((s) => o.sides[s]);
             return (
-              <li key={o.id} className="panel p-5">
+              <li key={o.id} className="panel p-3">
                 <div className="flex items-start justify-between gap-2">
                   <input value={o.name} onChange={(e) => updateOpening(o.id, { name: e.target.value })} className="min-w-0 bg-transparent font-display text-2xl font-medium tracking-tight outline-none" aria-label="Название окна" />
                   <div className="flex gap-1">
