@@ -26,6 +26,19 @@ function OpeningEditor({ opening, fallback, onChange, onRemove }: { opening: Ope
         <Num label="Запас на элемент" value={opening.allowance ?? fallback} onChange={(n) => onChange({ allowance: n })} />
       </div>
       <div>
+        <Label className="mb-2 block">Толщина облицовки фасада</Label>
+        <div className="grid grid-cols-3 gap-2">
+          <Num label="Слева" value={opening.facade?.left ?? 18} onChange={(n) => onChange({ facade: { left: n, right: opening.facade?.right ?? 18, top: opening.facade?.top ?? 18 } })} />
+          <Num label="Справа" value={opening.facade?.right ?? 18} onChange={(n) => onChange({ facade: { left: opening.facade?.left ?? 18, right: n, top: opening.facade?.top ?? 18 } })} />
+          <Num label="Сверху" value={opening.facade?.top ?? 18} onChange={(n) => onChange({ facade: { left: opening.facade?.left ?? 18, right: opening.facade?.right ?? 18, top: n } })} />
+        </div>
+        <div className="mt-3 grid grid-cols-3 gap-2">
+          <SlopeProfile thickness={opening.facade?.left ?? 18} label="Левый" />
+          <SlopeProfile thickness={opening.facade?.right ?? 18} label="Правый" />
+          <SlopeProfile thickness={opening.facade?.top ?? 18} label="Верхний" />
+        </div>
+      </div>
+      <div>
         <Label className="mb-2 block">Стороны</Label>
         <div className="grid grid-cols-2 gap-2">
           {SIDE_KEYS.map((side) => {
@@ -54,6 +67,22 @@ function OpeningEditor({ opening, fallback, onChange, onRemove }: { opening: Ope
   );
 }
 
+function SlopeProfile({ thickness, label }: { thickness: number; label: string }) {
+  const step = Math.max(8, Math.min(40, thickness));
+  return (
+    <figure className="rounded-xl border border-border bg-background/40 p-2">
+      <figcaption className="text-center text-[10px] uppercase tracking-[0.12em] text-steel">{label} {thickness} мм</figcaption>
+      <svg viewBox="0 0 120 90" className="mt-1 h-16 w-full" aria-label={`Профиль ${label}, толщина ${thickness}`}>
+        <path d={`M18 12 V62 H58 V${62 - step} H78 V${62 - step - 14} H108`} fill="none" stroke="#f3f1ec" strokeWidth="2" />
+        <path d="M14 12 V62 H58" fill="none" stroke="#c4a574" strokeDasharray="2 2" />
+        <text x="8" y="40" fill="#c4a574" fontSize="8">50</text>
+        <text x="30" y="74" fill="#c4a574" fontSize="8">40</text>
+        <text x="60" y={62 - step - 4} fill="#c4a574" fontSize="8">20</text>
+        <text x="100" y={62 - step / 2} fill="#f3f1ec" fontSize="8">{thickness}</text>
+      </svg>
+    </figure>
+  );
+}
 export function OpeningsView() {
   const project = useProject();
   const addOpening = useWorkspace((s) => s.addOpening);
@@ -97,6 +126,11 @@ export function OpeningsView() {
                   </div>
                 </div>
                 <WindowDiagram opening={o} fallbackAllowance={fallback} className="mt-3 h-48 w-full" />
+                <div className="mt-2 grid grid-cols-3 gap-2">
+                  <SlopeProfile thickness={o.facade?.left ?? 18} label="Слева" />
+                  <SlopeProfile thickness={o.facade?.right ?? 18} label="Справа" />
+                  <SlopeProfile thickness={o.facade?.top ?? 18} label="Сверху" />
+                </div>
                 <div className="mt-2 flex flex-wrap gap-1">
                   {sides.map((s) => <Badge key={s} tone="steel">{SIDE_SHORT[s]} {mm(slopeLength(o, s as SideKey, fallback))}</Badge>)}
                 </div>
