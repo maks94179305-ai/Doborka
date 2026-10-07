@@ -26,11 +26,16 @@ function OpeningEditor({ opening, fallback, onChange, onRemove }: { opening: Ope
         <Num label="Запас на элемент" value={opening.allowance ?? fallback} onChange={(n) => onChange({ allowance: n })} />
       </div>
       <div>
-        <Label className="mb-2 block">Профили откосов</Label>
-        <div className="grid gap-3">
-          <SlopeProfile size={opening.slopes.left} label="Левый" onChange={(size) => onChange({ slopes: { ...opening.slopes, left: size }, facade: { ...opening.facade, left: size.rise } })} />
-          <SlopeProfile size={opening.slopes.right} label="Правый" onChange={(size) => onChange({ slopes: { ...opening.slopes, right: size }, facade: { ...opening.facade, right: size.rise } })} />
-          <SlopeProfile size={opening.slopes.top} label="Верхний" onChange={(size) => onChange({ slopes: { ...opening.slopes, top: size }, facade: { ...opening.facade, top: size.rise } })} />
+        <Label className="mb-2 block">Толщина облицовки фасада</Label>
+        <div className="grid grid-cols-3 gap-2">
+          <Num label="Слева" value={opening.facade?.left ?? 18} onChange={(n) => onChange({ facade: { left: n, right: opening.facade?.right ?? 18, top: opening.facade?.top ?? 18 } })} />
+          <Num label="Справа" value={opening.facade?.right ?? 18} onChange={(n) => onChange({ facade: { left: opening.facade?.left ?? 18, right: n, top: opening.facade?.top ?? 18 } })} />
+          <Num label="Сверху" value={opening.facade?.top ?? 18} onChange={(n) => onChange({ facade: { left: opening.facade?.left ?? 18, right: opening.facade?.right ?? 18, top: n } })} />
+        </div>
+        <div className="mt-3 grid grid-cols-3 gap-2">
+          <SlopeProfile thickness={opening.facade?.left ?? 18} label="Левый" />
+          <SlopeProfile thickness={opening.facade?.right ?? 18} label="Правый" />
+          <SlopeProfile thickness={opening.facade?.top ?? 18} label="Верхний" />
         </div>
       </div>
       <div>
@@ -62,40 +67,21 @@ function OpeningEditor({ opening, fallback, onChange, onRemove }: { opening: Ope
   );
 }
 
-function SlopeProfile({ size, label, onChange }: { size: SlopeSize; label: string; onChange?: (size: SlopeSize) => void }) {
-  const leg = Math.max(1, size.leg);
-  const bottom = Math.max(1, size.bottom);
-  const shelf = Math.max(1, size.shelf);
-  const rise = Math.max(1, size.rise);
-  const top = Math.max(1, size.top);
-  const span = Math.max(leg, bottom + shelf, top + 20);
-  const s = 120 / span;
-  const x0 = 28;
-  const y0 = 24;
-  const yb = y0 + leg * s;
-  const xTail = x0 + bottom * s;
-  const xShelf = xTail - shelf * s;
-  const yShelf = yb - 6;
-  const yTop = yShelf - rise * s;
-  const xTop = xShelf + top * s;
-  const d = `M${x0} ${y0} V${yb} H${xTail} V${yShelf} H${xShelf} V${yTop} H${xTop}`;
-  function set(key: keyof SlopeSize, value: number) { if (onChange) onChange({ ...size, [key]: value }); }
+function SlopeProfile({ thickness, label }: { thickness: number; label: string }) {
+  const rise = Math.max(8, Math.min(70, thickness));
   return (
     <figure className="rounded-xl border border-border bg-[#141816] p-2">
-      <figcaption className="mb-1 text-[10px] uppercase tracking-[0.12em] text-steel">{label}</figcaption>
-      <svg viewBox="0 0 220 170" className="h-28 w-full"><path d={d} fill="none" stroke="#f3f1ec" strokeWidth="2.2" /></svg>
-      <div className="grid grid-cols-5 gap-1">
-        <Mini label="Стойка" value={leg} onChange={onChange ? (n) => set("leg", n) : undefined} />
-        <Mini label="Низ" value={bottom} onChange={onChange ? (n) => set("bottom", n) : undefined} />
-        <Mini label="Полка" value={shelf} onChange={onChange ? (n) => set("shelf", n) : undefined} />
-        <Mini label="Толщина" value={rise} onChange={onChange ? (n) => set("rise", n) : undefined} />
-        <Mini label="Верх" value={top} onChange={onChange ? (n) => set("top", n) : undefined} />
-      </div>
+      <figcaption className="text-center text-[10px] uppercase tracking-[0.12em] text-steel">{label} {thickness}</figcaption>
+      <svg viewBox="0 0 220 160" className="mt-1 h-24 w-full" aria-label={`${label}, толщина ${thickness}`}>
+        <path d={`M24 12 V118 H132 V112 H88 V${112 - rise} H196`} fill="none" stroke="#f3f1ec" strokeWidth="2.2" />
+        <text x="8" y="68" fill="#f3f1ec" fontSize="11" fontFamily="IBM Plex Mono, monospace">50</text>
+        <text x="70" y="136" fill="#f3f1ec" fontSize="11" fontFamily="IBM Plex Mono, monospace">40</text>
+        <text x="96" y="108" fill="#f3f1ec" fontSize="11" fontFamily="IBM Plex Mono, monospace">20</text>
+        <text x="64" y={112 - rise / 2} fill="#f3f1ec" fontSize="11" fontFamily="IBM Plex Mono, monospace">{thickness}</text>
+        <text x="130" y={100 - rise} fill="#f3f1ec" fontSize="11" fontFamily="IBM Plex Mono, monospace">50</text>
+      </svg>
     </figure>
   );
-}
-function Mini({ label, value, onChange }: { label: string; value: number; onChange?: (n: number) => void }) {
-  return <label className="grid gap-0.5 text-center text-[9px] text-steel">{label}<input inputMode="numeric" value={String(value)} readOnly={!onChange} onChange={(e) => { const n = Number(e.target.value.replace(/\D/g, "")); if (onChange && n >= 1) onChange(n); }} className="h-8 rounded-md border border-border bg-background text-center text-xs text-foreground" /></label>;
 }
 export function OpeningsView() {
   const project = useProject();
@@ -140,10 +126,10 @@ export function OpeningsView() {
                   </div>
                 </div>
                 <WindowDiagram opening={o} fallbackAllowance={fallback} className="mt-3 h-48 w-full" />
-                <div className="mt-2 grid gap-2">
-                  <SlopeProfile size={o.slopes.left} label="Слева" />
-                  <SlopeProfile size={o.slopes.right} label="Справа" />
-                  <SlopeProfile size={o.slopes.top} label="Сверху" />
+                <div className="mt-2 grid grid-cols-3 gap-2">
+                  <SlopeProfile thickness={o.facade?.left ?? 18} label="Слева" />
+                  <SlopeProfile thickness={o.facade?.right ?? 18} label="Справа" />
+                  <SlopeProfile thickness={o.facade?.top ?? 18} label="Сверху" />
                 </div>
                 <div className="mt-2 flex flex-wrap gap-1">
                   {sides.map((s) => <Badge key={s} tone="steel">{SIDE_SHORT[s]} {mm(slopeLength(o, s as SideKey, fallback))}</Badge>)}
