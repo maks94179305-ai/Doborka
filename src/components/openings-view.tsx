@@ -70,12 +70,22 @@ function OpeningEditor({ opening, fallback, onChange, onRemove }: { opening: Ope
 function SlopeProfile({ thickness, label }: { thickness: number; label: string }) {
   return (
     <figure className="rounded-xl border border-border bg-[#141816] p-2">
-      <figcaption className="text-center text-[10px] uppercase tracking-[0.12em] text-steel">{label} {thickness}</figcaption>
-      <svg viewBox="0 0 300 170" className="mt-1 h-28 w-full" aria-label={`${label}, толщина ${thickness}`}>
-        <path d="M24 10 V148 H118 V78 H268" fill="none" stroke="#f3f1ec" strokeWidth="2.2" />
-        <path d="M118 148 H156 V140 H196 V78" fill="none" stroke="#f3f1ec" strokeWidth="2.2" />
-        <text x="164" y="136" fill="#f3f1ec" fontSize="13" fontFamily="IBM Plex Mono, monospace">2</text>
-        <text x="126" y="116" fill="#f3f1ec" fontSize="13" fontFamily="IBM Plex Mono, monospace">{thickness}</text>
+      <figcaption className="text-center text-[10px] uppercase tracking-[0.12em] text-steel">{label}</figcaption>
+      <svg viewBox="0 0 320 190" className="mt-1 h-32 w-full" aria-label={`${label}, толщина ${thickness}`}>
+        <path d="M36 16 V150 H150 V144 H96 V92 H236" fill="none" stroke="#f3f1ec" strokeWidth="2.2" />
+        <g fill="none" stroke="#c46a45" strokeWidth="1.2" strokeDasharray="3 2">
+          <path d="M22 16 V150" />
+          <path d="M36 166 H150" />
+          <path d="M96 138 H150" />
+          <path d="M84 92 V144" />
+          <path d="M96 72 H236" />
+        </g>
+        <text x="8" y="88" fill="#f3f1ec" fontSize="12" fontFamily="IBM Plex Mono, monospace">50</text>
+        <text x="82" y="182" fill="#f3f1ec" fontSize="12" fontFamily="IBM Plex Mono, monospace">40</text>
+        <text x="154" y="148" fill="#f3f1ec" fontSize="12" fontFamily="IBM Plex Mono, monospace">1</text>
+        <text x="112" y="134" fill="#f3f1ec" fontSize="12" fontFamily="IBM Plex Mono, monospace">20</text>
+        <text x="62" y="122" fill="#f3f1ec" fontSize="12" fontFamily="IBM Plex Mono, monospace">{thickness}</text>
+        <text x="150" y="66" fill="#f3f1ec" fontSize="12" fontFamily="IBM Plex Mono, monospace">50</text>
       </svg>
     </figure>
   );
