@@ -49,7 +49,7 @@ export function collectPieces(project: Project): NeedPiece[] {
           color,
           label: `${opening.name}${tag}${profileMm ? ` · ${profileMm} мм` : ""}`,
           photoIds: opening.photoIds,
-          drawingId: side === "bottom" ? (dripIsDefault(project, opening.id, profileMm) ? "default-drip" : opening.sourceId ? `copy:${opening.sourceId}:${dripSignature(project, opening.id)}` : `added:${opening.id}`) : opening.drawingId,
+          drawingId: side === "bottom" ? ((opening.sourceId || opening.name.includes("копия")) ? "copied-drip" : dripIsDefault(project, opening.id, profileMm) ? "default-drip" : `added:${opening.id}`) : opening.drawingId,
           profileMm,
         });
       });
@@ -124,6 +124,7 @@ export function groupElements(pieces: NeedPiece[]): GroupedElement[] {
 }
 
 export function materialKey(piece: NeedPiece): string {
+  if (piece.kind === "slope" && piece.side === "bottom" && piece.drawingId === "copied-drip") return "slope:bottom:copies";
   if (piece.kind === "slope" && piece.side === "bottom" && piece.drawingId !== "default-drip") return `slope:bottom:${piece.profileMm ?? 18}:${piece.drawingId}`;
   if (piece.kind === "slope" && piece.side === "bottom") return `slope:${piece.profileMm ?? 18}`;
   if (piece.kind === "slope") return piece.profileMm ? `slope:${piece.profileMm}` : "slope:bottom";
@@ -132,6 +133,7 @@ export function materialKey(piece: NeedPiece): string {
 }
 
 export function materialTitle(piece: NeedPiece): string {
+  if (piece.kind === "slope" && piece.side === "bottom" && piece.drawingId === "copied-drip") return "Отлив";
   if (piece.kind === "slope" && piece.side === "bottom" && piece.drawingId !== "default-drip") return "Отлив";
   if (piece.kind === "slope") return "Откос";
   if (piece.extraName?.trim()) return piece.extraName.trim();
