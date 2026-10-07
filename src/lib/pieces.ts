@@ -7,7 +7,7 @@ export function allowanceOf(opening: Opening, fallback: number): number {
 export function slopeLength(opening: Opening, side: "left" | "right" | "top" | "bottom", fallbackAllowance: number): number {
   const a = allowanceOf(opening, fallbackAllowance);
   if (side === "left" || side === "right") return opening.height + a;
-  if (side === "bottom" && opening.bottomLength) return opening.bottomLength;
+  if (side === "bottom") return opening.bottomLength || opening.width + (opening.dripAllowance ?? a);
   return opening.width + a;
 }
 
