@@ -101,6 +101,14 @@ export const useWorkspace = create<Workspace>()(
         const id = uid("op");
         const s = get();
         const proj = s.projects.find((p) => p.id === s.activeId);
+        if (proj) {
+          const emptyIds = new Set((proj.drawings ?? []).filter((d) => !d.objects.length).map((d) => d.id));
+          const schemeDrawings = { ...(proj.schemeDrawings ?? {}) };
+          for (const [key, drawingId] of Object.entries(schemeDrawings)) if (key.startsWith("slope:") && emptyIds.has(drawingId)) delete schemeDrawings[key];
+          if (Object.keys(schemeDrawings).length !== Object.keys(proj.schemeDrawings ?? {}).length) {
+            set({ projects: s.projects.map((p) => p.id === proj.id ? { ...p, schemeDrawings } : p) });
+          }
+        }
         const opening: Opening = {
           id,
           name: `Окно ${(proj?.openings.length ?? 0) + 1}`,
