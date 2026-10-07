@@ -113,7 +113,7 @@ export function OpeningsView() {
             return (
               <li key={o.id} className="panel p-5">
                 <div className="flex items-start justify-between gap-2">
-                  <input value={o.name} onChange={(e) => updateOpening(o.id, { name: e.target.value })} className="min-w-0 bg-transparent font-medium outline-none" aria-label="Название окна" />
+                  <input value={o.name} onChange={(e) => updateOpening(o.id, { name: e.target.value })} className="min-w-0 bg-transparent font-display text-2xl font-medium tracking-tight outline-none" aria-label="Название окна" />
                   <div className="flex gap-1">
                     <Button size="icon-sm" variant="ghost" onClick={() => duplicateOpening(o.id)} aria-label="Копия"><Copy /></Button>
                     <Button size="icon-sm" variant="ghost" onClick={() => removeOpening(o.id)} aria-label="Удалить"><Trash2 /></Button>
