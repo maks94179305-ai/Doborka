@@ -106,7 +106,7 @@ export const useWorkspace = create<Workspace>()(
         const proj = s.projects.find((p) => p.id === s.activeId);
         const opening: Opening = {
           id,
-          name: `Проём ${(proj?.openings.length ?? 0) + 1}`,
+          name: `Окно ${(proj?.openings.length ?? 0) + 1}`,
           width: 1650,
           height: 2050,
           qty: 1,
