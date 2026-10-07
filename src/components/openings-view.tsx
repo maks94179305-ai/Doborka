@@ -97,7 +97,7 @@ function SlopeColumn({ label, title, thickness, onThickness, schemeKey, empty = 
   return (
     <div>
       <button type="button" className="mt-1 w-full" onClick={() => setOpen(true)} aria-label={`Править ${title}`}>
-        {saved ? (saved.objects.length ? <SavedScheme drawing={saved} /> : <figure className="mx-auto h-24 w-full rounded-xl border border-border bg-[#141816]" />) : empty ? <figure className="mx-auto h-24 w-full rounded-xl border border-border bg-[#141816]" /> : <SlopeProfile thickness={thickness} label={title} />}
+        {saved ? (saved.objects.length ? <SavedScheme drawing={saved} /> : <figure className="mx-auto w-full rounded-xl border border-border bg-[#141816] p-1.5"><svg viewBox="8 17 126 85" className="mx-auto mt-1 block h-auto w-full" /></figure>) : empty ? <figure className="mx-auto w-full rounded-xl border border-border bg-[#141816] p-1.5"><svg viewBox="8 17 126 85" className="mx-auto mt-1 block h-auto w-full" /></figure> : <SlopeProfile thickness={thickness} label={title} />}
       </button>
       {open ? <SchemeDrawDialog open={open} title={title} drawing={draft} onOpenChange={setOpen} onDone={(d) => { void done(d); }} /> : null}
     </div>
