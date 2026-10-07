@@ -89,7 +89,7 @@ function SlopeColumn({ label, title, thickness, onThickness, schemeKey }: { labe
   return (
     <div>
       <button type="button" className="mt-1 w-full" onClick={() => setOpen(true)} aria-label={`Править ${title}`}>
-        {saved && saved.objects.length ? <SavedScheme drawing={saved} /> : <SlopeProfile thickness={thickness} label={title} />}
+        {saved?.previewPhotoId ? <SavedScheme drawing={saved} /> : <SlopeProfile thickness={thickness} label={title} />}
       </button>
       {open ? <SchemeDrawDialog open={open} title={title} drawing={draft} onOpenChange={setOpen} onDone={(d) => { void done(d); }} /> : null}
     </div>
@@ -98,14 +98,20 @@ function SlopeColumn({ label, title, thickness, onThickness, schemeKey }: { labe
 
 
 function SavedScheme({ drawing }: { drawing: Drawing }) {
-  const lines = drawing.objects.filter((o) => o.type === "line" || o.type === "dim");
-  const pts = lines.flatMap((o) => o.type === "line" || o.type === "dim" ? [o.x1, o.y1, o.x2, o.y2] : []);
+  const lines = drawing.objects.filter((o) => o.type === "line");
+  const dims = drawing.objects.filter((o) => o.type === "dim");
+  const pts = [...lines, ...dims].flatMap((o) => [o.x1, o.y1, o.x2, o.y2]);
   if (!pts.length) return null;
-  const minX = Math.min(...pts) - 18, minY = Math.min(...pts) - 18, maxX = Math.max(...pts) + 18, maxY = Math.max(...pts) + 18;
+  const minX = Math.min(...pts) - 24, minY = Math.min(...pts) - 24, maxX = Math.max(...pts) + 24, maxY = Math.max(...pts) + 24;
   return (
     <figure className="mx-auto w-full rounded-xl border border-border bg-[#141816] p-1.5">
       <svg viewBox={`${minX} ${minY} ${maxX - minX} ${maxY - minY}`} className="mx-auto block h-auto w-full">
-        {lines.map((o) => o.type === "line" ? <line key={o.id} x1={o.x1} y1={o.y1} x2={o.x2} y2={o.y2} stroke="#f3f1ec" strokeWidth="1.6" /> : <line key={o.id} x1={o.x1} y1={o.y1} x2={o.x2} y2={o.y2} stroke="#c46a45" strokeWidth="1" strokeDasharray="3 2" />)}
+        {lines.map((o) => <line key={o.id} x1={o.x1} y1={o.y1} x2={o.x2} y2={o.y2} stroke="#f3f1ec" strokeWidth="1.6" />)}
+        {dims.map((o) => {
+          const dx = o.x2 - o.x1, dy = o.y2 - o.y1, len = Math.hypot(dx, dy) || 1;
+          const ox = (-dy / len) * (o.offset || 15), oy = (dx / len) * (o.offset || 15);
+          return <g key={o.id}><path d={`M${o.x1} ${o.y1} L${o.x1 + ox} ${o.y1 + oy} M${o.x2} ${o.y2} L${o.x2 + ox} ${o.y2 + oy} M${o.x1 + ox} ${o.y1 + oy} L${o.x2 + ox} ${o.y2 + oy}`} fill="none" stroke="#c46a45" strokeWidth="1" strokeDasharray="3 2" /><text x={(o.x1 + o.x2) / 2 + ox} y={(o.y1 + o.y2) / 2 + oy - 3} fill="#f3f1ec" fontSize="8" textAnchor="middle">{o.label || ""}</text></g>;
+        })}
       </svg>
     </figure>
   );
