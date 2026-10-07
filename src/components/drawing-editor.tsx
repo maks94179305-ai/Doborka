@@ -334,7 +334,7 @@ export function DrawingEditor({ drawing, onChange, compact = false }: { drawing:
     const world = toWorld(local(e).x, local(e).y);
     const tol = 22 / viewRef.current.scale;
     if (toolRef.current === "dim") {
-      const snapped = draftRef.current.locked ? snapDimEnd(draftRef.current.start, world, objectsRef.current, tol) : { end: snapToDrawing(world, objectsRef.current, [draftRef.current.start], tol), offset: keepMinOffset(signedPerp(world, draftRef.current.start, world)) };
+      const snapped = draftRef.current.locked ? { end: draftRef.current.end, offset: keepMinOffset(signedPerp(world, draftRef.current.start, draftRef.current.end)) } : { end: snapToDrawing(world, objectsRef.current, [draftRef.current.start], tol), offset: keepMinOffset(signedPerp(world, draftRef.current.start, world)) };
       draftRef.current = { ...draftRef.current, end: snapped.end, offset: snapped.offset };
       paintSoon();
       return;
