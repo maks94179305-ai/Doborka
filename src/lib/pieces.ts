@@ -20,6 +20,7 @@ export function collectPieces(project: Project): NeedPiece[] {
       const tag = qty > 1 ? ` · ${instance}` : "";
       (["left", "right", "top", "bottom"] as const).forEach((side) => {
         if (!opening.sides[side]) return;
+        const profileMm = side === "bottom" ? undefined : (opening.facade?.[side] ?? 18);
         pieces.push({
           id: `${opening.id}_${instance}_${side}`,
           length: slopeLength(opening, side, defaultAllowance),
@@ -29,9 +30,10 @@ export function collectPieces(project: Project): NeedPiece[] {
           openingName: opening.name,
           instance,
           color,
-          label: `${opening.name}${tag} · ${SIDE_SHORT[side]}`,
+          label: `${opening.name}${tag} · ${SIDE_SHORT[side]}${profileMm ? ` · ${profileMm} мм` : ""}`,
           photoIds: opening.photoIds,
           drawingId: opening.drawingId,
+          profileMm,
         });
       });
     }
