@@ -6,7 +6,7 @@ import { PhotoStrip } from "@/components/photo-strip";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { mergePlans, plansByMaterial, type MaterialPlan } from "@/lib/cutting";
-import { renderDrawingToBlob } from "@/lib/draw-render";
+import { renderDrawingToBlob, type Drawing } from "@/lib/draw-render";
 import { meters, mm, pct } from "@/lib/format";
 import { deletePhoto, savePhoto } from "@/lib/photos";
 import { collectPieces, profileColorOf, schemeIdsOf } from "@/lib/pieces";
@@ -99,6 +99,20 @@ function slopeProfileDrawing(thickness: number): Drawing {
     ],
   };
 }
+function DrawingShot({ drawing }: { drawing: Drawing }) {
+  const [url, setUrl] = useState("");
+  useEffect(() => {
+    let alive = true;
+    void renderDrawingToBlob(drawing, { w: 640, h: 420 }).then((blob) => {
+      if (!blob || !alive) return;
+      const next = URL.createObjectURL(blob);
+      setUrl((prev) => { if (prev) URL.revokeObjectURL(prev); return next; });
+    });
+    return () => { alive = false; };
+  }, [drawing]);
+  return url ? <img src={url} alt="" className="mx-auto block max-h-40 w-full object-contain" /> : null;
+}
+
 function OrderLine({ material, schemeIds, color, note, onSchemeChange, onColorChange, onNoteChange }: { material: MaterialPlan; schemeIds: string[]; color: string; note: string; onSchemeChange: (ids: string[]) => void; onColorChange: (hex: string) => void; onNoteChange: (note: string) => void }) {
   const project = useProject();
   const patch = useWorkspace((s) => s.patchProject);
@@ -106,8 +120,10 @@ function OrderLine({ material, schemeIds, color, note, onSchemeChange, onColorCh
   const [drawOpen, setDrawOpen] = useState(false);
   const [draft, setDraft] = useState<Drawing | null>(null);
   const colorName = profileColorName(color);
-  const savedDrawing = project?.drawings.find((d) => d.id === project.schemeDrawings?.[material.key]);
-  const profileMm = Number(material.key.startsWith("slope:") ? material.key.split(":").pop() : "");
+  const dripOpeningId = material.key.startsWith("slope:bottom:") ? material.pieces.find((piece) => piece.openingId)?.openingId : "";
+  const schemeKey = dripOpeningId ? `slope:bottom:${dripOpeningId}` : material.key;
+  const savedDrawing = project?.drawings.find((d) => d.id === project.schemeDrawings?.[schemeKey]) ?? project?.drawings.find((d) => d.id === project.schemeDrawings?.[material.key]);
+  const profileMm = Number(material.key.startsWith("slope:bottom:") ? material.key.split(":")[2] : material.key.startsWith("slope:") ? material.key.split(":").pop() : "");
   const hasDrawing = !!savedDrawing && savedDrawing.objects.length > 0 && !!savedDrawing.previewPhotoId && schemeIds.includes(savedDrawing.previewPhotoId);
   useEffect(() => {
     if (material.key.startsWith("slope:bottom") || !Number.isFinite(profileMm) || profileMm <= 0 || savedDrawing?.objects.some((o) => o.type === "dim" && o.label === "50" && o.offset === 15 && savedDrawing.objects.some((d) => d.type === "dim" && d.label === String(profileMm) && d.offset === -50))) return;
@@ -187,6 +203,7 @@ function OrderLine({ material, schemeIds, color, note, onSchemeChange, onColorCh
           <Button type="button" size="icon-sm" variant="ghost" onClick={removeLine} aria-label="Удалить позицию"><Trash2 /></Button>
         </div>
       </header>
+      {savedDrawing && savedDrawing.objects.length ? <div className="mt-3 rounded-xl border border-border bg-[#141816] p-2"><DrawingShot drawing={savedDrawing} /></div> : null}
       {plan.barCounts.length > 0 ? <ul className="mt-3 flex flex-wrap gap-2">{plan.barCounts.map((c) => <li key={c.length}><Badge className="whitespace-nowrap">{mm(c.length)} × {c.count}</Badge></li>)}</ul> : null}
       <div className="mt-4"><p className="mb-2 text-xs uppercase tracking-[0.14em] text-steel">Цвет профиля</p><ProfileColorPicker value={color} onChange={onColorChange} /></div>
       <label className="mt-4 block"><span className="mb-1 block text-xs uppercase tracking-[0.14em] text-steel">Комментарий</span><textarea value={note} onChange={(e) => onNoteChange(e.target.value)} rows={2} maxLength={400} placeholder="Заметка к этой позиции" className="w-full resize-y rounded-xl border border-border bg-background/60 px-3 py-2 text-sm outline-none focus:border-steel" /></label>
