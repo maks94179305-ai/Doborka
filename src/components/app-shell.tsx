@@ -57,11 +57,7 @@ export function AppShell() {
       document.documentElement.classList.add("app-ready");
       markReady();
     };
-    const timer = window.setTimeout(finish, 700);
-    void Promise.resolve(useWorkspace.persist.rehydrate()).finally(() => {
-      window.clearTimeout(timer);
-      finish();
-    });
+    void Promise.resolve(useWorkspace.persist.rehydrate()).finally(finish);
   }, [markReady]);
 
   return (
