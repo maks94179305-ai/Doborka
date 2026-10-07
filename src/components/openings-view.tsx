@@ -68,21 +68,36 @@ function OpeningEditor({ opening, fallback, onChange, onRemove }: { opening: Ope
 }
 
 function SlopeProfile({ thickness, label }: { thickness: number; label: string }) {
-  const rise = Math.max(18, Math.min(64, thickness));
+  const rise = Math.max(1, thickness);
+  const s = 90 / Math.max(50, rise + 20, 40);
+  const x0 = 42, y0 = 28;
+  const yb = y0 + 50 * s;
+  const xTail = x0 + 40 * s;
+  const yHook = yb - s;
+  const xShelf = xTail - 20 * s;
+  const yTop = yHook - rise * s;
+  const xTop = xShelf + 50 * s;
+  const line = `M${x0} ${y0} V${yb} H${xTail} V${yHook} H${xShelf} V${yTop} H${xTop}`;
   return (
     <figure className="rounded-xl border border-border bg-[#141816] p-2">
       <figcaption className="text-center text-[10px] uppercase tracking-[0.12em] text-steel">{label}</figcaption>
-      <svg viewBox="0 0 280 190" className="mt-1 h-28 w-full" aria-label={`${label}, толщина ${thickness}`}>
-        <path d={`M36 16 V132 H156 V124 H108 V${124 - rise} H236`} fill="none" stroke="#f3f1ec" strokeWidth="2.4" />
-        <g fill="#f3f1ec" fontSize="13" fontFamily="IBM Plex Mono, monospace">
-          <text x="8" y="78">50</text>
-          <text x="84" y="156">40</text>
-          <text x="122" y="118">20</text>
-          <text x="78" y={124 - rise / 2}>{thickness}</text>
-          <text x="156" y={112 - rise}>50</text>
-        </g>
+      <svg viewBox="0 0 260 190" className="mt-1 h-32 w-full" aria-label={`${label}, толщина ${thickness}`}>
+        <path d={line} fill="none" stroke="#f3f1ec" strokeWidth="2.2" />
+        <Dim x1={x0} y1={y0} x2={x0} y2={yb} dx={-16} dy={0} text="50" />
+        <Dim x1={x0} y1={yb} x2={xTail} y2={yb} dx={0} dy={16} text="40" />
+        <Dim x1={xShelf} y1={yHook} x2={xTail} y2={yHook} dx={0} dy={-12} text="20" />
+        <Dim x1={xShelf} y1={yTop} x2={xShelf} y2={yHook} dx={-16} dy={0} text={String(thickness)} />
+        <Dim x1={xShelf} y1={yTop} x2={xTop} y2={yTop} dx={0} dy={-14} text="50" />
       </svg>
     </figure>
+  );
+}
+function Dim({ x1, y1, x2, y2, dx, dy, text }: { x1: number; y1: number; x2: number; y2: number; dx: number; dy: number; text: string }) {
+  return (
+    <g fill="none" stroke="#c46a45" strokeWidth="1" strokeDasharray="3 2">
+      <path d={`M${x1} ${y1} L${x1 + dx} ${y1 + dy} M${x2} ${y2} L${x2 + dx} ${y2 + dy} M${x1 + dx} ${y1 + dy} L${x2 + dx} ${y2 + dy}`} />
+      <text x={(x1 + x2) / 2 + dx} y={(y1 + y2) / 2 + dy - 4} fill="#f3f1ec" stroke="none" fontSize="11" textAnchor="middle" fontFamily="IBM Plex Mono, monospace">{text}</text>
+    </g>
   );
 }
 export function OpeningsView() {
