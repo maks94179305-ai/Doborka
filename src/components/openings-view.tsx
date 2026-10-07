@@ -14,14 +14,7 @@ import { SIDE_KEYS, SIDE_SHORT, type Opening, type SideKey, type SlopeSize } fro
 function OpeningEditor({ opening, fallback, onChange, onRemove }: { opening: Opening; fallback: number; onChange: (patch: Partial<Opening>) => void; onRemove: () => void }) {
   return (
     <div className="grid gap-4">
-      <label className="grid gap-1.5">
-        <Label>Название</Label>
-        <Input value={opening.name} onChange={(e) => onChange({ name: e.target.value })} />
-      </label>
-      <div className="grid grid-cols-2 gap-3">
-        <Num label="Количество" value={opening.qty} suffix="шт" min={1} onChange={(n) => onChange({ qty: n })} />
-        <Num label="Запас на элемент" value={opening.allowance ?? fallback} onChange={(n) => onChange({ allowance: n })} />
-      </div>
+      <Num label="Запас на элемент" value={opening.allowance ?? fallback} onChange={(n) => onChange({ allowance: n })} />
       <div className="relative mx-auto w-full max-w-sm">
         <WindowDiagram opening={opening} fallbackAllowance={fallback} className="h-52 w-full" />
         <label className="absolute bottom-2 left-1/2 w-24 -translate-x-1/2 text-center text-[10px] text-steel">Ширина
@@ -38,7 +31,7 @@ function OpeningEditor({ opening, fallback, onChange, onRemove }: { opening: Ope
           <Num label="Справа" value={opening.facade?.right ?? 18} onChange={(n) => onChange({ facade: { left: opening.facade?.left ?? 18, right: n, top: opening.facade?.top ?? 18 } })} />
           <Num label="Сверху" value={opening.facade?.top ?? 18} onChange={(n) => onChange({ facade: { left: opening.facade?.left ?? 18, right: opening.facade?.right ?? 18, top: n } })} />
         </div>
-        <div className="mx-auto mt-3 grid w-full max-w-md grid-cols-3 gap-2">
+        <div className="mx-auto mt-8 grid w-full max-w-md grid-cols-3 gap-2">
           <SlopeProfile thickness={opening.facade?.left ?? 18} label="Левый" />
           <SlopeProfile thickness={opening.facade?.right ?? 18} label="Правый" />
           <SlopeProfile thickness={opening.facade?.top ?? 18} label="Верхний" />
@@ -52,8 +45,7 @@ function OpeningEditor({ opening, fallback, onChange, onRemove }: { opening: Ope
             const len = slopeLength(opening, side, fallback);
             return (
               <button key={side} type="button" onClick={() => onChange({ sides: { ...opening.sides, [side]: !on } })} className={`flex h-12 items-center justify-between rounded-lg border px-3 text-sm ${on ? "border-steel/50 bg-accent text-foreground" : "border-border text-muted-foreground"}`}>
-                <span>{SIDE_SHORT[side]}</span>
-                <span className="tabular text-xs">{on ? mm(len) : "нет"}</span>
+<span>{SIDE_SHORT[side]}</span>
               </button>
             );
           })}
@@ -129,10 +121,7 @@ export function OpeningsView() {
             return (
               <li key={o.id} className="panel p-5">
                 <div className="flex items-start justify-between gap-2">
-                  <div>
-                    <h2 className="font-medium">{o.name}</h2>
-                    <p className="tabular text-sm text-muted-foreground">{o.width}×{o.height} мм · {o.qty} шт</p>
-                  </div>
+                  <input value={o.name} onChange={(e) => updateOpening(o.id, { name: e.target.value })} className="min-w-0 bg-transparent font-medium outline-none" aria-label="Название окна" />
                   <div className="flex gap-1">
                     <Button size="icon-sm" variant="ghost" onClick={() => duplicateOpening(o.id)} aria-label="Копия"><Copy /></Button>
                     <Button size="icon-sm" variant="ghost" onClick={() => removeOpening(o.id)} aria-label="Удалить"><Trash2 /></Button>
