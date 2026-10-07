@@ -110,7 +110,7 @@ function OrderLine({ material, schemeIds, color, note, onSchemeChange, onColorCh
   const profileMm = Number(material.key.startsWith("slope:") ? material.key.split(":").pop() : "");
   const hasDrawing = !!savedDrawing && savedDrawing.objects.length > 0 && !!savedDrawing.previewPhotoId && schemeIds.includes(savedDrawing.previewPhotoId);
   useEffect(() => {
-    if (!Number.isFinite(profileMm) || profileMm <= 0 || savedDrawing?.objects.some((o) => o.type === "dim" && o.label === "50" && o.offset === 15 && savedDrawing.objects.some((d) => d.type === "dim" && d.label === String(profileMm) && d.offset === -50))) return;
+    if (material.key.startsWith("slope:bottom") || !Number.isFinite(profileMm) || profileMm <= 0 || savedDrawing?.objects.some((o) => o.type === "dim" && o.label === "50" && o.offset === 15 && savedDrawing.objects.some((d) => d.type === "dim" && d.label === String(profileMm) && d.offset === -50))) return;
     const next = slopeProfileDrawing(profileMm);
     void (async () => {
       const blob = await renderDrawingToBlob(next);
