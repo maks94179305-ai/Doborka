@@ -30,7 +30,7 @@ export function collectPieces(project: Project): NeedPiece[] {
           openingName: opening.name,
           instance,
           color,
-          label: `${opening.name}${tag}`,
+          label: `${opening.name}${tag}${profileMm ? ` · ${profileMm} мм` : ""}`,
           photoIds: opening.photoIds,
           drawingId: opening.drawingId,
           profileMm,
