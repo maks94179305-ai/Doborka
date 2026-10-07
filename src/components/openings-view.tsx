@@ -14,15 +14,7 @@ import { SIDE_KEYS, SIDE_SHORT, type Opening, type SideKey, type SlopeSize } fro
 function OpeningEditor({ opening, fallback, onChange, onRemove }: { opening: Opening; fallback: number; onChange: (patch: Partial<Opening>) => void; onRemove: () => void }) {
   return (
     <div className="grid gap-4">
-      <div className="grid grid-cols-[4.5rem_1fr] items-center gap-3">
-        <label className="grid gap-1 text-center text-[10px] uppercase tracking-[0.12em] text-steel">Высота
-          <input inputMode="numeric" value={String(opening.height)} onChange={(e) => { const n = Number(e.target.value.replace(/\D/g, "")); if (n >= 1) onChange({ height: n }); }} className="h-10 rounded-xl border border-border bg-background text-center text-sm text-foreground" />
-        </label>
-        <WindowDiagram opening={opening} fallbackAllowance={fallback} className="h-44 w-full" />
-      </div>
-      <label className="mx-auto grid w-28 gap-1 text-center text-[10px] uppercase tracking-[0.12em] text-steel">Ширина
-        <input inputMode="numeric" value={String(opening.width)} onChange={(e) => { const n = Number(e.target.value.replace(/\D/g, "")); if (n >= 1) onChange({ width: n }); }} className="h-10 rounded-xl border border-border bg-background text-center text-sm text-foreground" />
-      </label>
+      <WindowDiagram opening={opening} fallbackAllowance={fallback} className="mx-auto h-64 w-full max-w-sm" onWidth={(n) => onChange({ width: n })} onHeight={(n) => onChange({ height: n })} />
       <Num label="Запас на элемент" value={opening.allowance ?? fallback} onChange={(n) => onChange({ allowance: n })} />
       <div>
         <Label className="mb-2 block">Толщина облицовки фасада</Label>
