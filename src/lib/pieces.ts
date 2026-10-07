@@ -7,6 +7,7 @@ export function allowanceOf(opening: Opening, fallback: number): number {
 export function slopeLength(opening: Opening, side: "left" | "right" | "top" | "bottom", fallbackAllowance: number): number {
   const a = allowanceOf(opening, fallbackAllowance);
   if (side === "left" || side === "right") return opening.height + a;
+  if (side === "bottom" && opening.bottomLength) return opening.bottomLength;
   return opening.width + a;
 }
 
@@ -20,7 +21,7 @@ export function collectPieces(project: Project): NeedPiece[] {
       const tag = qty > 1 ? ` · ${instance}` : "";
       (["left", "right", "top", "bottom"] as const).forEach((side) => {
         if (!opening.sides[side]) return;
-        const profileMm = side === "bottom" ? undefined : (opening.facade?.[side] ?? 18);
+        const profileMm = opening.facade?.[side] ?? 18;
         pieces.push({
           id: `${opening.id}_${instance}_${side}`,
           length: slopeLength(opening, side, defaultAllowance),
