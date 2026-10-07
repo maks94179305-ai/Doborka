@@ -14,7 +14,7 @@ import { SIDE_KEYS, SIDE_SHORT, type Opening, type SideKey, type SlopeSize } fro
 function OpeningEditor({ opening, fallback, onChange, onRemove }: { opening: Opening; fallback: number; onChange: (patch: Partial<Opening>) => void; onRemove: () => void }) {
   return (
     <div className="grid gap-4">
-      <WindowDiagram opening={opening} fallbackAllowance={fallback} className="mx-auto block h-48 w-full max-w-full" onWidth={(n) => onChange({ width: n })} onHeight={(n) => onChange({ height: n })} />
+      <WindowDiagram opening={opening} fallbackAllowance={fallback} className="mx-auto block h-48 w-full max-w-[16rem]" onWidth={(n) => onChange({ width: n })} onHeight={(n) => onChange({ height: n })} />
       <Num label="Запас на элемент" value={opening.allowance ?? fallback} onChange={(n) => onChange({ allowance: n })} />
       <div>
         <Label className="mb-2 block">Толщина облицовки фасада</Label>
@@ -23,7 +23,7 @@ function OpeningEditor({ opening, fallback, onChange, onRemove }: { opening: Ope
           <Num label="Справа" value={opening.facade?.right ?? 18} onChange={(n) => onChange({ facade: { left: opening.facade?.left ?? 18, right: n, top: opening.facade?.top ?? 18 } })} />
           <Num label="Сверху" value={opening.facade?.top ?? 18} onChange={(n) => onChange({ facade: { left: opening.facade?.left ?? 18, right: opening.facade?.right ?? 18, top: n } })} />
         </div>
-        <div className="mx-auto mt-8 grid w-full min-w-0 grid-cols-3 gap-1">
+        <div className="mx-auto mt-8 grid w-full min-w-0 max-w-[16rem] grid-cols-3 gap-1">
           <SlopeProfile thickness={opening.facade?.left ?? 18} label="Левый" />
           <SlopeProfile thickness={opening.facade?.right ?? 18} label="Правый" />
           <SlopeProfile thickness={opening.facade?.top ?? 18} label="Верхний" />
@@ -111,7 +111,7 @@ export function OpeningsView() {
           {project.openings.map((o) => {
             const sides = SIDE_KEYS.filter((s) => o.sides[s]);
             return (
-              <li key={o.id} className="panel min-w-0 overflow-hidden p-3">
+              <li key={o.id} className="panel min-w-0 overflow-hidden px-3 pb-3 pt-2">
                 <div className="flex items-start justify-between gap-2">
                   <input value={o.name} onChange={(e) => updateOpening(o.id, { name: e.target.value })} className="min-w-0 bg-transparent font-display text-2xl font-medium tracking-tight outline-none" aria-label="Название окна" />
                   <div className="flex gap-1">
@@ -119,7 +119,7 @@ export function OpeningsView() {
                     <Button size="icon-sm" variant="ghost" onClick={() => removeOpening(o.id)} aria-label="Удалить"><Trash2 /></Button>
                   </div>
                 </div>
-                <div className="mt-4">
+                <div className="mt-1 flex flex-col items-center">
                   <OpeningEditor opening={o} fallback={fallback} onChange={(patch) => updateOpening(o.id, patch)} onRemove={() => removeOpening(o.id)} />
                 </div>
               </li>
