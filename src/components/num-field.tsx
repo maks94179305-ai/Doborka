@@ -39,9 +39,9 @@ export function Num({
           onKeyDown={(e) => {
             if (e.key === "Enter") (e.target as HTMLInputElement).blur();
           }}
-          className="tabular pr-12"
+          className="tabular px-1 pr-8 text-center"
         />
-        <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">
+        <span className="absolute right-1.5 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">
           {suffix}
         </span>
       </div>
