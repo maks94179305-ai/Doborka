@@ -218,6 +218,9 @@ export function useTeamSync() {
     const timer = window.setInterval(tick, 3000);
     const onShow = () => { if (document.visibilityState === "visible") tick(); };
     document.addEventListener("visibilitychange", onShow);
+    const onHide = () => { if (document.visibilityState === "hidden") void pushProject(); };
+    document.addEventListener("visibilitychange", onHide);
+    window.addEventListener("pagehide", () => { void pushProject(); });
     return () => { alive = false; unsub(); window.clearInterval(timer); window.clearTimeout(pushTimer); document.removeEventListener("visibilitychange", onShow); };
   }, [ready, pin]);
 }
