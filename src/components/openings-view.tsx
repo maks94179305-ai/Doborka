@@ -89,13 +89,27 @@ function SlopeColumn({ label, title, thickness, onThickness, schemeKey }: { labe
   return (
     <div>
       <button type="button" className="mt-1 w-full" onClick={() => setOpen(true)} aria-label={`Править ${title}`}>
-        <SlopeProfile thickness={thickness} label={title} />
+        {saved && saved.objects.length ? <SavedScheme drawing={saved} /> : <SlopeProfile thickness={thickness} label={title} />}
       </button>
       {open ? <SchemeDrawDialog open={open} title={title} drawing={draft} onOpenChange={setOpen} onDone={(d) => { void done(d); }} /> : null}
     </div>
   );
 }
 
+
+function SavedScheme({ drawing }: { drawing: Drawing }) {
+  const lines = drawing.objects.filter((o) => o.type === "line" || o.type === "dim");
+  const pts = lines.flatMap((o) => o.type === "line" || o.type === "dim" ? [o.x1, o.y1, o.x2, o.y2] : []);
+  if (!pts.length) return null;
+  const minX = Math.min(...pts) - 18, minY = Math.min(...pts) - 18, maxX = Math.max(...pts) + 18, maxY = Math.max(...pts) + 18;
+  return (
+    <figure className="mx-auto w-full rounded-xl border border-border bg-[#141816] p-1.5">
+      <svg viewBox={`${minX} ${minY} ${maxX - minX} ${maxY - minY}`} className="mx-auto block h-auto w-full">
+        {lines.map((o) => o.type === "line" ? <line key={o.id} x1={o.x1} y1={o.y1} x2={o.x2} y2={o.y2} stroke="#f3f1ec" strokeWidth="1.6" /> : <line key={o.id} x1={o.x1} y1={o.y1} x2={o.x2} y2={o.y2} stroke="#c46a45" strokeWidth="1" strokeDasharray="3 2" />)}
+      </svg>
+    </figure>
+  );
+}
 function SchemePreview({ photoId, label }: { photoId: string; label: string }) {
   const [url, setUrl] = useState("");
   useEffect(() => {
