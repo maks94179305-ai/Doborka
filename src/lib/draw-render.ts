@@ -30,7 +30,7 @@ export function objectsBounds(objects: DrawObject[]) {
   let x1 = Infinity, y1 = Infinity, x2 = -Infinity, y2 = -Infinity, any = false;
   const add = (x: number, y: number) => { any = true; x1 = Math.min(x1, x); y1 = Math.min(y1, y); x2 = Math.max(x2, x); y2 = Math.max(y2, y); };
   for (const o of objects) {
-    if (o.type === "line" || o.type === "dim") { add(o.x1, o.y1); add(o.x2, o.y2); if (o.type === "dim") { const g = dimGeom(o); add(g.ax, g.ay); add(g.bx, g.by); } }
+    if (o.type === "line" || o.type === "dim") { add(o.x1, o.y1); add(o.x2, o.y2); if (o.type === "dim") { const g = dimGeom(o); add(g.ax, g.ay); add(g.bx, g.by); const label = dimLabelWorld(o, 1); add(label.x, label.y); } }
     else if (o.type === "rect") { add(o.x, o.y); add(o.x + o.w, o.y + o.h); }
     else add(o.x, o.y);
   }
