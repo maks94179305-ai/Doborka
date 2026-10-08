@@ -255,7 +255,14 @@ export function DrawingEditor({ drawing, onChange, compact = false }: { drawing:
     }
     downRef.current = { x: e.clientX, y: e.clientY, empty: !found };
     if (found && (found.type === "line" || found.type === "dim") && !endHit) {
-      setSelected([found.id]);
+      const pickedId = found.id;
+      if (found.type === "line") {
+        holdRef.current = window.setTimeout(() => {
+          setSelected((cur) => cur.includes(pickedId) ? cur : [...cur, pickedId]);
+          setTool("select");
+          setDraft(null);
+        }, 420);
+      } else setSelected([found.id]);
       if (found.type === "line") { setLength(String(Math.round(dist({ x: found.x1, y: found.y1 }, { x: found.x2, y: found.y2 })))); freshRef.current = true; }
       setLabelBox(null);
       if (toolRef.current !== "line" && toolRef.current !== "dim") return;
