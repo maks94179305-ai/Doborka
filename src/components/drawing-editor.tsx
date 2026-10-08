@@ -258,7 +258,7 @@ export function DrawingEditor({ drawing, onChange, compact = false }: { drawing:
     }
     const found = hit(world);
     if (!found && !endHit) {
-      holdRef.current = window.setTimeout(() => { setSelected(objectsRef.current.map((o) => o.id)); setDraft(null); setTool("select"); }, 520);
+      holdRef.current = window.setTimeout(() => { holdAdded.current = true; setSelected(objectsRef.current.map((o) => o.id)); setDraft(null); setTool("select"); }, 520);
     }
     if (found?.type === "dim") {
       const part = hitDimPart(found, world, 22 / viewRef.current.scale, viewRef.current.scale);
