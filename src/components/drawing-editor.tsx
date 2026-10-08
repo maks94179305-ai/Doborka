@@ -557,7 +557,7 @@ export function DrawingEditor({ drawing, onChange, compact = false }: { drawing:
         <Button size="icon-sm" variant="secondary" onClick={delSelected} aria-label="Удалить" disabled={!selected.length}><Trash2 /></Button>
         <Button size="icon-sm" variant="secondary" aria-label="Копировать чертёж" onClick={() => { const payload = JSON.stringify(objectsRef.current); localStorage.setItem("doborka-drawing-clip", payload); void navigator.clipboard?.writeText(payload); }}><Copy /></Button>
         <Button size="icon-sm" variant="secondary" aria-label="Вставить чертёж" onClick={() => { const raw = localStorage.getItem("doborka-drawing-clip"); if (!raw) return; try { const items = JSON.parse(raw) as DrawObject[]; commit([...objectsRef.current, ...items.map((o) => ({ ...o, id: uid("ob") }))]); } catch { /* ignore */ } }}><ClipboardPaste /></Button>
-        <Button size="icon-sm" variant="secondary" aria-label="Вписать" onClick={() => { const el = wrapRef.current; if (el) setView(fitView(objects, el.clientWidth, el.clientHeight)); }}><Maximize2 /></Button>
+        <Button size="icon-sm" variant="secondary" aria-label="Вписать" onClick={() => { const el = wrapRef.current; if (el) setView(fitView(objectsRef.current, el.clientWidth, el.clientHeight)); }}><Maximize2 /></Button>
         <div className="flex items-center gap-2">
           {DRAW_COLORS.map((c) => (
             <button key={c} type="button" aria-label={`Цвет ${c}`} className="size-7 rounded-full" style={{ background: c, boxShadow: color === c ? `0 0 0 2px ${sheetColor()}, 0 0 0 4px ${c}` : "0 0 0 2px transparent" }} onClick={() => { manualRef.current = c; setColor(c); if (toolRef.current !== "dim") setTool("line"); }} />

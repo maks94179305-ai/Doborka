@@ -42,15 +42,16 @@ export function objectsBounds(objects: DrawObject[]) {
   for (const o of objects) {
     if (o.type === "line" || o.type === "dim") { add(o.x1, o.y1); add(o.x2, o.y2); if (o.type === "dim") { const g = dimGeom(o); add(g.ax, g.ay); add(g.bx, g.by); const label = dimLabelWorld(o, 1); add(label.x, label.y); } }
     else if (o.type === "rect") { add(o.x, o.y); add(o.x + o.w, o.y + o.h); }
-    else add(o.x, o.y);
+    else if (o.type === "text") add(o.x, o.y);
   }
   return any ? { x1, y1, x2, y2 } : null;
 }
 export function fitView(objects: DrawObject[], width: number, height: number, pad = 72) {
   const b = objectsBounds(objects);
-  if (!b || width < 40 || height < 40) return { x: 72, y: 72, scale: SCALE_DEFAULT };
+  if (!b || width < 40 || height < 40 || !Number.isFinite(b.x1) || !Number.isFinite(b.y1)) return { x: 72, y: 72, scale: SCALE_DEFAULT };
   const bw = Math.max(b.x2 - b.x1, 24); const bh = Math.max(b.y2 - b.y1, 24);
-  const scale = Math.min(SCALE_MAX, Math.max(SCALE_MIN, Math.min((width - pad * 2) / bw, (height - pad * 2) / bh)));
+  const padUsed = Math.min(pad, width * 0.12, height * 0.12);
+  const scale = Math.min(SCALE_MAX, Math.max(SCALE_MIN, Math.min((width - padUsed * 2) / bw, (height - padUsed * 2) / bh)));
   return { scale, x: width / 2 - ((b.x1 + b.x2) / 2) * scale, y: height / 2 - ((b.y1 + b.y2) / 2) * scale };
 }
 export function dimLabelWorld(obj: Extract<DrawObject, { type: "dim" }>, scale: number): Pt & { angle: number } {
