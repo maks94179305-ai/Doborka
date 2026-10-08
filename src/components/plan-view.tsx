@@ -36,12 +36,15 @@ export function PlanView() {
     const chosen = materials.filter((m) => picked.includes(m.key));
     const sent: { file: File; title: string }[] = [];
     for (const m of chosen) {
-      const drawing = project!.drawings.find((d) => d.id === project!.schemeDrawings?.[m.key]);
+      const dripOpeningId = m.key.startsWith("slope:bottom:") ? m.pieces.find((piece) => piece.openingId)?.openingId : "";
+      const schemeKey = dripOpeningId ? `slope:bottom:${dripOpeningId}` : m.key;
+      const drawing = project!.drawings.find((d) => d.id === project!.schemeDrawings?.[schemeKey]) ?? project!.drawings.find((d) => d.id === project!.schemeDrawings?.[m.key]) ?? project!.drawings.find((d) => d.id === m.pieces.find((piece) => piece.drawingId)?.drawingId);
       const dims = (drawing?.objects ?? []).filter((o) => o.type === "dim" && o.label).map((o) => ({ length: Number(o.label) || 0, count: 1 }));
       let blob = null as Blob | null;
-      const photoId = schemeIdsOf(project!, m.key)[0] || drawing?.previewPhotoId;
+      const photoId = schemeIdsOf(project!, schemeKey)[0] || schemeIdsOf(project!, m.key)[0] || drawing?.previewPhotoId;
       if (photoId) blob = await getPhoto(photoId);
       if (!blob && drawing) blob = await renderDrawingToBlob(drawing, { w: 900, h: 640 });
+      if (!blob) blob = await renderDrawingToBlob({ id: m.key, name: m.title, objects: [], updatedAt: Date.now() }, { w: 900, h: 640 });
       if (!blob) continue;
       const url = URL.createObjectURL(blob);
       try {
