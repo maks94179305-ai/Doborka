@@ -1,11 +1,11 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { ClipboardPaste, Copy, Maximize2, MousePointer2, PenLine, Redo2, Ruler, Trash2, Undo2 } from "lucide-react";
+import { ClipboardPaste, Copy, DraftingCompass, Maximize2, MousePointer2, PenLine, Redo2, Ruler, Trash2, Undo2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { dimInputValue, dimLabelWorld, dist, fitView, hitDimPart, hitScore, keepMinOffset, paintDim, paintObject, parseMm, pickDimStart, resizeFromStart, SCALE_DEFAULT, sheetColor, signedPerp, snapDimEnd, snapToDrawing, strokeDash, type Pt } from "@/lib/draw-render";
 import { DRAW_COLORS, type DrawObject, type Drawing } from "@/lib/types";
 import { cn, uid } from "@/lib/utils";
 
-type Tool = "select" | "line" | "dim";
+type Tool = "select" | "line" | "dim" | "angle";
 
 export function DrawingEditor({ drawing, onChange, compact = false }: { drawing: Drawing; onChange: (d: Drawing) => void; compact?: boolean }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -371,6 +371,33 @@ export function DrawingEditor({ drawing, onChange, compact = false }: { drawing:
     const moved = e && tap ? Math.hypot(e.clientX - tap.x, e.clientY - tap.y) : d ? dist(d.start, d.end) : 0;
     if (tap?.empty && moved < 8) { endDrag.current = null; pendingEnd.current = null; setDraft(null); return; }
     if (!d || dist(d.start, d.end) < 2) return;
+    if (toolRef.current === "angle") {
+      const world = d.end;
+      const tol = 18 / viewRef.current.scale;
+      let best: { x: number; y: number; d: number } | null = null;
+      for (const o of objectsRef.current) {
+        if (o.type !== "line") continue;
+        for (const pt of [{ x: o.x1, y: o.y1 }, { x: o.x2, y: o.y2 }]) {
+          const dd = Math.hypot(world.x - pt.x, world.y - pt.y);
+          if (dd <= tol && (!best || dd < best.d)) best = { ...pt, d: dd };
+        }
+      }
+      if (!best) return;
+      const dirs: { x: number; y: number }[] = [];
+      for (const o of objectsRef.current) {
+        if (o.type !== "line") continue;
+        if (Math.hypot(o.x1 - best.x, o.y1 - best.y) < 1) dirs.push({ x: o.x2 - o.x1, y: o.y2 - o.y1 });
+        if (Math.hypot(o.x2 - best.x, o.y2 - best.y) < 1) dirs.push({ x: o.x1 - o.x2, y: o.y1 - o.y2 });
+      }
+      if (dirs.length < 2) return;
+      const a = Math.atan2(dirs[0].y, dirs[0].x);
+      const b = Math.atan2(dirs[1].y, dirs[1].x);
+      let deg = Math.abs(b - a) * 180 / Math.PI;
+      if (deg > 180) deg = 360 - deg;
+      deg = Math.round(deg);
+      commit([...objectsRef.current, { id: uid("dr"), type: "text", x: best.x + 12, y: best.y - 12, text: `${deg}°`, size: 16, color: activeColor("dim") }]);
+      return;
+    }
     if (toolRef.current === "dim") {
       commit([...objectsRef.current, { id: uid("dr"), type: "dim", x1: d.start.x, y1: d.start.y, x2: d.end.x, y2: d.end.y, offset: d.offset ?? 40, color: activeColor("dim"), width: 2, dash: "dash" }]);
       return;
@@ -441,6 +468,7 @@ export function DrawingEditor({ drawing, onChange, compact = false }: { drawing:
     { id: "select" as const, icon: MousePointer2, label: "Выбор" },
     { id: "line" as const, icon: PenLine, label: "Линия" },
     { id: "dim" as const, icon: Ruler, label: "Размер" },
+    { id: "angle" as const, icon: DraftingCompass, label: "Угол" },
   ], []);
 
   return (
