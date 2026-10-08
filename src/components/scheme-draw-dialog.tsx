@@ -2,12 +2,13 @@ import { useEffect, useState } from "react";
 import { DrawingEditor } from "@/components/drawing-editor";
 import { Button } from "@/components/ui/button";
 import type { Drawing } from "@/lib/types";
+import { rememberDrawing } from "@/lib/drawing-library";
 
 export function SchemeDrawDialog({ open, title, drawing, onOpenChange, onDone }: { open: boolean; title: string; drawing: Drawing; onOpenChange: (open: boolean) => void; onDone: (drawing: Drawing) => void }) {
   const [local, setLocal] = useState(drawing);
   useEffect(() => { if (open) setLocal(drawing); }, [open, drawing]);
   if (!open) return null;
-  function close() { onDone(local); onOpenChange(false); }
+  function close() { rememberDrawing(local.name || title, local.objects, local.id); onDone(local); onOpenChange(false); }
   return (
     <div className="fixed inset-0 z-[120] flex flex-col bg-[#141816] p-3 pt-[max(2.75rem,env(safe-area-inset-top))]">
       <div className="mb-2 flex items-center justify-between gap-3">

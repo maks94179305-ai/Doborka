@@ -19,7 +19,12 @@ export function rememberDrawing(name: string, objects: DrawObject[], id = "") {
   if (forgotten().has(sig)) return;
   const items = loadLibrary();
   const key = id || sig;
-  if (items.some((item) => item.id === key || sigOf(item.objects) === sig)) return;
+  const current = items.find((item) => item.id === key);
+  if (current) {
+    saveLibrary(items.map((item) => item.id === key ? { ...item, name: name || item.name, objects, updatedAt: Date.now() } : item));
+    return;
+  }
+  if (items.some((item) => sigOf(item.objects) === sig)) return;
   saveLibrary([{ id: key, name: name || "Чертёж", objects, updatedAt: Date.now() }, ...items]);
 }
 
