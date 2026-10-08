@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { ClipboardPaste, Copy, Download, Pencil, Trash2 } from "lucide-react";
+import { Check, ClipboardPaste, Copy, Download, Pencil, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -172,6 +172,7 @@ export function MoreView() {
 
 function ArchiveFolder({ library }: { library: LibraryDrawing[] }) {
   const [picked, setPicked] = useState<string[]>([]);
+  const hold = { current: 0 };
   const [edit, setEdit] = useState<LibraryDrawing | null>(null);
   function copy(item: LibraryDrawing) {
     const payload = JSON.stringify(item.objects);
@@ -182,7 +183,11 @@ function ArchiveFolder({ library }: { library: LibraryDrawing[] }) {
     <div className="mt-3 grid gap-2">
       <Button variant="secondary" onClick={() => { const raw = localStorage.getItem("doborka-drawing-clip"); if (!raw) return; try { rememberDrawing("Вставленный чертёж", JSON.parse(raw)); } catch { /* ignore */ } }}><ClipboardPaste /> Вставить</Button>
       {library.length ? <div className="grid grid-cols-2 gap-2">{library.map((item) => (
-        <article key={item.id} className={"rounded-xl border bg-card p-2 " + (picked.includes(item.id) ? "border-primary" : "border-border")} onClick={() => setPicked((cur) => cur.includes(item.id) ? cur.filter((id) => id !== item.id) : [...cur, item.id])}>
+        <article key={item.id} className={"relative rounded-xl border bg-card p-2 " + (picked.includes(item.id) ? "border-primary" : "border-border")}
+          onPointerDown={() => { window.setTimeout(() => { if (!hold.current) return; setPicked((cur) => cur.includes(item.id) ? cur : [...cur, item.id]); hold.current = 0; }, 420); hold.current = 1; }}
+          onPointerUp={() => { if (hold.current && picked.length) setPicked((cur) => cur.includes(item.id) ? cur.filter((id) => id !== item.id) : [...cur, item.id]); hold.current = 0; }}
+          onPointerCancel={() => { hold.current = 0; }}>
+          {picked.includes(item.id) ? <span className="absolute right-3 top-3 z-10 flex size-6 items-center justify-center rounded-full bg-primary text-primary-foreground"><Check className="size-4" /></span> : null}
           <ArchiveShot item={item} />
           <div className="mt-2 flex items-center justify-between gap-1">
             <span className="min-w-0 truncate text-xs">{item.name}</span>
