@@ -98,26 +98,6 @@ export function MoreView() {
       </details>
 
       <section className="space-y-3">
-        <h2 className="font-display text-lg">Объект</h2>
-        <label className="grid gap-1.5"><Label>Название</Label><Input value={project.name} onChange={(e) => ws.renameProject(project.id, e.target.value)} /></label>
-        <div className="flex flex-wrap gap-2">
-          <Button variant="secondary" onClick={() => ws.addProject()}>Новый объект</Button>
-          <Button variant="outline" onClick={() => ws.loadDemo()}>Пример 5 проёмов</Button>
-          <Button variant="outline" onClick={exportJson}><Download /> Копия JSON</Button>
-          <Button variant="outline" asChild><label>Открыть JSON<input type="file" accept="application/json" className="sr-only" onChange={(e) => { importJson(e.target.files?.[0]); e.target.value = ""; }} /></label></Button>
-        </div>
-        {ws.projects.length > 1 ? (
-          <ul className="grid gap-1">
-            {ws.projects.map((p) => (
-              <li key={p.id} className="flex items-center gap-2">
-                <button type="button" className={`h-11 flex-1 rounded-lg px-3 text-left text-sm ${p.id === project.id ? "bg-primary text-primary-foreground" : "bg-secondary"}`} onClick={() => ws.setActive(p.id)}>{p.name}</button>
-                <Button size="icon-sm" variant="ghost" onClick={() => ws.deleteProject(p.id)} aria-label="Удалить объект"><Trash2 /></Button>
-              </li>
-            ))}
-          </ul>
-        ) : null}
-      </section>
-      <section className="space-y-3">
         <h2 className="font-display text-lg">Тема</h2>
         <label className="flex h-11 items-center justify-between rounded-md border border-border px-3">
           <span className="text-sm">Светлая тема</span>
