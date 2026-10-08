@@ -205,6 +205,7 @@ export function OpeningsView() {
   const updateOpening = useWorkspace((s) => s.updateOpening);
   const duplicateOpening = useWorkspace((s) => s.duplicateOpening);
   const removeOpening = useWorkspace((s) => s.removeOpening);
+  const patchProject = useWorkspace((s) => s.patchProject);
   const [editId, setEditId] = useState<string | null>(null);
   const editing = useMemo(() => project?.openings.find((o) => o.id === editId) ?? null, [project, editId]);
   if (!project) return <div className="mx-auto flex w-full max-w-5xl flex-col gap-3"><p className="kicker">Доборка</p><h1>Откосы проёмов:</h1><p className="text-sm text-muted-foreground">Загрузка объекта…</p></div>;
@@ -238,7 +239,28 @@ export function OpeningsView() {
                   </div>
                 </div>
                 <div className="mt-1 flex flex-col items-center">
-                  <OpeningEditor opening={o} fallback={fallback} onChange={(patch) => updateOpening(o.id, patch)} onRemove={() => removeOpening(o.id)} />
+                  <OpeningEditor opening={o} fallback={fallback} onChange={(patch) => {
+                    if (!patch.facade) { updateOpening(o.id, patch); return; }
+                    const sides = (["left", "right", "top", "bottom"] as const).filter((side) => patch.facade?.[side] !== o.facade?.[side]);
+                    patchProject((p) => {
+                      let drawings = p.drawings;
+                      for (const side of sides) {
+                        const prev = o.facade?.[side] ?? 18;
+                        const next = patch.facade?.[side] ?? prev;
+                        const key = side === "bottom" ? `slope:bottom:${o.id}` : `slope:${o.id}:${side}`;
+                        const drawingId = p.schemeDrawings?.[key];
+                        if (!drawingId || prev === next) continue;
+                        const oldY = 49 - prev;
+                        const newY = 49 - next;
+                        drawings = drawings.map((d) => d.id !== drawingId ? d : { ...d, updatedAt: Date.now(), objects: d.objects.map((obj) => {
+                          if (obj.type !== "line" && obj.type !== "dim") return obj;
+                          const moved = { ...obj, y1: obj.y1 === oldY ? newY : obj.y1, y2: obj.y2 === oldY ? newY : obj.y2 };
+                          return obj.type === "dim" && obj.label === String(prev) ? { ...moved, label: String(next) } : moved;
+                        }) });
+                      }
+                      return { ...p, drawings, openings: p.openings.map((item) => item.id === o.id ? { ...item, facade: patch.facade } : item) };
+                    });
+                  }} onRemove={() => removeOpening(o.id)} />
                 </div>
               </li>
             );
