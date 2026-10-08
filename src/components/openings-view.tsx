@@ -21,7 +21,7 @@ function OpeningEditor({ opening, fallback, onChange, onRemove }: { opening: Ope
   const sideKey = (side: "left" | "right" | "top", thickness: number) => project?.schemeDrawings?.[`slope:${opening.id}:${side}`] ? `slope:${opening.id}:${side}` : `slope:${thickness}`;
   return (
     <div className="grid gap-4">
-      <WindowDiagram opening={opening} fallbackAllowance={fallback} className="mr-auto mt-3 block h-44 w-[92%] max-w-full" onWidth={(n) => onChange({ width: n })} onHeight={(n) => onChange({ height: n })} onBottom={(n) => onChange({ bottomLength: n })} />
+      <WindowDiagram opening={opening} fallbackAllowance={fallback} className="mx-auto mt-2 block h-72 w-full max-w-full" onWidth={(n) => onChange({ width: n })} onHeight={(n) => onChange({ height: n })} onBottom={(n) => onChange({ bottomLength: n })} />
       <details open className="w-full rounded-xl border border-steel/50 bg-card px-3 py-2">
         <summary className="cursor-pointer text-base font-medium text-foreground">Запасы</summary>
         <div className="mt-2 grid gap-2">
