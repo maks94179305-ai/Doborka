@@ -2,6 +2,9 @@ import type { DrawObject } from "./types";
 
 export type LibraryDrawing = { id: string; name: string; objects: DrawObject[]; updatedAt: number };
 const KEY = "doborka-drawing-library";
+const FORGOT = "doborka-drawing-forgotten";
+function sigOf(objects: DrawObject[]) { return JSON.stringify(objects.map((o) => ({ ...o, id: "" }))); }
+function forgotten() { try { return new Set(JSON.parse(localStorage.getItem(FORGOT) || "[]") as string[]); } catch { return new Set<string>(); } }
 
 export function loadLibrary(): LibraryDrawing[] {
   try { return JSON.parse(localStorage.getItem(KEY) || "[]") as LibraryDrawing[]; } catch { return []; }
@@ -12,8 +15,16 @@ export function saveLibrary(items: LibraryDrawing[]) {
 }
 export function rememberDrawing(name: string, objects: DrawObject[]) {
   if (!objects.length) return;
+  const sig = sigOf(objects);
+  if (forgotten().has(sig)) return;
   const items = loadLibrary();
-  const sig = JSON.stringify(objects.map((o) => ({ ...o, id: "" })));
-  if (items.some((item) => JSON.stringify(item.objects.map((o) => ({ ...o, id: "" }))) === sig)) return;
+  if (items.some((item) => sigOf(item.objects) === sig)) return;
   saveLibrary([{ id: `lib-${Date.now()}`, name: name || "Чертёж", objects, updatedAt: Date.now() }, ...items]);
+}
+
+export function forgetDrawings(items: LibraryDrawing[]) {
+  const gone = forgotten();
+  for (const item of items) gone.add(sigOf(item.objects));
+  localStorage.setItem(FORGOT, JSON.stringify([...gone]));
+  saveLibrary(loadLibrary().filter((item) => !items.some((goneItem) => goneItem.id === item.id)));
 }

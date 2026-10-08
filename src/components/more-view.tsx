@@ -9,7 +9,7 @@ import { useProject, useWorkspace } from "@/lib/store";
 import { downloadText } from "@/lib/report";
 import { PairPanel } from "@/components/pair-panel";
 import { SchemeDrawDialog } from "@/components/scheme-draw-dialog";
-import { loadLibrary, rememberDrawing, saveLibrary, type LibraryDrawing } from "@/lib/drawing-library";
+import { forgetDrawings, loadLibrary, rememberDrawing, saveLibrary, type LibraryDrawing } from "@/lib/drawing-library";
 import { renderDrawingToBlob } from "@/lib/draw-render";
 import type { Drawing } from "@/lib/types";
 
@@ -189,12 +189,12 @@ function ArchiveFolder({ library }: { library: LibraryDrawing[] }) {
             <span className="flex gap-1">
               <Button size="icon-sm" variant="secondary" aria-label="Редактировать" onClick={(e) => { e.stopPropagation(); setEdit(item); }}><Pencil /></Button>
               <Button size="icon-sm" variant="secondary" aria-label="Копировать" onClick={(e) => { e.stopPropagation(); copy(item); }}><Copy /></Button>
-              <Button size="icon-sm" variant="ghost" aria-label="Удалить" onClick={(e) => { e.stopPropagation(); saveLibrary(library.filter((x) => x.id !== item.id)); }}><Trash2 /></Button>
+              <Button size="icon-sm" variant="ghost" aria-label="Удалить" onClick={(e) => { e.stopPropagation(); forgetDrawings([item]); }}><Trash2 /></Button>
             </span>
           </div>
         </article>
       ))}</div> : <p className="text-sm text-muted-foreground">Пока нет сохранённых чертежей.</p>}
-      {picked.length ? <Button variant="secondary" onClick={() => { const items = library.filter((item) => picked.includes(item.id)); const payload = JSON.stringify(items.flatMap((item) => item.objects)); localStorage.setItem("doborka-drawing-clip", payload); void navigator.clipboard?.writeText(payload); }}><Copy /> Копировать выбранные</Button> : null}
+      {picked.length ? <div className="flex gap-2"><Button variant="secondary" onClick={() => { const items = library.filter((item) => picked.includes(item.id)); const payload = JSON.stringify(items.flatMap((item) => item.objects)); localStorage.setItem("doborka-drawing-clip", payload); void navigator.clipboard?.writeText(payload); }}><Copy /> Копировать выбранные</Button><Button variant="destructive" onClick={() => { forgetDrawings(library.filter((item) => picked.includes(item.id))); setPicked([]); }}><Trash2 /> Удалить выбранные</Button></div> : null}
       {edit ? <SchemeDrawDialog open title={edit.name} drawing={{ id: edit.id, name: edit.name, objects: edit.objects, updatedAt: edit.updatedAt }} onOpenChange={(open) => { if (!open) setEdit(null); }} onDone={(drawing: Drawing) => { saveLibrary(library.map((item) => item.id === edit.id ? { ...item, name: drawing.name, objects: drawing.objects, updatedAt: Date.now() } : item)); setEdit(null); }} /> : null}
     </div>
   );
