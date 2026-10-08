@@ -231,12 +231,15 @@ export function DrawingEditor({ drawing, onChange, compact = false }: { drawing:
       downRef.current = { x: e.clientX, y: e.clientY, empty: false };
       return;
     }
-    const angleHit = objectsRef.current.find((o) => {
+    const angleHit = toolRef.current === "select" ? objectsRef.current.find((o) => {
       if (o.type !== "angle") return false;
       const joint = angleJoint(o, objectsRef.current);
-      return !!joint && Math.hypot(world.x - joint.x, world.y - joint.y) <= Math.max(28, (o.radius ?? 18) + 20);
-    });
-    if (angleHit) { offsetDrag.current = angleHit.id; setSelected([angleHit.id]); return; }
+      if (!joint) return false;
+      const r = o.radius ?? 18;
+      const d = Math.hypot(world.x - joint.x, world.y - joint.y);
+      return Math.abs(d - r) < 10 || Math.abs(d - (r + 14)) < 12;
+    }) : undefined;
+    if (angleHit) { offsetDrag.current = angleHit.id; setSelected([angleHit.id]); downRef.current = { x: e.clientX, y: e.clientY, empty: false }; return; }
     const found = hit(world);
     if (!found && !endHit) {
       holdRef.current = window.setTimeout(() => { setSelected(objectsRef.current.map((o) => o.id)); setDraft(null); setTool("select"); }, 520);
@@ -262,16 +265,14 @@ export function DrawingEditor({ drawing, onChange, compact = false }: { drawing:
     downRef.current = { x: e.clientX, y: e.clientY, empty: !found };
     if (found && (found.type === "line" || found.type === "dim") && !endHit) {
       const pickedId = found.id;
-      if (found.type === "line") {
+      if (found.type === "line" && toolRef.current === "select") {
         holdRef.current = window.setTimeout(() => {
           setSelected((cur) => cur.includes(pickedId) ? cur : [...cur, pickedId]);
-          setTool("select");
           setDraft(null);
         }, 420);
-      } else setSelected([found.id]);
+      }
       if (found.type === "line") { setLength(String(Math.round(dist({ x: found.x1, y: found.y1 }, { x: found.x2, y: found.y2 })))); freshRef.current = true; }
       setLabelBox(null);
-      if (toolRef.current !== "line" && toolRef.current !== "dim") return;
     }
     if (toolRef.current === "select") {
       setSelected(found ? [found.id] : []);
