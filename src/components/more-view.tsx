@@ -180,7 +180,6 @@ function ArchiveFolder({ library }: { library: LibraryDrawing[] }) {
   }
   return (
     <div className="relative mt-3 grid gap-2">
-      <Button variant="secondary" onClick={() => { const raw = localStorage.getItem("doborka-drawing-clip"); if (!raw) return; try { rememberDrawing("Вставленный чертёж", JSON.parse(raw)); } catch { /* ignore */ } }}><ClipboardPaste /> Вставить</Button>
       {library.length ? <div className="grid grid-cols-2 gap-2">{library.map((item) => (
         <article key={item.id} className={"relative rounded-xl border bg-card p-2 " + (picked.includes(item.id) ? "border-primary" : "border-border")}
           onPointerDown={() => { window.setTimeout(() => { if (!hold.current) return; setPicked((cur) => cur.includes(item.id) ? cur : [...cur, item.id]); hold.current = 0; }, 420); hold.current = 1; }}
