@@ -19,6 +19,7 @@ export function DrawingEditor({ drawing, onChange, compact = false }: { drawing:
   const [labelBox, setLabelBox] = useState<{ id: string; x: number; y: number; value: string } | null>(null);
   const [pad, setPad] = useState<null | "length" | "label">(null);
   const [pressedKey, setPressedKey] = useState("");
+  const [angleLabel, setAngleLabel] = useState<string | null>(null);
   const freshRef = useRef(true);
   const history = useRef<DrawObject[][]>([drawing.objects]);
   const histIndex = useRef(0);
@@ -311,6 +312,8 @@ export function DrawingEditor({ drawing, onChange, compact = false }: { drawing:
         if (o.id !== drag.id || o.type !== "line") return o;
         const fixed = drag.end === "start" ? { x: o.x2, y: o.y2 } : { x: o.x1, y: o.y1 };
         const next = snapAngle(fixed, world);
+        const deg = Math.round(Math.atan2(next.y - fixed.y, next.x - fixed.x) * 180 / Math.PI / 5) * 5;
+        setAngleLabel(`${((deg % 360) + 360) % 360}°`);
         return drag.end === "start" ? { ...o, x1: next.x, y1: next.y } : { ...o, x2: next.x, y2: next.y };
       });
       paintSoon();
@@ -354,6 +357,7 @@ export function DrawingEditor({ drawing, onChange, compact = false }: { drawing:
     if (endDrag.current) {
       const id = endDrag.current.id;
       endDrag.current = null;
+      setAngleLabel(null);
       commit(objectsRef.current);
       setSelected([id]);
       return;
@@ -465,6 +469,7 @@ export function DrawingEditor({ drawing, onChange, compact = false }: { drawing:
       </div>
       <div ref={wrapRef} className="relative min-h-[22rem] flex-1 overflow-hidden rounded-xl border border-border">
         <canvas ref={canvasRef} className="absolute inset-0 touch-none" style={{ touchAction: "none" }} onPointerDown={onDown} onPointerMove={onMove} onPointerUp={onUp} onPointerCancel={(e) => { clearHold(); pointers.current.delete(e.pointerId); pinchRef.current = null; panRef.current = null; offsetDrag.current = null; endDrag.current = null; downRef.current = null; setDraft(null); }} onContextMenu={(e) => e.preventDefault()} />
+        {angleLabel ? <div className="absolute left-1/2 top-3 z-20 -translate-x-1/2 rounded-full bg-primary px-3 py-1 text-sm font-medium text-primary-foreground">{angleLabel}</div> : null}
         {labelBox ? (
           <div className="absolute z-20 h-9 w-20 -translate-x-1/2 -translate-y-1/2 rounded-md border border-primary bg-background px-2 text-center text-sm leading-9 text-foreground shadow-float" style={{ left: labelBox.x, top: labelBox.y }}>{labelBox.value || "0"}</div>
         ) : null}
