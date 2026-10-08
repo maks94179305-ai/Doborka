@@ -241,7 +241,7 @@ export function DrawingEditor({ drawing, onChange, compact = false }: { drawing:
       const d = Math.hypot(world.x - joint.x, world.y - joint.y);
       return Math.abs(d - r) < 12 || Math.abs(d - labelAt) < 16;
     });
-    if (angleHit && angleHit.type === "angle") {
+    if (angleHit && angleHit.type === "angle" && toolRef.current === "select") {
       const joint = angleJoint(angleHit, objectsRef.current);
       const d = joint ? Math.hypot(world.x - joint.x, world.y - joint.y) : 0;
       offsetDrag.current = `${angleHit.id}:${d > (angleHit.radius ?? 22) + 8 ? "label" : "arc"}`;
@@ -403,9 +403,10 @@ export function DrawingEditor({ drawing, onChange, compact = false }: { drawing:
     const tap = downRef.current;
     downRef.current = null;
     if (holdAdded.current) { holdAdded.current = false; return; }
-    if (toolRef.current === "select" && tap && e) {
+    if (toolRef.current === "select" && tap && e && Math.hypot(e.clientX - tap.x, e.clientY - tap.y) < 8) {
       const picked = hit(toWorld(local(e).x, local(e).y));
       setSelected(picked ? [picked.id] : []);
+      setDraft(null);
       return;
     }
     const d = draftRef.current;
@@ -541,7 +542,7 @@ export function DrawingEditor({ drawing, onChange, compact = false }: { drawing:
       <div className="flex shrink-0 flex-wrap items-center gap-2">
         <div className="flex rounded-xl border border-border/80 bg-card/80 p-1">
           {tools.map((t) => (
-            <button key={t.id} type="button" aria-label={t.label} aria-pressed={tool === t.id} onClick={() => { manualRef.current = null; if (t.id === "angle" && placeAngle()) return; setTool(t.id); setColor(t.id === "dim" ? dimColor : lineColor); }} className={cn("flex h-10 items-center gap-1.5 rounded-lg px-2 text-xs font-medium", tool === t.id ? "bg-primary text-primary-foreground" : "text-muted-foreground")}>
+            <button key={t.id} type="button" aria-label={t.label} aria-pressed={tool === t.id} onClick={() => { offsetDrag.current = null; endDrag.current = null; setDraft(null); manualRef.current = null; if (t.id === "angle" && placeAngle()) return; setTool(t.id); setColor(t.id === "dim" ? dimColor : lineColor); }} className={cn("flex h-10 items-center gap-1.5 rounded-lg px-2 text-xs font-medium", tool === t.id ? "bg-primary text-primary-foreground" : "text-muted-foreground")}>
               <t.icon className="size-4" />
               <span>{t.label}</span>
             </button>
