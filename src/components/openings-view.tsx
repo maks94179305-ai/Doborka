@@ -36,14 +36,14 @@ function OpeningEditor({ opening, fallback, onChange, onRemove }: { opening: Ope
             <Num clearOnFocus min={1} label="Слева" value={opening.facade?.left ?? 18} onChange={(n) => onChange({ facade: { left: n, right: opening.facade?.right ?? 18, top: opening.facade?.top ?? 18, bottom: opening.facade?.bottom ?? 18 } })} />
             <Num clearOnFocus min={1} label="Справа" value={opening.facade?.right ?? 18} onChange={(n) => onChange({ facade: { left: opening.facade?.left ?? 18, right: n, top: opening.facade?.top ?? 18, bottom: opening.facade?.bottom ?? 18 } })} />
             <Num clearOnFocus min={1} label="Сверху" value={opening.facade?.top ?? 18} onChange={(n) => onChange({ facade: { left: opening.facade?.left ?? 18, right: opening.facade?.right ?? 18, top: n, bottom: opening.facade?.bottom ?? 18 } })} />
-            {opening.sides.bottom ? <Num clearOnFocus min={1} label="Отлив" value={opening.facade?.bottom ?? 18} onChange={(n) => onChange({ facade: { left: opening.facade?.left ?? 18, right: opening.facade?.right ?? 18, top: opening.facade?.top ?? 18, bottom: n } })} /> : null}
+            {opening.sides.bottom && (opening.facade?.bottom ?? 18) > 0 ? <Num clearOnFocus min={0} label="Отлив" value={opening.facade?.bottom ?? 18} onChange={(n) => onChange({ facade: { left: opening.facade?.left ?? 18, right: opening.facade?.right ?? 18, top: opening.facade?.top ?? 18, bottom: n } })} /> : opening.sides.bottom ? <button type="button" className="flex h-full min-h-11 items-center justify-center rounded-md border border-border text-sm" onClick={() => onChange({ facade: { left: opening.facade?.left ?? 18, right: opening.facade?.right ?? 18, top: opening.facade?.top ?? 18, bottom: 18 }, sides: { ...opening.sides, bottom: true } })}>+ отлив</button> : null}
           </div>
         </details>
         <div className="grid w-full grid-cols-2 items-stretch gap-2 sm:grid-cols-4">
           {opening.sides.left ? <SlopeColumn label="Слева" title="Левый" thickness={opening.facade?.left ?? 18} schemeKey={sideKey("left", opening.facade?.left ?? 18)} onThickness={(n) => onChange({ facade: { left: n, right: opening.facade?.right ?? 18, top: opening.facade?.top ?? 18, bottom: opening.facade?.bottom ?? 18 } })} /> : null}
           {opening.sides.right ? <SlopeColumn label="Справа" title="Правый" thickness={opening.facade?.right ?? 18} schemeKey={sideKey("right", opening.facade?.right ?? 18)} onThickness={(n) => onChange({ facade: { left: opening.facade?.left ?? 18, right: n, top: opening.facade?.top ?? 18, bottom: opening.facade?.bottom ?? 18 } })} /> : null}
           {opening.sides.top ? <SlopeColumn label="Сверху" title="Верхний" thickness={opening.facade?.top ?? 18} schemeKey={sideKey("top", opening.facade?.top ?? 18)} onThickness={(n) => onChange({ facade: { left: opening.facade?.left ?? 18, right: opening.facade?.right ?? 18, top: n, bottom: opening.facade?.bottom ?? 18 } })} /> : null}
-          {opening.sides.bottom ? <SlopeColumn label="Отлив" title="Отлив" thickness={opening.facade?.bottom ?? 18} schemeKey={`slope:bottom:${opening.id}`} onThickness={(n) => onChange({ facade: { left: opening.facade?.left ?? 18, right: opening.facade?.right ?? 18, top: opening.facade?.top ?? 18, bottom: n } })} /> : null}
+          {opening.sides.bottom && (opening.facade?.bottom ?? 18) > 0 ? <SlopeColumn label="Отлив" title="Отлив" thickness={opening.facade?.bottom ?? 18} schemeKey={`slope:bottom:${opening.id}`} onThickness={(n) => onChange({ facade: { left: opening.facade?.left ?? 18, right: opening.facade?.right ?? 18, top: opening.facade?.top ?? 18, bottom: n } })} /> : null}
         </div>
       </div>
       <div>
@@ -246,7 +246,7 @@ export function OpeningsView() {
                       let drawings = p.drawings;
                       for (const side of sides) {
                         const prev = o.facade?.[side] ?? 18;
-                        const next = Math.max(1, patch.facade?.[side] ?? prev);
+                        const next = side === "bottom" ? Math.max(0, patch.facade?.[side] ?? prev) : Math.max(1, patch.facade?.[side] ?? prev);
                         const key = side === "bottom" ? `slope:bottom:${o.id}` : `slope:${o.id}:${side}`;
                         const drawingId = p.schemeDrawings?.[key];
                         if (!drawingId || prev === next) continue;
@@ -266,7 +266,7 @@ export function OpeningsView() {
                         ];
                         drawings = drawings.map((d) => d.id === drawingId ? { ...d, updatedAt: Date.now(), objects } : d);
                       }
-                      return { ...p, drawings, openings: p.openings.map((item) => item.id === o.id ? { ...item, facade: { left: Math.max(1, patch.facade?.left ?? 18), right: Math.max(1, patch.facade?.right ?? 18), top: Math.max(1, patch.facade?.top ?? 18), bottom: Math.max(1, patch.facade?.bottom ?? 18) } } : item) };
+                      return { ...p, drawings, openings: p.openings.map((item) => item.id === o.id ? { ...item, facade: { left: Math.max(1, patch.facade?.left ?? 18), right: Math.max(1, patch.facade?.right ?? 18), top: Math.max(1, patch.facade?.top ?? 18), bottom: Math.max(0, patch.facade?.bottom ?? 18) } } : item) };
                     });
                   }} onRemove={() => removeOpening(o.id)} />
                 </div>
