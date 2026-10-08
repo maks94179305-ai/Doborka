@@ -33,26 +33,31 @@ export function PlanView() {
   const [picked, setPicked] = useState<string[]>([]);
   function toggle(key: string) { setPicked((cur) => cur.includes(key) ? cur.filter((x) => x !== key) : [...cur, key]); }
   async function sharePicked() {
-    const files = [];
-    for (const m of materials.filter((m) => picked.includes(m.key))) {
-      const photoId = schemeIdsOf(project!, m.key)[0];
-      if (!photoId) continue;
-      const blob = await getPhoto(photoId);
+    const chosen = materials.filter((m) => picked.includes(m.key));
+    const sent: { file: File; title: string }[] = [];
+    for (const m of chosen) {
+      const drawing = project!.drawings.find((d) => d.id === project!.schemeDrawings?.[m.key]);
+      const dims = (drawing?.objects ?? []).filter((o) => o.type === "dim" && o.label).map((o) => ({ length: Number(o.label) || 0, count: 1 }));
+      let blob = null as Blob | null;
+      const photoId = schemeIdsOf(project!, m.key)[0] || drawing?.previewPhotoId;
+      if (photoId) blob = await getPhoto(photoId);
+      if (!blob && drawing) blob = await renderDrawingToBlob(drawing, { w: 900, h: 640 });
       if (!blob) continue;
       const url = URL.createObjectURL(blob);
       try {
-        files.push(await composeWindowShot(url, { heading: "Схема", title: m.title, color: profileColorOf(project!, m.key), colorName: profileColorName(profileColorOf(project!, m.key)), note: project!.profileNotes?.[m.key], bars: m.plan.barCounts, totalBars: m.plan.bars.length }));
+        const file = await composeWindowShot(url, { heading: "Схема", title: m.title, color: profileColorOf(project!, m.key), colorName: profileColorName(profileColorOf(project!, m.key)), note: project!.profileNotes?.[m.key], bars: dims.length ? dims : m.plan.barCounts, totalBars: dims.length || m.plan.bars.length });
+        sent.push({ file, title: m.title });
       } finally { URL.revokeObjectURL(url); }
     }
-    if (!files.length) return;
+    if (!sent.length) return;
     const projectName = (window.prompt("Название проекта в истории", "Раскрой") || "").trim() || "Раскрой";
     const projectId = uid("hp");
-    for (const [i, file] of files.entries()) {
+    for (const item of sent) {
       const photoId = uid("ph");
-      await savePhoto(photoId, file);
-      addArchiveEntry({ photoId, title: materials.filter((m) => picked.includes(m.key))[i]?.title || projectName, projectId, projectName });
+      await savePhoto(photoId, item.file);
+      addArchiveEntry({ photoId, title: item.title, projectId, projectName });
     }
-    await shareFiles(files, projectName);
+    await shareFiles(sent.map((item) => item.file), projectName);
   }
   if (!project) return null;
   const tooLong = plan.unplaced;
@@ -227,7 +232,7 @@ function OrderLine({ material, schemeIds, color, note, picked, onToggle, onSchem
       {plan.remainderMm > 0 ? <p className="mt-3 text-sm text-muted-foreground">Пригодный остаток: {mm(plan.remainderMm)}</p> : null}
       <div className="mt-4 border-t border-border pt-3">
         <p className="mb-2 text-xs uppercase tracking-[0.14em] text-steel">Схема профиля</p>
-        <PhotoStrip ids={shownSchemeIds} onChange={onSchemeChange} variant="scheme" extraActions={<Button type="button" variant="outline" className="h-11" onClick={hasDrawing ? editDrawing : openBlank}><Pencil /> {hasDrawing ? "Редактировать" : "Начертить"}</Button>} previewAside={<BarOrderPanel title={title} color={color} colorName={colorName} note={note} barCounts={plan.barCounts} totalBars={plan.bars.length} />} shareCard={{ heading: "Схема", title, color, colorName, note, bars: plan.barCounts, totalBars: plan.bars.length }} onEdit={openExisting} />
+        <PhotoStrip ids={shownSchemeIds} onChange={onSchemeChange} variant="scheme" extraActions={<Button type="button" variant="outline" className="h-11" onClick={hasDrawing ? editDrawing : openBlank}><Pencil /> {hasDrawing ? "Редактировать" : "Начертить"}</Button>} previewAside={<BarOrderPanel title={title} color={color} colorName={colorName} note={note} barCounts={plan.barCounts} totalBars={plan.bars.length} />} shareCard={{ heading: "Схема", title, color, colorName, note, bars: (savedDrawing?.objects ?? []).filter((o) => o.type === "dim" && o.label).map((o) => ({ length: Number(o.label) || 0, count: 1 })), totalBars: (savedDrawing?.objects ?? []).filter((o) => o.type === "dim").length || plan.bars.length }} onEdit={openExisting} />
       </div>
       {draft ? <SchemeDrawDialog open={drawOpen} title={title} drawing={draft} onOpenChange={setDrawOpen} onDone={(d) => { void persistDraw(d); }} /> : null}
     </article>

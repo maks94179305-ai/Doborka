@@ -49,6 +49,7 @@ export function ArchiveView() {
   const [urls, setUrls] = useState<Record<string, string>>({});
   const [preview, setPreview] = useState<string | null>(null);
   const [picked, setPicked] = useState<string[]>([]);
+  const [openFolder, setOpenFolder] = useState<string | null>(null);
   const entries = project?.archive ?? [];
   const [photoRev, setPhotoRev] = useState(0);
   const photoKey = entries.map((e) => e.photoId).join("|");
@@ -133,15 +134,19 @@ export function ArchiveView() {
           <p className="mt-1 text-sm text-muted-foreground">Нажмите «Поделиться» на схеме в раскрое — карточка появится здесь.</p>
         </div>
       ) : (
-        <div className="space-y-8">
-          {Object.entries(entries.reduce<Record<string, typeof entries>>((acc, e) => { const day = dayFmt.format(e.sentAt); (acc[day] ??= []).push(e); return acc; }, {})).map(([day, items]) => (
-          <section key={day}>
-            <h2 className="mb-3 font-display text-3xl text-[#f3f1ec]">{day}</h2>
-            {Object.entries(items.reduce<Record<string, typeof items>>((acc, e) => { const key = e.projectId || e.id; (acc[key] ??= []).push(e); return acc; }, {})).map(([key, group]) => (
-            <section key={key} className="mb-4 rounded-2xl border border-border p-3">
-              {group[0]?.projectId ? <input value={group[0].projectName || "Раскрой"} onChange={(ev) => renameArchiveProject(group[0].projectId!, ev.target.value)} className="mb-3 w-full bg-transparent font-display text-2xl outline-none" aria-label="Название папки" /> : null}
-            <ul className="grid gap-3 sm:grid-cols-2">
-          {group.map((e) => (
+        <div className="space-y-4">
+          {openFolder ? <Button variant="secondary" onClick={() => setOpenFolder(null)}>Назад к папкам</Button> : null}
+          {(openFolder ? entries.filter((e) => (e.projectId || e.id) === openFolder) : Object.values(entries.reduce<Record<string, typeof entries[number]>>((acc, e) => { const key = e.projectId || e.id; acc[key] ??= e; return acc; }, {}))).map((e) => (
+          openFolder ? null : (
+            <button key={e.projectId || e.id} type="button" className="panel flex w-full items-center justify-between p-4 text-left" onClick={() => setOpenFolder(e.projectId || e.id)}>
+              <span>
+                <input value={e.projectName || e.title} onClick={(ev) => ev.stopPropagation()} onChange={(ev) => e.projectId && renameArchiveProject(e.projectId, ev.target.value)} className="w-full bg-transparent font-display text-2xl outline-none" aria-label="Название папки" />
+                <span className="mt-1 block text-sm text-muted-foreground">{entries.filter((x) => (x.projectId || x.id) === (e.projectId || e.id)).length} карт. · {dayFmt.format(e.sentAt)}</span>
+              </span>
+              <span className="text-steel">Открыть</span>
+            </button>
+          )))}
+          {openFolder ? <ul className="grid gap-3 sm:grid-cols-2">{entries.filter((e) => (e.projectId || e.id) === openFolder).map((e) => (
             <li key={e.id} className={"panel overflow-hidden p-4 " + (picked.includes(e.id) ? "ring-2 ring-primary" : "")}>
               <button type="button" className="block w-full overflow-hidden rounded-xl border border-border bg-background/50" onClick={() => urls[e.id] && setPreview(urls[e.id])} aria-label="Открыть карточку">
                 {urls[e.id] ? <img src={urls[e.id]} alt="" className="max-h-52 w-full object-contain" /> : <div className="h-36 bg-muted" />}
@@ -157,11 +162,7 @@ export function ArchiveView() {
               </div>
             </li>
           ))}
-            </ul>
-            </section>
-            ))}
-          </section>
-          ))}
+          ))}</ul> : null}
         </div>
       )}
       {preview ? <SchemeZoom src={preview} onClose={() => setPreview(null)} /> : null}
