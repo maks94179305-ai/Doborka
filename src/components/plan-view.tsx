@@ -1,8 +1,11 @@
 import { useEffect, useId, useMemo, useState } from "react";
-import { Download, Pencil, Printer, Trash2 } from "lucide-react";
+import { Download, Pencil, Printer, Share2, Trash2 } from "lucide-react";
 import { BarScheme } from "@/components/bar-scheme";
 import { SchemeDrawDialog } from "@/components/scheme-draw-dialog";
 import { PhotoStrip } from "@/components/photo-strip";
+import { getPhoto } from "@/lib/photos";
+import { composeWindowShot } from "@/lib/share-image";
+import { shareFiles } from "@/lib/share-native";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { mergePlans, plansByMaterial, type MaterialPlan } from "@/lib/cutting";
@@ -26,6 +29,22 @@ export function PlanView() {
     return plansByMaterial(pieces, project.settings.stockLengths, project.settings.kerf, project.settings.minRemainder, project.settings.strategy);
   }, [project, pieces]);
   const plan = useMemo(() => mergePlans(materials.map((m) => m.plan)), [materials]);
+  const [picked, setPicked] = useState<string[]>([]);
+  function toggle(key: string) { setPicked((cur) => cur.includes(key) ? cur.filter((x) => x !== key) : [...cur, key]); }
+  async function sharePicked() {
+    const files = [];
+    for (const m of materials.filter((m) => picked.includes(m.key))) {
+      const photoId = schemeIdsOf(project!, m.key)[0];
+      if (!photoId) continue;
+      const blob = await getPhoto(photoId);
+      if (!blob) continue;
+      const url = URL.createObjectURL(blob);
+      try {
+        files.push(await composeWindowShot(url, { heading: "Схема", title: m.title, color: profileColorOf(project!, m.key), colorName: profileColorName(profileColorOf(project!, m.key)), note: project!.profileNotes?.[m.key], bars: m.plan.barCounts, totalBars: m.plan.bars.length }));
+      } finally { URL.revokeObjectURL(url); }
+    }
+    if (files.length) await shareFiles(files, "Раскрой · Доборка");
+  }
   if (!project) return null;
   const tooLong = plan.unplaced;
   return (
@@ -39,6 +58,9 @@ export function PlanView() {
         <div className="flex flex-wrap gap-2">
           <Button variant="secondary" onClick={() => downloadText(`doborka-${project.name}.html`, buildReportHtml(project, plan, materials), "text/html;charset=utf-8")}><Download /> Отчёт для ПК</Button>
           <Button variant="outline" className="no-print" onClick={() => window.print()}><Printer /> Печать</Button>
+          <Button variant="secondary" onClick={() => setPicked(materials.map((m) => m.key))}>Выбрать все</Button>
+          <Button variant="secondary" onClick={() => setPicked([])} disabled={!picked.length}>Снять выбор</Button>
+          <Button onClick={() => void sharePicked()} disabled={!picked.length}><Share2 /> Поделиться выбранными{picked.length ? ` (${picked.length})` : ""}</Button>
         </div>
       </header>
       <section className="grid grid-cols-2 gap-3 sm:grid-cols-4">
@@ -59,7 +81,7 @@ export function PlanView() {
             {materials.map((m, i) => (
               <li key={m.key} className="grid gap-3">
                 {i > 0 ? <div className="cut-rule" role="separator" aria-hidden /> : null}
-                <OrderLine material={m} schemeIds={schemeIdsOf(project, m.key)} color={profileColorOf(project, m.key)} note={project.profileNotes?.[m.key] ?? ""} onSchemeChange={(ids) => setSchemeIds(m.key, ids)} onColorChange={(hex) => setProfileColor(m.key, hex)} onNoteChange={(note) => setProfileNote(m.key, note)} />
+                <OrderLine material={m} schemeIds={schemeIdsOf(project, m.key)} color={profileColorOf(project, m.key)} note={project.profileNotes?.[m.key] ?? ""} picked={picked.includes(m.key)} onToggle={() => toggle(m.key)} onSchemeChange={(ids) => setSchemeIds(m.key, ids)} onColorChange={(hex) => setProfileColor(m.key, hex)} onNoteChange={(note) => setProfileNote(m.key, note)} />
                 {m.plan.bars.length > 0 ? (
                   <div className="grid min-w-0 gap-3">
                     <h2 className="font-display text-base">Раскрой · {m.title}</h2>
@@ -99,7 +121,7 @@ function slopeProfileDrawing(thickness: number): Drawing {
     ],
   };
 }
-function OrderLine({ material, schemeIds, color, note, onSchemeChange, onColorChange, onNoteChange }: { material: MaterialPlan; schemeIds: string[]; color: string; note: string; onSchemeChange: (ids: string[]) => void; onColorChange: (hex: string) => void; onNoteChange: (note: string) => void }) {
+function OrderLine({ material, schemeIds, color, note, picked, onToggle, onSchemeChange, onColorChange, onNoteChange }: { material: MaterialPlan; schemeIds: string[]; color: string; note: string; picked: boolean; onToggle: () => void; onSchemeChange: (ids: string[]) => void; onColorChange: (hex: string) => void; onNoteChange: (note: string) => void }) {
   const project = useProject();
   const patch = useWorkspace((s) => s.patchProject);
   const { plan, pieces, title } = material;
@@ -179,10 +201,10 @@ function OrderLine({ material, schemeIds, color, note, onSchemeChange, onColorCh
     });
   }
   return (
-    <article className="panel min-w-0 overflow-hidden p-5">
+    <article className={"panel min-w-0 overflow-hidden p-5 " + (picked ? "ring-2 ring-primary" : "")}>
       <header className="flex flex-wrap items-start justify-between gap-2">
         <div className="min-w-0">
-          <h3 className="font-display text-base font-medium">{title}</h3>
+          <label className="mb-1 flex items-center gap-2 text-sm"><input type="checkbox" checked={picked} onChange={onToggle} /> Выбрать</label><h3 className="font-display text-base font-medium">{title}</h3>
           <p className="mt-0.5 flex items-center gap-2 text-sm text-muted-foreground"><ColorChip hex={color} size="sm" /> Цвет {colorName} · {pieces.length} шт · {meters(plan.totalMm)}</p>
         </div>
         <div className="flex shrink-0 items-center gap-2">
