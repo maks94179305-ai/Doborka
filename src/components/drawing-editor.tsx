@@ -3,6 +3,7 @@ import { ClipboardPaste, Copy, DraftingCompass, Maximize2, MousePointer2, PenLin
 import { Button } from "@/components/ui/button";
 import { dimInputValue, dimLabelWorld, dist, fitView, hitDimPart, hitScore, keepMinOffset, angleJoint, paintAngle, paintDim, paintObject, parseMm, pickDimStart, resizeFromStart, SCALE_DEFAULT, sheetColor, signedPerp, snapDimEnd, snapToDrawing, strokeDash, type Pt } from "@/lib/draw-render";
 import { DRAW_COLORS, type DrawObject, type Drawing } from "@/lib/types";
+import { rememberDrawing } from "@/lib/drawing-library";
 import { cn, uid } from "@/lib/utils";
 
 type Tool = "select" | "line" | "dim" | "angle";
@@ -83,6 +84,7 @@ export function DrawingEditor({ drawing, onChange, compact = false }: { drawing:
     history.current = [...history.current.slice(0, histIndex.current + 1), next].slice(-40);
     histIndex.current = history.current.length - 1;
     onChange({ ...drawing, objects: next, view: viewRef.current, updatedAt: Date.now() });
+    rememberDrawing(drawing.name, next);
   }, [drawing, onChange]);
 
   function undo() {

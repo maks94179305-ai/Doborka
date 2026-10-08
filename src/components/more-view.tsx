@@ -8,6 +8,8 @@ import { DEFAULT_STOCK, SIDE_KEYS, SIDE_SHORT, type Strategy } from "@/lib/types
 import { useProject, useWorkspace } from "@/lib/store";
 import { downloadText } from "@/lib/report";
 import { PairPanel } from "@/components/pair-panel";
+import { loadLibrary, rememberDrawing, saveLibrary, type LibraryDrawing } from "@/lib/drawing-library";
+import { Copy, ClipboardPaste } from "lucide-react";
 
 type BIPEvent = Event & { prompt: () => Promise<void> };
 
@@ -18,6 +20,13 @@ export function MoreView() {
   const [standalone, setStandalone] = useState(false);
   const [customStock, setCustomStock] = useState("");
   const [light, setLight] = useState(() => localStorage.getItem("doborka-theme") === "light");
+  const [library, setLibrary] = useState<LibraryDrawing[]>(() => loadLibrary());
+  useEffect(() => {
+    const sync = () => setLibrary(loadLibrary());
+    window.addEventListener("doborka-library", sync);
+    return () => window.removeEventListener("doborka-library", sync);
+  }, []);
+  useEffect(() => { for (const d of project?.drawings ?? []) if (d.objects.length) rememberDrawing(d.name, d.objects); }, [project]);
 
   useEffect(() => {
     const standaloneNow = window.matchMedia("(display-mode: standalone)").matches || ("standalone" in navigator && Boolean((navigator as { standalone?: boolean }).standalone));
@@ -100,6 +109,23 @@ export function MoreView() {
             ))}
           </ul>
         ) : null}
+      </section>
+      <section className="space-y-3">
+        <details className="rounded-xl border border-border px-3 py-2">
+          <summary className="cursor-pointer font-display text-lg">Чертежи</summary>
+          <div className="mt-3 grid gap-2">
+            <Button variant="secondary" onClick={() => { const raw = localStorage.getItem("doborka-drawing-clip"); if (!raw) return; try { rememberDrawing("Вставленный чертёж", JSON.parse(raw)); } catch { /* ignore */ } }}><ClipboardPaste /> Вставить чертёж</Button>
+            {library.length ? library.map((item) => (
+              <div key={item.id} className="flex items-center justify-between gap-2 rounded-md border border-border px-3 py-2">
+                <span className="min-w-0 truncate text-sm">{item.name}</span>
+                <span className="flex gap-1">
+                  <Button size="icon-sm" variant="secondary" aria-label="Копировать" onClick={() => { const payload = JSON.stringify(item.objects); localStorage.setItem("doborka-drawing-clip", payload); void navigator.clipboard?.writeText(payload); }}><Copy /></Button>
+                  <Button size="icon-sm" variant="ghost" aria-label="Удалить" onClick={() => saveLibrary(library.filter((x) => x.id !== item.id))}><Trash2 /></Button>
+                </span>
+              </div>
+            )) : <p className="text-sm text-muted-foreground">Пока нет сохранённых чертежей.</p>}
+          </div>
+        </details>
       </section>
       <section className="space-y-3">
         <h2 className="font-display text-lg">Тема</h2>
