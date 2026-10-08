@@ -130,7 +130,7 @@ export function DrawingEditor({ drawing, onChange, compact = false }: { drawing:
     ctx.save();
     ctx.translate(v.x, v.y);
     ctx.scale(v.scale, v.scale);
-    for (const obj of objectsRef.current) { if (obj.type === "angle") paintAngle(ctx, obj, objectsRef.current, v.scale); else paintObject(ctx, obj, v.scale, selected.includes(obj.id)); }
+    for (const obj of objectsRef.current) { if (obj.type === "angle") paintAngle(ctx, obj, objectsRef.current, v.scale, selected.includes(obj.id)); else paintObject(ctx, obj, v.scale, selected.includes(obj.id)); }
     const preview = draftRef.current;
     if (preview && preview.pan) {
       /* sheet is moving */

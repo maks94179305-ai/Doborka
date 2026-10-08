@@ -223,7 +223,7 @@ export function angleJoint(obj: Extract<DrawObject, { type: "angle" }>, objects:
   }
   return { x: (best.p.x + best.q.x) / 2, y: (best.p.y + best.q.y) / 2 };
 }
-export function paintAngle(ctx: CanvasRenderingContext2D, obj: Extract<DrawObject, { type: "angle" }>, objects: DrawObject[], scale: number) {
+export function paintAngle(ctx: CanvasRenderingContext2D, obj: Extract<DrawObject, { type: "angle" }>, objects: DrawObject[], scale: number, hi = false) {
   const a = objects.find((o) => o.id === obj.a && o.type === "line");
   const b = objects.find((o) => o.id === obj.b && o.type === "line");
   if (!a || a.type !== "line" || !b || b.type !== "line") return;
@@ -248,9 +248,9 @@ export function paintAngle(ctx: CanvasRenderingContext2D, obj: Extract<DrawObjec
   const r = Math.max(12, obj.radius ?? 22);
   const labelAt = obj.label ?? r * 0.62;
   ctx.save();
-  ctx.strokeStyle = strokeColor(obj.color);
-  ctx.fillStyle = strokeColor(obj.color);
-  ctx.lineWidth = 1.4 / scale;
+  ctx.strokeStyle = hi ? "#e8e4d8" : strokeColor(obj.color);
+  ctx.fillStyle = hi ? "#e8e4d8" : strokeColor(obj.color);
+  ctx.lineWidth = (hi ? 2.4 : 1.4) / scale;
   ctx.beginPath();
   ctx.arc(joint.x, joint.y, r, a0, a0 + sweep, sweep < 0);
   ctx.stroke();
