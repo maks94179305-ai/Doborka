@@ -13,13 +13,14 @@ export function saveLibrary(items: LibraryDrawing[]) {
   localStorage.setItem(KEY, JSON.stringify(items.slice(0, 80)));
   window.dispatchEvent(new Event("doborka-library"));
 }
-export function rememberDrawing(name: string, objects: DrawObject[]) {
+export function rememberDrawing(name: string, objects: DrawObject[], id = "") {
   if (!objects.length) return;
   const sig = sigOf(objects);
   if (forgotten().has(sig)) return;
   const items = loadLibrary();
-  if (items.some((item) => sigOf(item.objects) === sig)) return;
-  saveLibrary([{ id: `lib-${Date.now()}`, name: name || "Чертёж", objects, updatedAt: Date.now() }, ...items]);
+  const key = id || sig;
+  if (items.some((item) => item.id === key || sigOf(item.objects) === sig)) return;
+  saveLibrary([{ id: key, name: name || "Чертёж", objects, updatedAt: Date.now() }, ...items]);
 }
 
 export function forgetDrawings(items: LibraryDrawing[]) {

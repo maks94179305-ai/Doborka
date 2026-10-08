@@ -84,7 +84,7 @@ export function DrawingEditor({ drawing, onChange, compact = false }: { drawing:
     history.current = [...history.current.slice(0, histIndex.current + 1), next].slice(-40);
     histIndex.current = history.current.length - 1;
     onChange({ ...drawing, objects: next, view: viewRef.current, updatedAt: Date.now() });
-    rememberDrawing(drawing.name, next);
+    rememberDrawing(drawing.name, next, drawing.id);
   }, [drawing, onChange]);
 
   function undo() {

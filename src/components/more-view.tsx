@@ -28,7 +28,6 @@ export function MoreView() {
     window.addEventListener("doborka-library", sync);
     return () => window.removeEventListener("doborka-library", sync);
   }, []);
-  useEffect(() => { for (const d of project?.drawings ?? []) if (d.objects.length) rememberDrawing(d.name, d.objects); }, [project]);
 
   useEffect(() => {
     const standaloneNow = window.matchMedia("(display-mode: standalone)").matches || ("standalone" in navigator && Boolean((navigator as { standalone?: boolean }).standalone));
