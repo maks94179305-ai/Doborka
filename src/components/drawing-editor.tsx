@@ -244,14 +244,14 @@ export function DrawingEditor({ drawing, onChange, compact = false }: { drawing:
       const joint = angleJoint(o, objectsRef.current);
       if (!joint) return false;
       const r = o.radius ?? 22;
-      const labelAt = o.label ?? r + 28;
+      const labelAt = o.label ?? r * 0.62;
       const d = Math.hypot(world.x - joint.x, world.y - joint.y);
       return Math.abs(d - r) < 4 || Math.abs(d - labelAt) < 5;
     });
     if (angleHit && angleHit.type === "angle" && toolRef.current === "select") {
       const joint = angleJoint(angleHit, objectsRef.current);
       const d = joint ? Math.hypot(world.x - joint.x, world.y - joint.y) : 0;
-      offsetDrag.current = `${angleHit.id}:${d > (angleHit.radius ?? 22) + 8 ? "label" : "arc"}`;
+      offsetDrag.current = angleHit.id;
       setSelected([angleHit.id]);
       downRef.current = { x: e.clientX, y: e.clientY, empty: false };
       return;
@@ -362,11 +362,9 @@ export function DrawingEditor({ drawing, onChange, compact = false }: { drawing:
       }
       if (obj?.type === "angle") {
         const joint = angleJoint(obj, objectsRef.current);
-        const part = id.endsWith(":label") ? "label" : "arc";
-        const angleId = id.split(":")[0];
         if (joint) {
-          const dist = Math.max(12, Math.hypot(world.x - joint.x, world.y - joint.y));
-          objectsRef.current = objectsRef.current.map((o) => o.id === angleId && o.type === "angle" ? { ...o, ...(part === "label" ? { label: dist } : { radius: dist }) } : o);
+          const radius = Math.max(16, Math.hypot(world.x - joint.x, world.y - joint.y));
+          objectsRef.current = objectsRef.current.map((o) => o.id === id && o.type === "angle" ? { ...o, radius, label: undefined } : o);
           paintSoon();
         }
       }
