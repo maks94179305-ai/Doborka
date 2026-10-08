@@ -161,7 +161,6 @@ export function ArchiveView() {
                 <div className="flex shrink-0 gap-1"><Button size="sm" variant="secondary" onClick={() => void share(e.photoId, e.title)}><Share2 /> Поделиться</Button><Button size="icon-sm" variant="ghost" onClick={() => void remove(e.id, e.photoId)} aria-label="Удалить из архива"><Trash2 /></Button></div>
               </div>
             </li>
-          ))}
           ))}</ul> : null}
         </div>
       )}
