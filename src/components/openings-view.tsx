@@ -33,10 +33,10 @@ function OpeningEditor({ opening, fallback, onChange, onRemove }: { opening: Ope
         <details open className="mb-2 w-full rounded-xl border border-steel/50 bg-card px-3 py-2">
           <summary className="cursor-pointer text-base font-medium text-foreground">Толщина облицовки фасада</summary>
           <div className={"mb-2 grid gap-2 " + (opening.sides.bottom ? "grid-cols-4" : "grid-cols-3")}>
-            <Num label="Слева" value={opening.facade?.left ?? 18} onChange={(n) => onChange({ facade: { left: n, right: opening.facade?.right ?? 18, top: opening.facade?.top ?? 18, bottom: opening.facade?.bottom ?? 18 } })} />
-            <Num label="Справа" value={opening.facade?.right ?? 18} onChange={(n) => onChange({ facade: { left: opening.facade?.left ?? 18, right: n, top: opening.facade?.top ?? 18, bottom: opening.facade?.bottom ?? 18 } })} />
-            <Num label="Сверху" value={opening.facade?.top ?? 18} onChange={(n) => onChange({ facade: { left: opening.facade?.left ?? 18, right: opening.facade?.right ?? 18, top: n, bottom: opening.facade?.bottom ?? 18 } })} />
-            {opening.sides.bottom ? <Num label="Отлив" value={opening.facade?.bottom ?? 18} onChange={(n) => onChange({ facade: { left: opening.facade?.left ?? 18, right: opening.facade?.right ?? 18, top: opening.facade?.top ?? 18, bottom: n } })} /> : null}
+            <Num clearOnFocus label="Слева" value={opening.facade?.left ?? 18} onChange={(n) => onChange({ facade: { left: n, right: opening.facade?.right ?? 18, top: opening.facade?.top ?? 18, bottom: opening.facade?.bottom ?? 18 } })} />
+            <Num clearOnFocus label="Справа" value={opening.facade?.right ?? 18} onChange={(n) => onChange({ facade: { left: opening.facade?.left ?? 18, right: n, top: opening.facade?.top ?? 18, bottom: opening.facade?.bottom ?? 18 } })} />
+            <Num clearOnFocus label="Сверху" value={opening.facade?.top ?? 18} onChange={(n) => onChange({ facade: { left: opening.facade?.left ?? 18, right: opening.facade?.right ?? 18, top: n, bottom: opening.facade?.bottom ?? 18 } })} />
+            {opening.sides.bottom ? <Num clearOnFocus label="Отлив" value={opening.facade?.bottom ?? 18} onChange={(n) => onChange({ facade: { left: opening.facade?.left ?? 18, right: opening.facade?.right ?? 18, top: opening.facade?.top ?? 18, bottom: n } })} /> : null}
           </div>
         </details>
         <div className="grid w-full grid-cols-2 items-stretch gap-2 sm:grid-cols-4">

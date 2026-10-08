@@ -8,12 +8,14 @@ export function Num({
   onChange,
   suffix = "мм",
   min,
+  clearOnFocus = false,
 }: {
   label: string;
   value: number;
   onChange: (n: number) => void;
   suffix?: string;
   min?: number;
+  clearOnFocus?: boolean;
 }) {
   const [draft, setDraft] = useState<string | null>(null);
   const shown = draft ?? (Number.isFinite(value) ? String(value) : "");
@@ -35,7 +37,7 @@ export function Num({
           inputMode="numeric"
           value={shown}
           onChange={(e) => setDraft(e.target.value.replace(/\D/g, ""))}
-          onBlur={() => commit(shown)}
+          onFocus={() => { if (clearOnFocus) setDraft(""); }} onBlur={() => commit(shown)}
           onKeyDown={(e) => {
             if (e.key === "Enter") (e.target as HTMLInputElement).blur();
           }}
