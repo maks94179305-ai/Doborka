@@ -23,6 +23,7 @@ export function PlanView() {
   const setSchemeIds = useWorkspace((s) => s.setSchemeIds);
   const setProfileColor = useWorkspace((s) => s.setProfileColor);
   const setProfileNote = useWorkspace((s) => s.setProfileNote);
+  const addArchiveEntry = useWorkspace((s) => s.addArchiveEntry);
   const pieces = useMemo(() => (project ? collectPieces(project) : []), [project]);
   const materials = useMemo(() => {
     if (!project) return [];
@@ -43,7 +44,15 @@ export function PlanView() {
         files.push(await composeWindowShot(url, { heading: "Схема", title: m.title, color: profileColorOf(project!, m.key), colorName: profileColorName(profileColorOf(project!, m.key)), note: project!.profileNotes?.[m.key], bars: m.plan.barCounts, totalBars: m.plan.bars.length }));
       } finally { URL.revokeObjectURL(url); }
     }
-    if (files.length) await shareFiles(files, "Раскрой · Доборка");
+    if (!files.length) return;
+    const projectName = (window.prompt("Название проекта в истории", "Раскрой") || "").trim() || "Раскрой";
+    const projectId = uid("hp");
+    for (const [i, file] of files.entries()) {
+      const photoId = uid("ph");
+      await savePhoto(photoId, file);
+      addArchiveEntry({ photoId, title: materials.filter((m) => picked.includes(m.key))[i]?.title || projectName, projectId, projectName });
+    }
+    await shareFiles(files, projectName);
   }
   if (!project) return null;
   const tooLong = plan.unplaced;

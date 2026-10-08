@@ -45,6 +45,7 @@ function SchemeZoom({ src, onClose }: { src: string; onClose: () => void }) {
 export function ArchiveView() {
   const project = useProject();
   const removeArchiveEntry = useWorkspace((s) => s.removeArchiveEntry);
+  const renameArchiveProject = useWorkspace((s) => s.renameArchiveProject);
   const [urls, setUrls] = useState<Record<string, string>>({});
   const [preview, setPreview] = useState<string | null>(null);
   const [picked, setPicked] = useState<string[]>([]);
@@ -145,6 +146,7 @@ export function ArchiveView() {
               <div className="mt-3 flex items-start justify-between gap-2">
                 <div className="min-w-0">
                   <label className="mb-1 flex items-center gap-2 text-sm"><input type="checkbox" checked={picked.includes(e.id)} onChange={() => toggle(e.id)} /> Выбрать</label>
+                  {e.projectId ? <input value={e.projectName || "Раскрой"} onChange={(ev) => renameArchiveProject(e.projectId!, ev.target.value)} className="mb-1 w-full bg-transparent font-display text-xl outline-none" aria-label="Название проекта" /> : null}
                   <p className="font-medium">{e.title}</p>
                   {e.colorName ? <p className="text-sm text-muted-foreground">Цвет {e.colorName}</p> : null}
                   <p className="mt-1 tabular text-sm text-steel">{sentFmt.format(e.sentAt)}</p>

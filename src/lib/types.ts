@@ -184,7 +184,7 @@ export type Project = {
   settings: ProjectSettings;
 };
 
-export type ArchiveEntry = { id: string; photoId: string; title: string; colorName?: string; sentAt: number };
+export type ArchiveEntry = { id: string; photoId: string; title: string; colorName?: string; sentAt: number; projectId?: string; projectName?: string };
 
 export type NeedPiece = {
   id: string;

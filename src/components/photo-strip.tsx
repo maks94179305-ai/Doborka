@@ -77,7 +77,8 @@ export function PhotoStrip({ ids, onChange, variant = "photos", previewAside, ex
       if (result !== "cancelled") {
         const photoId = uid("ph");
         await savePhoto(photoId, file);
-        const entry = addArchiveEntry({ photoId, title: shareCard?.title ?? (scheme ? "Схема" : "Фото"), colorName: shareCard?.colorName });
+        const projectName = shareCard ? (window.prompt("Название проекта в истории", shareCard.title || "Раскрой") || "").trim() : "";
+        const entry = addArchiveEntry({ photoId, title: shareCard?.title ?? (scheme ? "Схема" : "Фото"), colorName: shareCard?.colorName, projectId: projectName ? uid("hp") : undefined, projectName: projectName || undefined });
         void publishHistory(entry, file);
       }
       setShareState(result === "cancelled" ? "idle" : result);
