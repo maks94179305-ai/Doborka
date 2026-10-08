@@ -556,7 +556,26 @@ export function DrawingEditor({ drawing, onChange, compact = false }: { drawing:
         <Button size="icon-sm" variant="secondary" onClick={redo} aria-label="Повторить"><Redo2 /></Button>
         <Button size="icon-sm" variant="secondary" onClick={delSelected} aria-label="Удалить" disabled={!selected.length}><Trash2 /></Button>
         <Button size="icon-sm" variant="secondary" aria-label="Копировать чертёж" onClick={() => { const payload = JSON.stringify(objectsRef.current); localStorage.setItem("doborka-drawing-clip", payload); void navigator.clipboard?.writeText(payload); }}><Copy /></Button>
-        <Button size="icon-sm" variant="secondary" aria-label="Вставить чертёж" onClick={() => { const raw = localStorage.getItem("doborka-drawing-clip"); if (!raw) return; try { const items = JSON.parse(raw) as DrawObject[]; commit([...objectsRef.current, ...items.map((o) => ({ ...o, id: uid("ob") }))]); } catch { /* ignore */ } }}><ClipboardPaste /></Button>
+        <Button size="icon-sm" variant="secondary" aria-label="Вставить чертёж" onClick={() => { const raw = localStorage.getItem("doborka-drawing-clip"); if (!raw) return; try {
+          const items = JSON.parse(raw) as DrawObject[];
+          const ids = new Map(items.map((o) => [o.id, uid("ob")]));
+          const pasted = items.map((o) => o.type === "angle" ? { ...o, id: ids.get(o.id) ?? uid("ob"), a: ids.get(o.a) ?? o.a, b: ids.get(o.b) ?? o.b } : { ...o, id: ids.get(o.id) ?? uid("ob") });
+          const pts = pasted.flatMap((o) => o.type === "line" || o.type === "dim" ? [o.x1, o.y1, o.x2, o.y2] : o.type === "text" ? [o.x, o.y] : []);
+          const el = wrapRef.current;
+          if (pts.length && el) {
+            const cx = pts.filter((_, i) => i % 2 === 0).reduce((s, n) => s + n, 0) / (pts.length / 2);
+            const cy = pts.filter((_, i) => i % 2 === 1).reduce((s, n) => s + n, 0) / (pts.length / 2);
+            const v = viewRef.current;
+            const tx = (el.clientWidth / 2 - v.x) / v.scale - cx;
+            const ty = (el.clientHeight / 2 - v.y) / v.scale - cy;
+            for (const o of pasted) {
+              if (o.type === "line" || o.type === "dim") { o.x1 += tx; o.y1 += ty; o.x2 += tx; o.y2 += ty; }
+              else if (o.type === "text" || o.type === "rect") { o.x += tx; o.y += ty; }
+            }
+          }
+          commit([...objectsRef.current, ...pasted]);
+          setView(fitView([...objectsRef.current, ...pasted], el?.clientWidth ?? 640, el?.clientHeight ?? 420));
+        } catch { /* ignore */ } }}><ClipboardPaste /></Button>
         <Button size="icon-sm" variant="secondary" aria-label="Вписать" onClick={() => { const el = wrapRef.current; if (el) setView(fitView(objectsRef.current, el.clientWidth, el.clientHeight)); }}><Maximize2 /></Button>
         <div className="flex items-center gap-2">
           {DRAW_COLORS.map((c) => (
