@@ -137,8 +137,11 @@ export function ArchiveView() {
           {Object.entries(entries.reduce<Record<string, typeof entries>>((acc, e) => { const day = dayFmt.format(e.sentAt); (acc[day] ??= []).push(e); return acc; }, {})).map(([day, items]) => (
           <section key={day}>
             <h2 className="mb-3 font-display text-3xl text-[#f3f1ec]">{day}</h2>
+            {Object.entries(items.reduce<Record<string, typeof items>>((acc, e) => { const key = e.projectId || e.id; (acc[key] ??= []).push(e); return acc; }, {})).map(([key, group]) => (
+            <section key={key} className="mb-4 rounded-2xl border border-border p-3">
+              {group[0]?.projectId ? <input value={group[0].projectName || "Раскрой"} onChange={(ev) => renameArchiveProject(group[0].projectId!, ev.target.value)} className="mb-3 w-full bg-transparent font-display text-2xl outline-none" aria-label="Название папки" /> : null}
             <ul className="grid gap-3 sm:grid-cols-2">
-          {items.map((e) => (
+          {group.map((e) => (
             <li key={e.id} className={"panel overflow-hidden p-4 " + (picked.includes(e.id) ? "ring-2 ring-primary" : "")}>
               <button type="button" className="block w-full overflow-hidden rounded-xl border border-border bg-background/50" onClick={() => urls[e.id] && setPreview(urls[e.id])} aria-label="Открыть карточку">
                 {urls[e.id] ? <img src={urls[e.id]} alt="" className="max-h-52 w-full object-contain" /> : <div className="h-36 bg-muted" />}
@@ -146,7 +149,6 @@ export function ArchiveView() {
               <div className="mt-3 flex items-start justify-between gap-2">
                 <div className="min-w-0">
                   <label className="mb-1 flex items-center gap-2 text-sm"><input type="checkbox" checked={picked.includes(e.id)} onChange={() => toggle(e.id)} /> Выбрать</label>
-                  {e.projectId ? <input value={e.projectName || "Раскрой"} onChange={(ev) => renameArchiveProject(e.projectId!, ev.target.value)} className="mb-1 w-full bg-transparent font-display text-xl outline-none" aria-label="Название проекта" /> : null}
                   <p className="font-medium">{e.title}</p>
                   {e.colorName ? <p className="text-sm text-muted-foreground">Цвет {e.colorName}</p> : null}
                   <p className="mt-1 tabular text-sm text-steel">{sentFmt.format(e.sentAt)}</p>
@@ -156,6 +158,8 @@ export function ArchiveView() {
             </li>
           ))}
             </ul>
+            </section>
+            ))}
           </section>
           ))}
         </div>

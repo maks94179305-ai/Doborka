@@ -38,8 +38,7 @@ export async function shareOrSave(file: File, title: string, text?: string): Pro
   } catch (e) {
     if ((e as Error).name === "AbortError") return "cancelled";
   }
-  downloadFile(file);
-  return "saved";
+  return "cancelled";
 }
 
 export async function shareFiles(files: File[], title: string): Promise<"shared" | "saved" | "cancelled"> {
@@ -70,6 +69,5 @@ export async function shareFiles(files: File[], title: string): Promise<"shared"
   } catch (e) {
     if ((e as Error).name === "AbortError") return "cancelled";
   }
-  files.forEach(downloadFile);
-  return "saved";
+  return "cancelled";
 }
