@@ -245,7 +245,7 @@ export function paintAngle(ctx: CanvasRenderingContext2D, obj: Extract<DrawObjec
   while (sweep > Math.PI) sweep -= Math.PI * 2;
   const deg = Math.round(Math.abs(sweep) * 180 / Math.PI);
   const r = Math.max(12, obj.radius ?? 22);
-  const labelAt = Math.max(r + 16, obj.label ?? r + 28);
+  const labelAt = obj.label ?? r * 0.62;
   ctx.save();
   ctx.strokeStyle = strokeColor(obj.color);
   ctx.fillStyle = strokeColor(obj.color);
@@ -268,20 +268,13 @@ export function paintAngle(ctx: CanvasRenderingContext2D, obj: Extract<DrawObjec
     ctx.fill();
   }
   const mid = a0 + sweep / 2;
-  const ax = joint.x + Math.cos(mid) * r;
-  const ay = joint.y + Math.sin(mid) * r;
   const lx = joint.x + Math.cos(mid) * labelAt;
   const ly = joint.y + Math.sin(mid) * labelAt;
-  ctx.beginPath();
-  ctx.moveTo(ax, ay);
-  ctx.lineTo(lx, ly);
-  ctx.lineTo(lx + 16 / scale, ly);
-  ctx.stroke();
   ctx.fillStyle = labelColor();
-  ctx.font = `600 ${16 / scale}px IBM Plex Mono, monospace`;
-  ctx.textAlign = "left";
+  ctx.font = `600 ${14 / scale}px IBM Plex Mono, monospace`;
+  ctx.textAlign = "center";
   ctx.textBaseline = "middle";
-  ctx.fillText(`${deg}°`, lx + 18 / scale, ly);
+  ctx.fillText(`${deg}°`, lx, ly);
   ctx.restore();
 }
 export function paintObject(ctx: CanvasRenderingContext2D, obj: DrawObject, scale: number, hi: boolean, hideLabel = false) {
