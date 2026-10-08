@@ -234,11 +234,12 @@ export async function composeWindowShot(imageUrl: string, meta?: ShareCardMeta):
       ctx.fillStyle = INK;
       ctx.font = "600 24px Manrope, ui-sans-serif, sans-serif";
       ctx.fillText(mm(b.length), inset + 28, y);
-      ctx.fillStyle = MUTED;
+      ctx.fillStyle = INK;
+      ctx.font = "700 32px Manrope, ui-sans-serif, sans-serif";
       ctx.textAlign = "right";
       ctx.fillText(`× ${b.count}`, px + panelW - 22, y);
       ctx.textAlign = "left";
-      y += 40;
+      y += 44;
     }
   }
   if (noteLines.length) {
@@ -253,9 +254,10 @@ export async function composeWindowShot(imageUrl: string, meta?: ShareCardMeta):
   }
   ctx.fillStyle = MUTED;
   ctx.font = "600 20px Manrope, system-ui, sans-serif";
-  ctx.fillText(`${dateLine}, ${timeLine}`, inset, py + imageBoxH - 70);
-  ctx.font = "600 22px Manrope, system-ui, sans-serif";
-  ctx.fillText(`Всего ${meta.totalBars} хлыст.`, inset, py + imageBoxH - 40);
+  ctx.fillText(`${dateLine}, ${timeLine}`, inset, py + imageBoxH - 74);
+  ctx.fillStyle = INK;
+  ctx.font = "700 28px Manrope, system-ui, sans-serif";
+  ctx.fillText(`Всего ${meta.totalBars} хлыст.`, inset, py + imageBoxH - 42);
   const blob = await new Promise<Blob>((resolve, reject) => {
     canvas.toBlob((b) => (b ? resolve(b) : reject(new Error("blob"))), "image/png");
   });
