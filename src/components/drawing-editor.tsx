@@ -246,7 +246,7 @@ export function DrawingEditor({ drawing, onChange, compact = false }: { drawing:
       const r = o.radius ?? 22;
       const labelAt = o.label ?? r + 28;
       const d = Math.hypot(world.x - joint.x, world.y - joint.y);
-      return Math.abs(d - r) < 8 || Math.abs(d - labelAt) < 10;
+      return Math.abs(d - r) < 4 || Math.abs(d - labelAt) < 5;
     });
     if (angleHit && angleHit.type === "angle" && toolRef.current === "select") {
       const joint = angleJoint(angleHit, objectsRef.current);
