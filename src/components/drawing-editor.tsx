@@ -220,7 +220,7 @@ export function DrawingEditor({ drawing, onChange, compact = false }: { drawing:
     }
     if (e.button === 1 || toolRef.current === "select" && e.shiftKey) return;
     const endHit = nearestEnd(world, 26 / viewRef.current.scale);
-    if (endHit && toolRef.current !== "dim") {
+    if (endHit && toolRef.current !== "dim" && toolRef.current !== "angle") {
       pendingEnd.current = { ...endHit, x: e.clientX, y: e.clientY };
       if (endHold.current) window.clearTimeout(endHold.current);
       endHold.current = window.setTimeout(() => {
@@ -229,6 +229,13 @@ export function DrawingEditor({ drawing, onChange, compact = false }: { drawing:
         setDraft(null);
         setSelected([endHit.id]);
       }, 420);
+      if (toolRef.current === "line") {
+        const obj = objectsRef.current.find((o) => o.id === endHit.id && o.type === "line");
+        if (obj && obj.type === "line") {
+          const start = endHit.end === "start" ? { x: obj.x1, y: obj.y1 } : { x: obj.x2, y: obj.y2 };
+          setDraft({ start, end: start });
+        }
+      }
       downRef.current = { x: e.clientX, y: e.clientY, empty: false };
       return;
     }
@@ -239,7 +246,7 @@ export function DrawingEditor({ drawing, onChange, compact = false }: { drawing:
       const r = o.radius ?? 22;
       const labelAt = o.label ?? r + 28;
       const d = Math.hypot(world.x - joint.x, world.y - joint.y);
-      return Math.abs(d - r) < 12 || Math.abs(d - labelAt) < 16;
+      return Math.abs(d - r) < 8 || Math.abs(d - labelAt) < 10;
     });
     if (angleHit && angleHit.type === "angle" && toolRef.current === "select") {
       const joint = angleJoint(angleHit, objectsRef.current);
@@ -407,6 +414,7 @@ export function DrawingEditor({ drawing, onChange, compact = false }: { drawing:
       const picked = hit(toWorld(local(e).x, local(e).y));
       setSelected(picked ? [picked.id] : []);
       setDraft(null);
+      offsetDrag.current = null;
       return;
     }
     const d = draftRef.current;
