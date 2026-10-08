@@ -33,10 +33,10 @@ function OpeningEditor({ opening, fallback, onChange, onRemove }: { opening: Ope
         <details open className="mb-2 w-full rounded-xl border border-steel/50 bg-card px-3 py-2">
           <summary className="cursor-pointer text-base font-medium text-foreground">Толщина облицовки фасада</summary>
           <div className={"mb-2 grid gap-2 " + (opening.sides.bottom ? "grid-cols-4" : "grid-cols-3")}>
-            <Num clearOnFocus label="Слева" value={opening.facade?.left ?? 18} onChange={(n) => onChange({ facade: { left: n, right: opening.facade?.right ?? 18, top: opening.facade?.top ?? 18, bottom: opening.facade?.bottom ?? 18 } })} />
-            <Num clearOnFocus label="Справа" value={opening.facade?.right ?? 18} onChange={(n) => onChange({ facade: { left: opening.facade?.left ?? 18, right: n, top: opening.facade?.top ?? 18, bottom: opening.facade?.bottom ?? 18 } })} />
-            <Num clearOnFocus label="Сверху" value={opening.facade?.top ?? 18} onChange={(n) => onChange({ facade: { left: opening.facade?.left ?? 18, right: opening.facade?.right ?? 18, top: n, bottom: opening.facade?.bottom ?? 18 } })} />
-            {opening.sides.bottom ? <Num clearOnFocus label="Отлив" value={opening.facade?.bottom ?? 18} onChange={(n) => onChange({ facade: { left: opening.facade?.left ?? 18, right: opening.facade?.right ?? 18, top: opening.facade?.top ?? 18, bottom: n } })} /> : null}
+            <Num clearOnFocus min={1} label="Слева" value={opening.facade?.left ?? 18} onChange={(n) => onChange({ facade: { left: n, right: opening.facade?.right ?? 18, top: opening.facade?.top ?? 18, bottom: opening.facade?.bottom ?? 18 } })} />
+            <Num clearOnFocus min={1} label="Справа" value={opening.facade?.right ?? 18} onChange={(n) => onChange({ facade: { left: opening.facade?.left ?? 18, right: n, top: opening.facade?.top ?? 18, bottom: opening.facade?.bottom ?? 18 } })} />
+            <Num clearOnFocus min={1} label="Сверху" value={opening.facade?.top ?? 18} onChange={(n) => onChange({ facade: { left: opening.facade?.left ?? 18, right: opening.facade?.right ?? 18, top: n, bottom: opening.facade?.bottom ?? 18 } })} />
+            {opening.sides.bottom ? <Num clearOnFocus min={1} label="Отлив" value={opening.facade?.bottom ?? 18} onChange={(n) => onChange({ facade: { left: opening.facade?.left ?? 18, right: opening.facade?.right ?? 18, top: opening.facade?.top ?? 18, bottom: n } })} /> : null}
           </div>
         </details>
         <div className="grid w-full grid-cols-2 items-stretch gap-2 sm:grid-cols-4">
@@ -246,19 +246,27 @@ export function OpeningsView() {
                       let drawings = p.drawings;
                       for (const side of sides) {
                         const prev = o.facade?.[side] ?? 18;
-                        const next = patch.facade?.[side] ?? prev;
+                        const next = Math.max(1, patch.facade?.[side] ?? prev);
                         const key = side === "bottom" ? `slope:bottom:${o.id}` : `slope:${o.id}:${side}`;
                         const drawingId = p.schemeDrawings?.[key];
                         if (!drawingId || prev === next) continue;
-                        const oldY = 49 - prev;
-                        const newY = 49 - next;
-                        drawings = drawings.map((d) => d.id !== drawingId ? d : { ...d, updatedAt: Date.now(), objects: d.objects.map((obj) => {
-                          if (obj.type !== "line" && obj.type !== "dim") return obj;
-                          const moved = { ...obj, y1: obj.y1 === oldY ? newY : obj.y1, y2: obj.y2 === oldY ? newY : obj.y2 };
-                          return obj.type === "dim" && obj.label === String(prev) ? { ...moved, label: String(next) } : moved;
-                        }) });
+                        const rise = next;
+                        const objects = [
+                          { id: uid("ln"), type: "line" as const, x1: 0, y1: 0, x2: 0, y2: 50, color: "#f3f1ec", width: 2, dash: "solid" as const },
+                          { id: uid("ln"), type: "line" as const, x1: 0, y1: 50, x2: 40, y2: 50, color: "#f3f1ec", width: 2, dash: "solid" as const },
+                          { id: uid("ln"), type: "line" as const, x1: 40, y1: 50, x2: 40, y2: 49, color: "#f3f1ec", width: 2, dash: "solid" as const },
+                          { id: uid("ln"), type: "line" as const, x1: 40, y1: 49, x2: 20, y2: 49, color: "#f3f1ec", width: 2, dash: "solid" as const },
+                          { id: uid("ln"), type: "line" as const, x1: 20, y1: 49, x2: 20, y2: 49 - rise, color: "#f3f1ec", width: 2, dash: "solid" as const },
+                          { id: uid("ln"), type: "line" as const, x1: 20, y1: 49 - rise, x2: 70, y2: 49 - rise, color: "#f3f1ec", width: 2, dash: "solid" as const },
+                          { id: uid("dm"), type: "dim" as const, x1: 0, y1: 0, x2: 0, y2: 50, offset: 15, color: "#c46a45", width: 1, label: "50" },
+                          { id: uid("dm"), type: "dim" as const, x1: 0, y1: 50, x2: 40, y2: 50, offset: 15, color: "#c46a45", width: 1, label: "40" },
+                          { id: uid("dm"), type: "dim" as const, x1: 20, y1: 49, x2: 40, y2: 49, offset: -15, color: "#c46a45", width: 1, label: "20" },
+                          { id: uid("dm"), type: "dim" as const, x1: 20, y1: 49 - rise, x2: 20, y2: 49, offset: -50, color: "#c46a45", width: 1, label: String(next) },
+                          { id: uid("dm"), type: "dim" as const, x1: 20, y1: 49 - rise, x2: 70, y2: 49 - rise, offset: -15, color: "#c46a45", width: 1, label: "50" },
+                        ];
+                        drawings = drawings.map((d) => d.id === drawingId ? { ...d, updatedAt: Date.now(), objects } : d);
                       }
-                      return { ...p, drawings, openings: p.openings.map((item) => item.id === o.id ? { ...item, facade: patch.facade } : item) };
+                      return { ...p, drawings, openings: p.openings.map((item) => item.id === o.id ? { ...item, facade: { left: Math.max(1, patch.facade?.left ?? 18), right: Math.max(1, patch.facade?.right ?? 18), top: Math.max(1, patch.facade?.top ?? 18), bottom: Math.max(1, patch.facade?.bottom ?? 18) } } : item) };
                     });
                   }} onRemove={() => removeOpening(o.id)} />
                 </div>
