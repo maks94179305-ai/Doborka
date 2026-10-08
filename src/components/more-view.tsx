@@ -180,7 +180,7 @@ function ArchiveFolder({ library }: { library: LibraryDrawing[] }) {
     void navigator.clipboard?.writeText(payload);
   }
   return (
-    <div className="mt-3 grid gap-2">
+    <div className="relative mt-3 grid gap-2">
       <Button variant="secondary" onClick={() => { const raw = localStorage.getItem("doborka-drawing-clip"); if (!raw) return; try { rememberDrawing("Вставленный чертёж", JSON.parse(raw)); } catch { /* ignore */ } }}><ClipboardPaste /> Вставить</Button>
       {library.length ? <div className="grid grid-cols-2 gap-2">{library.map((item) => (
         <article key={item.id} className={"relative rounded-xl border bg-card p-2 " + (picked.includes(item.id) ? "border-primary" : "border-border")}
@@ -199,7 +199,7 @@ function ArchiveFolder({ library }: { library: LibraryDrawing[] }) {
           </div>
         </article>
       ))}</div> : <p className="text-sm text-muted-foreground">Пока нет сохранённых чертежей.</p>}
-      {picked.length ? <div className="flex gap-2"><Button variant="secondary" onClick={() => { const items = library.filter((item) => picked.includes(item.id)); const payload = JSON.stringify(items.flatMap((item) => item.objects)); localStorage.setItem("doborka-drawing-clip", payload); void navigator.clipboard?.writeText(payload); }}><Copy /> Копировать выбранные</Button><Button variant="destructive" onClick={() => { forgetDrawings(library.filter((item) => picked.includes(item.id))); setPicked([]); }}><Trash2 /> Удалить выбранные</Button></div> : null}
+      {picked.length ? <div className="sticky bottom-2 z-20 flex gap-2"><Button variant="secondary" onClick={() => { const items = library.filter((item) => picked.includes(item.id)); const payload = JSON.stringify(items.flatMap((item) => item.objects)); localStorage.setItem("doborka-drawing-clip", payload); void navigator.clipboard?.writeText(payload); }}><Copy /> Копировать</Button><Button variant="destructive" onClick={() => { forgetDrawings(library.filter((item) => picked.includes(item.id))); setPicked([]); }}><Trash2 /> Удалить</Button></div> : null}
       {edit ? <SchemeDrawDialog open title={edit.name} drawing={{ id: edit.id, name: edit.name, objects: edit.objects, updatedAt: edit.updatedAt }} onOpenChange={(open) => { if (!open) setEdit(null); }} onDone={(drawing: Drawing) => { saveLibrary(library.map((item) => item.id === edit.id ? { ...item, name: drawing.name, objects: drawing.objects, updatedAt: Date.now() } : item)); setEdit(null); }} /> : null}
     </div>
   );
