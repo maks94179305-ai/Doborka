@@ -41,3 +41,35 @@ export async function shareOrSave(file: File, title: string, text?: string): Pro
   downloadFile(file);
   return "saved";
 }
+
+export async function shareFiles(files: File[], title: string): Promise<"shared" | "saved" | "cancelled"> {
+  if (!files.length) return "cancelled";
+  const cap = (window as unknown as { Capacitor?: { Plugins?: Record<string, { writeFile: Function; getUri: Function; share: Function }> } }).Capacitor;
+  const fs = cap?.Plugins?.Filesystem;
+  const sharePlugin = cap?.Plugins?.Share;
+  if (fs && sharePlugin) {
+    try {
+      const urls: string[] = [];
+      for (const file of files) {
+        const path = file.name || `doborka-${urls.length + 1}.png`;
+        await fs.writeFile({ path, data: await toBase64(file), directory: "CACHE" });
+        const uri = await fs.getUri({ path, directory: "CACHE" });
+        urls.push(uri.uri);
+      }
+      await sharePlugin.share({ title, files: urls, url: urls[0], dialogTitle: "Поделиться" });
+      return "shared";
+    } catch (e) {
+      if ((e as Error).name === "AbortError") return "cancelled";
+    }
+  }
+  try {
+    if (navigator.canShare?.({ files })) {
+      await navigator.share({ files, title });
+      return "shared";
+    }
+  } catch (e) {
+    if ((e as Error).name === "AbortError") return "cancelled";
+  }
+  files.forEach(downloadFile);
+  return "saved";
+}

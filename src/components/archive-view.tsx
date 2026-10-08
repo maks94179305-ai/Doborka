@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { Share2, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { deletePhoto, getPhoto } from "@/lib/photos";
-import { shareOrSave } from "@/lib/share-native";
+import { shareFiles, shareOrSave } from "@/lib/share-native";
 import { useProject, useWorkspace } from "@/lib/store";
 import { unpublishHistory } from "@/lib/team-sync";
 
@@ -47,6 +47,7 @@ export function ArchiveView() {
   const removeArchiveEntry = useWorkspace((s) => s.removeArchiveEntry);
   const [urls, setUrls] = useState<Record<string, string>>({});
   const [preview, setPreview] = useState<string | null>(null);
+  const [picked, setPicked] = useState<string[]>([]);
   const entries = project?.archive ?? [];
   const [photoRev, setPhotoRev] = useState(0);
   const photoKey = entries.map((e) => e.photoId).join("|");
@@ -79,11 +80,29 @@ export function ArchiveView() {
     return () => { live = false; fresh.forEach((u) => URL.revokeObjectURL(u)); };
   }, [photoKey, photoRev]);
 
+  function toggle(id: string) {
+    setPicked((cur) => cur.includes(id) ? cur.filter((x) => x !== id) : [...cur, id]);
+  }
+
+  async function filesOf(list: { photoId: string; title: string }[]) {
+    const files: File[] = [];
+    for (const [i, item] of list.entries()) {
+      const blob = await getPhoto(item.photoId);
+      if (!blob) continue;
+      files.push(new File([blob], `doborka-${i + 1}.png`, { type: blob.type || "image/png" }));
+    }
+    return files;
+  }
+
   async function share(photoId: string, title: string) {
-    const blob = await getPhoto(photoId);
-    if (!blob) return;
-    const file = new File([blob], "doborka-shema.png", { type: blob.type || "image/png" });
-    await shareOrSave(file, title || "Схема · Доборка");
+    const files = await filesOf([{ photoId, title }]);
+    if (files[0]) await shareOrSave(files[0], title || "Схема · Доборка");
+  }
+
+  async function sharePicked() {
+    const chosen = entries.filter((e) => picked.includes(e.id));
+    const files = await filesOf(chosen);
+    if (files.length) await shareFiles(files, "Схемы · Доборка");
   }
 
   async function remove(id: string, photoId: string) {
@@ -100,7 +119,12 @@ export function ArchiveView() {
       <header>
         <p className="kicker">История</p>
         <h1>История заказов</h1>
-        <p className="mt-1 text-sm text-muted-foreground">Общая для компьютера и телефона. Карточки, которыми делились, видят все, кто открыл Доборку.</p>
+        <p className="mt-1 text-sm text-muted-foreground">Отметьте карточки и отправьте сразу несколько.</p>
+        {entries.length ? <div className="mt-3 flex flex-wrap gap-2">
+          <Button size="sm" variant="secondary" onClick={() => setPicked(entries.map((e) => e.id))}>Выбрать все</Button>
+          <Button size="sm" variant="secondary" onClick={() => setPicked([])} disabled={!picked.length}>Снять выбор</Button>
+          <Button size="sm" onClick={() => void sharePicked()} disabled={!picked.length}><Share2 /> Поделиться выбранными{picked.length ? ` (${picked.length})` : ""}</Button>
+        </div> : null}
       </header>
       {entries.length === 0 ? (
         <div className="panel-dash px-5 py-12 text-center">
@@ -114,12 +138,13 @@ export function ArchiveView() {
             <h2 className="mb-3 font-display text-3xl text-[#f3f1ec]">{day}</h2>
             <ul className="grid gap-3 sm:grid-cols-2">
           {items.map((e) => (
-            <li key={e.id} className="panel overflow-hidden p-4">
+            <li key={e.id} className={"panel overflow-hidden p-4 " + (picked.includes(e.id) ? "ring-2 ring-primary" : "")}>
               <button type="button" className="block w-full overflow-hidden rounded-xl border border-border bg-background/50" onClick={() => urls[e.id] && setPreview(urls[e.id])} aria-label="Открыть карточку">
                 {urls[e.id] ? <img src={urls[e.id]} alt="" className="max-h-52 w-full object-contain" /> : <div className="h-36 bg-muted" />}
               </button>
               <div className="mt-3 flex items-start justify-between gap-2">
                 <div className="min-w-0">
+                  <label className="mb-1 flex items-center gap-2 text-sm"><input type="checkbox" checked={picked.includes(e.id)} onChange={() => toggle(e.id)} /> Выбрать</label>
                   <p className="font-medium">{e.title}</p>
                   {e.colorName ? <p className="text-sm text-muted-foreground">Цвет {e.colorName}</p> : null}
                   <p className="mt-1 tabular text-sm text-steel">{sentFmt.format(e.sentAt)}</p>
