@@ -39,7 +39,6 @@ export function PlanView() {
       const dripOpeningId = m.key.startsWith("slope:bottom:") ? m.pieces.find((piece) => piece.openingId)?.openingId : "";
       const schemeKey = dripOpeningId ? `slope:bottom:${dripOpeningId}` : m.key;
       const drawing = project!.drawings.find((d) => d.id === project!.schemeDrawings?.[schemeKey]) ?? project!.drawings.find((d) => d.id === project!.schemeDrawings?.[m.key]) ?? project!.drawings.find((d) => d.id === m.pieces.find((piece) => piece.drawingId)?.drawingId);
-      const dims = (drawing?.objects ?? []).filter((o) => o.type === "dim" && o.label).map((o) => ({ length: Number(o.label) || 0, count: 1 }));
       let blob = null as Blob | null;
       const photoId = schemeIdsOf(project!, schemeKey)[0] || schemeIdsOf(project!, m.key)[0] || drawing?.previewPhotoId;
       if (photoId) blob = await getPhoto(photoId);
@@ -48,7 +47,7 @@ export function PlanView() {
       if (!blob) continue;
       const url = URL.createObjectURL(blob);
       try {
-        const file = await composeWindowShot(url, { heading: "Схема", title: m.title, color: profileColorOf(project!, m.key), colorName: profileColorName(profileColorOf(project!, m.key)), note: project!.profileNotes?.[m.key], bars: dims.length ? dims : m.plan.barCounts, totalBars: dims.length || m.plan.bars.length });
+        const file = await composeWindowShot(url, { heading: "Схема", title: m.title, color: profileColorOf(project!, m.key), colorName: profileColorName(profileColorOf(project!, m.key)), note: project!.profileNotes?.[m.key], bars: m.plan.barCounts, totalBars: m.plan.bars.length });
         sent.push({ file, title: m.title });
       } finally { URL.revokeObjectURL(url); }
     }
@@ -235,7 +234,7 @@ function OrderLine({ material, schemeIds, color, note, picked, onToggle, onSchem
       {plan.remainderMm > 0 ? <p className="mt-3 text-sm text-muted-foreground">Пригодный остаток: {mm(plan.remainderMm)}</p> : null}
       <div className="mt-4 border-t border-border pt-3">
         <p className="mb-2 text-xs uppercase tracking-[0.14em] text-steel">Схема профиля</p>
-        <PhotoStrip ids={shownSchemeIds} onChange={onSchemeChange} variant="scheme" extraActions={<Button type="button" variant="outline" className="h-11" onClick={hasDrawing ? editDrawing : openBlank}><Pencil /> {hasDrawing ? "Редактировать" : "Начертить"}</Button>} previewAside={<BarOrderPanel title={title} color={color} colorName={colorName} note={note} barCounts={plan.barCounts} totalBars={plan.bars.length} />} shareCard={{ heading: "Схема", title, color, colorName, note, bars: (savedDrawing?.objects ?? []).filter((o) => o.type === "dim" && o.label).map((o) => ({ length: Number(o.label) || 0, count: 1 })), totalBars: (savedDrawing?.objects ?? []).filter((o) => o.type === "dim").length || plan.bars.length }} onEdit={openExisting} />
+        <PhotoStrip ids={shownSchemeIds} onChange={onSchemeChange} variant="scheme" extraActions={<Button type="button" variant="outline" className="h-11" onClick={hasDrawing ? editDrawing : openBlank}><Pencil /> {hasDrawing ? "Редактировать" : "Начертить"}</Button>} previewAside={<BarOrderPanel title={title} color={color} colorName={colorName} note={note} barCounts={plan.barCounts} totalBars={plan.bars.length} />} shareCard={{ heading: "Схема", title, color, colorName, note, bars: plan.barCounts, totalBars: plan.bars.length }} onEdit={openExisting} />
       </div>
       {draft ? <SchemeDrawDialog open={drawOpen} title={title} drawing={draft} onOpenChange={setDrawOpen} onDone={(d) => { void persistDraw(d); }} /> : null}
     </article>
