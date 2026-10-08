@@ -133,7 +133,7 @@ export const useWorkspace = create<Workspace>()(
         const src = p.openings.find((o) => o.id === id);
         if (!src) return p;
         const copyId = uid("op");
-        const copy: Opening = { ...src, id: copyId, sourceId: src.sourceId || src.id, name: `${src.name} копия`, photoIds: [...src.photoIds], sides: { ...src.sides }, facade: src.facade ? { ...src.facade } : src.facade, slopes: src.slopes ? { ...src.slopes } : src.slopes, width: src.width, height: src.height, bottomLength: src.bottomLength, allowance: src.allowance, dripAllowance: src.dripAllowance };
+        const copy: Opening = { ...src, id: copyId, sourceId: src.sourceId || src.id, name: `Окно ${Math.max(0, ...p.openings.map((o) => Number(o.name.match(/\\d+/)?.[0]) || 0)) + 1}`, photoIds: [...src.photoIds], sides: { ...src.sides }, facade: src.facade ? { ...src.facade } : src.facade, slopes: src.slopes ? { ...src.slopes } : src.slopes, width: src.width, height: src.height, bottomLength: src.bottomLength, allowance: src.allowance, dripAllowance: src.dripAllowance };
         const i = p.openings.findIndex((o) => o.id === id);
         const openings = [...p.openings];
         openings.splice(i + 1, 0, copy);
