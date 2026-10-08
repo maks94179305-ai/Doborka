@@ -416,6 +416,28 @@ export function DrawingEditor({ drawing, onChange, compact = false }: { drawing:
     setPad("length");
   }
 
+
+  function placeAngle(ids = selected) {
+    const lines = objectsRef.current.filter((o) => ids.includes(o.id) && o.type === "line");
+    if (lines.length < 2) return false;
+    const a = lines[0];
+    const b = lines[1];
+    const pts = [{ x: a.x1, y: a.y1 }, { x: a.x2, y: a.y2 }];
+    const qts = [{ x: b.x1, y: b.y1 }, { x: b.x2, y: b.y2 }];
+    let best = { d: Infinity, p: pts[0], q: qts[0] };
+    for (const p0 of pts) for (const q of qts) {
+      const d = Math.hypot(p0.x - q.x, p0.y - q.y);
+      if (d < best.d) best = { d, p: p0, q };
+    }
+    const joint = { x: (best.p.x + best.q.x) / 2, y: (best.p.y + best.q.y) / 2 };
+    const va = best.p.x === a.x1 && best.p.y === a.y1 ? { x: a.x2 - a.x1, y: a.y2 - a.y1 } : { x: a.x1 - a.x2, y: a.y1 - a.y2 };
+    const vb = best.q.x === b.x1 && best.q.y === b.y1 ? { x: b.x2 - b.x1, y: b.y2 - b.y1 } : { x: b.x1 - b.x2, y: b.y1 - b.y2 };
+    let deg = Math.abs(Math.atan2(vb.y, vb.x) - Math.atan2(va.y, va.x)) * 180 / Math.PI;
+    if (deg > 180) deg = 360 - deg;
+    deg = Math.round(deg);
+    commit([...objectsRef.current, { id: uid("dr"), type: "text", x: joint.x + 12, y: joint.y - 12, text: `${deg}°`, size: 16, color: activeColor("dim") }]);
+    return true;
+  }
   function confirmTyped() {
     if (labelBox) {
       const box = labelBox;
@@ -484,7 +506,7 @@ export function DrawingEditor({ drawing, onChange, compact = false }: { drawing:
       <div className="flex shrink-0 flex-wrap items-center gap-2">
         <div className="flex rounded-xl border border-border/80 bg-card/80 p-1">
           {tools.map((t) => (
-            <button key={t.id} type="button" aria-label={t.label} aria-pressed={tool === t.id} onClick={() => { manualRef.current = null; setTool(t.id); setColor(t.id === "dim" ? dimColor : lineColor); }} className={cn("flex h-10 items-center gap-1.5 rounded-lg px-2 text-xs font-medium", tool === t.id ? "bg-primary text-primary-foreground" : "text-muted-foreground")}>
+            <button key={t.id} type="button" aria-label={t.label} aria-pressed={tool === t.id} onClick={() => { manualRef.current = null; if (t.id === "angle" && placeAngle()) return; setTool(t.id); setColor(t.id === "dim" ? dimColor : lineColor); }} className={cn("flex h-10 items-center gap-1.5 rounded-lg px-2 text-xs font-medium", tool === t.id ? "bg-primary text-primary-foreground" : "text-muted-foreground")}>
               <t.icon className="size-4" />
               <span>{t.label}</span>
             </button>
