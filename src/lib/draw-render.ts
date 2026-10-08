@@ -208,6 +208,20 @@ export function paintDim(ctx: CanvasRenderingContext2D, obj: Extract<DrawObject,
   ctx.fillText(dimText(obj), 0, 0); ctx.restore();
 }
 
+
+export function angleJoint(obj: Extract<DrawObject, { type: "angle" }>, objects: DrawObject[]) {
+  const a = objects.find((o) => o.id === obj.a && o.type === "line");
+  const b = objects.find((o) => o.id === obj.b && o.type === "line");
+  if (!a || a.type !== "line" || !b || b.type !== "line") return null;
+  const pts = [{ x: a.x1, y: a.y1 }, { x: a.x2, y: a.y2 }];
+  const qts = [{ x: b.x1, y: b.y1 }, { x: b.x2, y: b.y2 }];
+  let best = { d: Infinity, p: pts[0], q: qts[0] };
+  for (const p of pts) for (const q of qts) {
+    const d = Math.hypot(p.x - q.x, p.y - q.y);
+    if (d < best.d) best = { d, p, q };
+  }
+  return { x: (best.p.x + best.q.x) / 2, y: (best.p.y + best.q.y) / 2 };
+}
 export function paintAngle(ctx: CanvasRenderingContext2D, obj: Extract<DrawObject, { type: "angle" }>, objects: DrawObject[], scale: number) {
   const a = objects.find((o) => o.id === obj.a && o.type === "line");
   const b = objects.find((o) => o.id === obj.b && o.type === "line");
@@ -230,7 +244,7 @@ export function paintAngle(ctx: CanvasRenderingContext2D, obj: Extract<DrawObjec
   while (sweep <= -Math.PI) sweep += Math.PI * 2;
   while (sweep > Math.PI) sweep -= Math.PI * 2;
   const deg = Math.round(Math.abs(sweep) * 180 / Math.PI);
-  const r = 18;
+  const r = Math.max(12, obj.radius ?? 18);
   ctx.save();
   ctx.strokeStyle = strokeColor(obj.color);
   ctx.fillStyle = labelColor();

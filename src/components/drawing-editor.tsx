@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ClipboardPaste, Copy, DraftingCompass, Maximize2, MousePointer2, PenLine, Redo2, Ruler, Trash2, Undo2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { dimInputValue, dimLabelWorld, dist, fitView, hitDimPart, hitScore, keepMinOffset, paintAngle, paintDim, paintObject, parseMm, pickDimStart, resizeFromStart, SCALE_DEFAULT, sheetColor, signedPerp, snapDimEnd, snapToDrawing, strokeDash, type Pt } from "@/lib/draw-render";
+import { dimInputValue, dimLabelWorld, dist, fitView, hitDimPart, hitScore, keepMinOffset, angleJoint, paintAngle, paintDim, paintObject, parseMm, pickDimStart, resizeFromStart, SCALE_DEFAULT, sheetColor, signedPerp, snapDimEnd, snapToDrawing, strokeDash, type Pt } from "@/lib/draw-render";
 import { DRAW_COLORS, type DrawObject, type Drawing } from "@/lib/types";
 import { cn, uid } from "@/lib/utils";
 
@@ -231,6 +231,12 @@ export function DrawingEditor({ drawing, onChange, compact = false }: { drawing:
       downRef.current = { x: e.clientX, y: e.clientY, empty: false };
       return;
     }
+    const angleHit = objectsRef.current.find((o) => {
+      if (o.type !== "angle") return false;
+      const joint = angleJoint(o, objectsRef.current);
+      return !!joint && Math.hypot(world.x - joint.x, world.y - joint.y) <= Math.max(28, (o.radius ?? 18) + 20);
+    });
+    if (angleHit) { offsetDrag.current = angleHit.id; setSelected([angleHit.id]); return; }
     const found = hit(world);
     if (!found && !endHit) {
       holdRef.current = window.setTimeout(() => { setSelected(objectsRef.current.map((o) => o.id)); setDraft(null); setTool("select"); }, 520);
@@ -329,11 +335,19 @@ export function DrawingEditor({ drawing, onChange, compact = false }: { drawing:
     if (offsetDrag.current) {
       const world = toWorld(local(e).x, local(e).y);
       const id = offsetDrag.current;
-      const obj = objectsRef.current.find((o) => o.id === id && o.type === "dim");
-      if (obj && obj.type === "dim") {
+      const obj = objectsRef.current.find((o) => o.id === id);
+      if (obj?.type === "dim") {
         const offset = keepMinOffset(signedPerp(world, { x: obj.x1, y: obj.y1 }, { x: obj.x2, y: obj.y2 }));
         objectsRef.current = objectsRef.current.map((o) => o.id === id && o.type === "dim" ? { ...o, offset } : o);
         paintSoon();
+      }
+      if (obj?.type === "angle") {
+        const joint = angleJoint(obj, objectsRef.current);
+        if (joint) {
+          const radius = Math.max(12, Math.hypot(world.x - joint.x, world.y - joint.y));
+          objectsRef.current = objectsRef.current.map((o) => o.id === id && o.type === "angle" ? { ...o, radius } : o);
+          paintSoon();
+        }
       }
       return;
     }
