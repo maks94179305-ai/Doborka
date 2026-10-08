@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from "react";
-import { Trash2 } from "lucide-react";
+import { Share2, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { deletePhoto, getPhoto } from "@/lib/photos";
+import { shareOrSave } from "@/lib/share-native";
 import { useProject, useWorkspace } from "@/lib/store";
 import { unpublishHistory } from "@/lib/team-sync";
 
@@ -78,6 +79,13 @@ export function ArchiveView() {
     return () => { live = false; fresh.forEach((u) => URL.revokeObjectURL(u)); };
   }, [photoKey, photoRev]);
 
+  async function share(photoId: string, title: string) {
+    const blob = await getPhoto(photoId);
+    if (!blob) return;
+    const file = new File([blob], "doborka-shema.png", { type: blob.type || "image/png" });
+    await shareOrSave(file, title || "Схема · Доборка");
+  }
+
   async function remove(id: string, photoId: string) {
     await deletePhoto(photoId);
     removeArchiveEntry(id);
@@ -116,7 +124,7 @@ export function ArchiveView() {
                   {e.colorName ? <p className="text-sm text-muted-foreground">Цвет {e.colorName}</p> : null}
                   <p className="mt-1 tabular text-sm text-steel">{sentFmt.format(e.sentAt)}</p>
                 </div>
-                <Button size="icon-sm" variant="ghost" onClick={() => void remove(e.id, e.photoId)} aria-label="Удалить из архива"><Trash2 /></Button>
+                <div className="flex shrink-0 gap-1"><Button size="sm" variant="secondary" onClick={() => void share(e.photoId, e.title)}><Share2 /> Поделиться</Button><Button size="icon-sm" variant="ghost" onClick={() => void remove(e.id, e.photoId)} aria-label="Удалить из архива"><Trash2 /></Button></div>
               </div>
             </li>
           ))}
