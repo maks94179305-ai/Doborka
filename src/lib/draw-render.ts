@@ -170,7 +170,7 @@ export function hitDimPart(obj: Extract<DrawObject, { type: "dim" }>, p: Pt, _to
 }
 export function hitScore(obj: DrawObject, p: Pt, scale: number): number | null {
   const px = 1 / Math.max(scale, 0.05);
-  if (obj.type === "line") { const d = distPointSeg(p, { x: obj.x1, y: obj.y1 }, { x: obj.x2, y: obj.y2 }); return d <= 10 * px ? d : null; }
+  if (obj.type === "line") { const d = distPointSeg(p, { x: obj.x1, y: obj.y1 }, { x: obj.x2, y: obj.y2 }); return d <= 24 * px ? d : null; }
   if (obj.type === "dim") {
     const g = dimGeom(obj); const lab = dimLabelWorld(obj, scale); const dLabel = dist(p, lab); const dBody = distPointSeg(p, { x: g.ax, y: g.ay }, { x: g.bx, y: g.by });
     let best = Infinity; if (dLabel <= 16 * px) best = Math.min(best, dLabel); if (dBody <= 7 * px) best = Math.min(best, dBody); return best === Infinity ? null : best;
