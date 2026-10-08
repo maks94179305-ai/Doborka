@@ -198,7 +198,7 @@ function ArchiveFolder({ library }: { library: LibraryDrawing[] }) {
           </div>
         </article>
       ))}</div> : <p className="text-sm text-muted-foreground">Пока нет сохранённых чертежей.</p>}
-      {picked.length ? <div className="absolute inset-x-0 bottom-2 z-20 flex gap-2 px-1"><Button variant="secondary" onClick={() => { const items = library.filter((item) => picked.includes(item.id)); const payload = JSON.stringify(items.flatMap((item) => item.objects)); localStorage.setItem("doborka-drawing-clip", payload); void navigator.clipboard?.writeText(payload); }}><Copy /> Копировать</Button><Button variant="destructive" onClick={() => { forgetDrawings(library.filter((item) => picked.includes(item.id))); setPicked([]); }}><Trash2 /> Удалить</Button></div> : null}
+      {picked.length ? <div className="mt-2 flex gap-2"><Button variant="secondary" onClick={() => { const items = library.filter((item) => picked.includes(item.id)); const payload = JSON.stringify(items.flatMap((item) => item.objects)); localStorage.setItem("doborka-drawing-clip", payload); void navigator.clipboard?.writeText(payload); }}><Copy /> Копировать</Button><Button variant="destructive" onClick={() => { forgetDrawings(library.filter((item) => picked.includes(item.id))); setPicked([]); }}><Trash2 /> Удалить</Button></div> : null}
       {edit ? <SchemeDrawDialog open title={edit.name} drawing={{ id: edit.id, name: edit.name, objects: edit.objects, updatedAt: edit.updatedAt }} onOpenChange={(open) => { if (!open) setEdit(null); }} onDone={(drawing: Drawing) => { saveLibrary(library.map((item) => item.id === edit.id ? { ...item, name: drawing.name, objects: drawing.objects, updatedAt: Date.now() } : item)); setEdit(null); }} /> : null}
     </div>
   );
