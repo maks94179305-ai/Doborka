@@ -115,7 +115,7 @@ function SlopeColumn({ label, title, thickness, onThickness, schemeKey, empty = 
   return (
     <div className="h-full">
       <button type="button" className="mt-1 block h-full w-full" onClick={() => setOpen(true)} aria-label={`Править ${title}`}>
-        {saved && saved.objects.length ? <DrawingShot drawing={saved} /> : empty || (saved && !saved.objects.length) ? <SlopeProfile thickness={thickness} label={title} blank /> : <DrawingShot drawing={generated} />}
+        {saved && saved.objects.length ? <DrawingShot drawing={thickness === 0 ? { ...saved, objects: saved.objects.filter((o) => !(o.type === "dim" && o.offset === -50)) } : saved} /> : empty || (saved && !saved.objects.length) ? <SlopeProfile thickness={thickness} label={title} blank /> : <DrawingShot drawing={generated} />}
       </button>
       {open ? <SchemeDrawDialog open={open} title={title} drawing={draft} onOpenChange={setOpen} onDone={(d) => { void done(d); }} /> : null}
     </div>
@@ -249,7 +249,7 @@ export function OpeningsView() {
                         const next = side === "bottom" ? Math.max(0, patch.facade?.[side] ?? prev) : Math.max(1, patch.facade?.[side] ?? prev);
                         const key = side === "bottom" ? `slope:bottom:${o.id}` : `slope:${o.id}:${side}`;
                         const drawingId = p.schemeDrawings?.[key];
-                        if (!drawingId || prev === next) continue;
+                        if (!drawingId || prev === next || next === 0) continue;
                         const rise = next;
                         const objects = [
                           { id: uid("ln"), type: "line" as const, x1: 0, y1: 0, x2: 0, y2: 50, color: "#f3f1ec", width: 2, dash: "solid" as const },
