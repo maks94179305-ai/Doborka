@@ -22,6 +22,16 @@ export function dimAngle(obj: { x1: number; y1: number; x2: number; y2: number }
   return ang;
 }
 export const SHEET_BG = "#161c19";
+export function sheetColor() {
+  return document.documentElement.dataset.theme === "light" ? "#f4f1ea" : SHEET_BG;
+}
+export function strokeColor(color: string) {
+  if (document.documentElement.dataset.theme !== "light") return color;
+  return color.toLowerCase() === "#eceae4" || color.toLowerCase() === "#f3f1ec" ? "#1b211e" : color;
+}
+export function labelColor() {
+  return document.documentElement.dataset.theme === "light" ? "#1b211e" : "#ffffff";
+}
 export const DIM_FONT = 26;
 export const SCALE_MIN = 0.06;
 export const SCALE_MAX = 16;
@@ -187,12 +197,12 @@ function strokeDimMarks(ctx: CanvasRenderingContext2D, obj: Extract<DrawObject, 
 export function paintDim(ctx: CanvasRenderingContext2D, obj: Extract<DrawObject, { type: "dim" }>, scale: number, hi = false, hideLabel = false) {
   const g = dimGeom(obj); const s = 1 / scale; const tick = 12 * s;
   ctx.save(); ctx.lineCap = "round"; ctx.lineJoin = "round"; strokeDash(ctx, "dash", scale);
-  ctx.strokeStyle = obj.color; ctx.fillStyle = obj.color; ctx.lineWidth = (hi ? Math.max((obj.width ?? 1) + 0.6, 1.6) : (obj.width ?? 1)) / scale;
+  ctx.strokeStyle = strokeColor(obj.color); ctx.fillStyle = strokeColor(obj.color); ctx.lineWidth = (hi ? Math.max((obj.width ?? 1) + 0.6, 1.6) : (obj.width ?? 1)) / scale;
   if (hi) { ctx.shadowColor = obj.color; ctx.shadowBlur = 8; }
   strokeDimMarks(ctx, obj, g, tick); ctx.setLineDash([]);
   if (hideLabel) { ctx.restore(); return; }
   const pose = dimLabelWorld(obj, scale);
-  ctx.translate(pose.x, pose.y); ctx.rotate(pose.angle); ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.fillStyle = "#ffffff";
+  ctx.translate(pose.x, pose.y); ctx.rotate(pose.angle); ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.fillStyle = labelColor();
   ctx.font = `600 ${DIM_FONT * s}px IBM Plex Mono, monospace`;
   ctx.fillText(dimText(obj), 0, 0); ctx.restore();
 }
@@ -201,8 +211,8 @@ export function paintObject(ctx: CanvasRenderingContext2D, obj: DrawObject, scal
   if (obj.type === "line" || obj.type === "rect") {
     ctx.lineCap = "round"; ctx.lineJoin = "round";
     const drawShape = () => { ctx.beginPath(); if (obj.type === "line") { ctx.moveTo(obj.x1, obj.y1); ctx.lineTo(obj.x2, obj.y2); } else ctx.rect(obj.x, obj.y, obj.w, obj.h); ctx.stroke(); };
-    if (hi) { ctx.shadowColor = obj.color; ctx.shadowBlur = 8; ctx.strokeStyle = obj.color; ctx.lineWidth = Math.max(obj.width + 1.2, 3.4) / scale; drawShape(); }
-    else { ctx.strokeStyle = obj.color; ctx.lineWidth = Math.max(obj.width, 2.8) / scale; strokeDash(ctx, obj.dash, scale); drawShape(); }
+    if (hi) { ctx.shadowColor = strokeColor(obj.color); ctx.shadowBlur = 8; ctx.strokeStyle = strokeColor(obj.color); ctx.lineWidth = Math.max(obj.width + 1.2, 3.4) / scale; drawShape(); }
+    else { ctx.strokeStyle = strokeColor(obj.color); ctx.lineWidth = Math.max(obj.width, 2.8) / scale; strokeDash(ctx, obj.dash, scale); drawShape(); }
   } else if (obj.type === "dim") paintDim(ctx, obj, scale, hi, hideLabel);
   else { ctx.fillStyle = obj.color; ctx.font = `${obj.size / scale}px Manrope, sans-serif`; ctx.fillText(obj.text, obj.x, obj.y); }
   ctx.restore();
@@ -213,7 +223,7 @@ export function renderDrawingToBlob(drawing: Drawing, size?: { w: number; h: num
   const canvas = document.createElement("canvas"); canvas.width = w; canvas.height = h;
   const ctx = canvas.getContext("2d"); if (!ctx) return Promise.resolve(null);
   const v = fitView(drawing.objects, w, h, 48);
-  ctx.fillStyle = SHEET_BG; ctx.fillRect(0, 0, w, h); ctx.save(); ctx.translate(v.x, v.y); ctx.scale(v.scale, v.scale);
+  ctx.fillStyle = sheetColor(); ctx.fillRect(0, 0, w, h); ctx.save(); ctx.translate(v.x, v.y); ctx.scale(v.scale, v.scale);
   for (const obj of drawing.objects) paintObject(ctx, obj, v.scale, false);
   ctx.restore();
   return new Promise((resolve) => { canvas.toBlob((blob) => resolve(blob), "image/png"); });

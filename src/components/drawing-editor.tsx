@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ClipboardPaste, Copy, Maximize2, MousePointer2, PenLine, Redo2, Ruler, Trash2, Undo2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { dimInputValue, dimLabelWorld, dist, fitView, hitDimPart, hitScore, keepMinOffset, paintDim, paintObject, parseMm, pickDimStart, resizeFromStart, SCALE_DEFAULT, SHEET_BG, signedPerp, snapDimEnd, snapToDrawing, strokeDash, type Pt } from "@/lib/draw-render";
+import { dimInputValue, dimLabelWorld, dist, fitView, hitDimPart, hitScore, keepMinOffset, paintDim, paintObject, parseMm, pickDimStart, resizeFromStart, SCALE_DEFAULT, sheetColor, signedPerp, snapDimEnd, snapToDrawing, strokeDash, type Pt } from "@/lib/draw-render";
 import { DRAW_COLORS, type DrawObject, type Drawing } from "@/lib/types";
 import { cn, uid } from "@/lib/utils";
 
@@ -123,7 +123,7 @@ export function DrawingEditor({ drawing, onChange, compact = false }: { drawing:
     if (!ctx) return;
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     const v = viewRef.current;
-    ctx.fillStyle = SHEET_BG;
+    ctx.fillStyle = sheetColor();
     ctx.fillRect(0, 0, w, h);
     ctx.save();
     ctx.translate(v.x, v.y);
@@ -459,7 +459,7 @@ export function DrawingEditor({ drawing, onChange, compact = false }: { drawing:
         <Button size="icon-sm" variant="secondary" aria-label="Вписать" onClick={() => { const el = wrapRef.current; if (el) setView(fitView(objects, el.clientWidth, el.clientHeight)); }}><Maximize2 /></Button>
         <div className="flex items-center gap-2">
           {DRAW_COLORS.map((c) => (
-            <button key={c} type="button" aria-label={`Цвет ${c}`} className="size-7 rounded-full" style={{ background: c, boxShadow: color === c ? `0 0 0 2px #141816, 0 0 0 4px ${c}` : "0 0 0 2px transparent" }} onClick={() => { manualRef.current = c; setColor(c); if (toolRef.current !== "dim") setTool("line"); }} />
+            <button key={c} type="button" aria-label={`Цвет ${c}`} className="size-7 rounded-full" style={{ background: c, boxShadow: color === c ? `0 0 0 2px ${sheetColor()}, 0 0 0 4px ${c}` : "0 0 0 2px transparent" }} onClick={() => { manualRef.current = c; setColor(c); if (toolRef.current !== "dim") setTool("line"); }} />
           ))}
         </div>
       </div>

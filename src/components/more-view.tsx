@@ -105,7 +105,7 @@ export function MoreView() {
         <h2 className="font-display text-lg">Тема</h2>
         <label className="flex h-11 items-center justify-between rounded-md border border-border px-3">
           <span className="text-sm">Светлая тема</span>
-          <Switch checked={light} onCheckedChange={(v) => { setLight(v); localStorage.setItem("doborka-theme", v ? "light" : "dark"); document.documentElement.dataset.theme = v ? "light" : "dark"; }} />
+          <Switch checked={light} onCheckedChange={(v) => { setLight(v); localStorage.setItem("doborka-theme", v ? "light" : "dark"); document.documentElement.dataset.theme = v ? "light" : "dark"; window.dispatchEvent(new Event("doborka-theme")); }} />
         </label>
       </section>
       <section className="space-y-3">
