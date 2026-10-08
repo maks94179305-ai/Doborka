@@ -114,6 +114,18 @@ export function ArchiveView() {
     if (preview && urls[id] === preview) setPreview(null);
   }
 
+  async function removeFolder(folderId: string) {
+    const items = entries.filter((e) => (e.projectId || e.id) === folderId);
+    for (const item of items) {
+      await deletePhoto(item.photoId);
+      removeArchiveEntry(item.id);
+      void unpublishHistory(item.id);
+    }
+    setPicked((cur) => cur.filter((id) => !items.some((item) => item.id === id)));
+    if (openFolder === folderId) setOpenFolder(null);
+    setPreview(null);
+  }
+
   if (!project) return null;
 
   return (
@@ -135,7 +147,7 @@ export function ArchiveView() {
         </div>
       ) : (
         <div className="space-y-4">
-          {openFolder ? <Button variant="secondary" onClick={() => setOpenFolder(null)}>Назад к папкам</Button> : null}
+          {openFolder ? <div className="flex gap-2"><Button variant="secondary" onClick={() => setOpenFolder(null)}>Назад к папкам</Button><Button variant="secondary" onClick={() => void removeFolder(openFolder)}><Trash2 /> Удалить папку</Button></div> : null}
           {(openFolder ? entries.filter((e) => (e.projectId || e.id) === openFolder) : Object.values(entries.reduce<Record<string, typeof entries[number]>>((acc, e) => { const key = e.projectId || e.id; acc[key] ??= e; return acc; }, {}))).map((e) => (
           openFolder ? null : (
             <button key={e.projectId || e.id} type="button" className="panel flex w-full items-center justify-between p-4 text-left" onClick={() => setOpenFolder(e.projectId || e.id)}>
@@ -143,7 +155,7 @@ export function ArchiveView() {
                 <input value={e.projectId ? (e.projectName ?? "") : e.title} placeholder="Название папки" onClick={(ev) => ev.stopPropagation()} onChange={(ev) => e.projectId && renameArchiveProject(e.projectId, ev.target.value)} className="w-full bg-transparent font-display text-2xl outline-none" aria-label="Название папки" />
                 <span className="mt-1 block text-sm text-muted-foreground">{entries.filter((x) => (x.projectId || x.id) === (e.projectId || e.id)).length} карт. · {dayFmt.format(e.sentAt)}</span>
               </span>
-              <span className="text-steel">Открыть</span>
+              <span className="flex items-center gap-2"><Button size="icon-sm" variant="ghost" onClick={(ev) => { ev.stopPropagation(); void removeFolder(e.projectId || e.id); }} aria-label="Удалить папку"><Trash2 /></Button><span className="text-steel">Открыть</span></span>
             </button>
           )))}
           {openFolder ? <ul className="grid gap-3 sm:grid-cols-2">{entries.filter((e) => (e.projectId || e.id) === openFolder).map((e) => (
