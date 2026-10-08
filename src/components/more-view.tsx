@@ -17,6 +17,7 @@ export function MoreView() {
   const [installEvt, setInstallEvt] = useState<BIPEvent | null>(null);
   const [standalone, setStandalone] = useState(false);
   const [customStock, setCustomStock] = useState("");
+  const [light, setLight] = useState(() => localStorage.getItem("doborka-theme") === "light");
 
   useEffect(() => {
     const standaloneNow = window.matchMedia("(display-mode: standalone)").matches || ("standalone" in navigator && Boolean((navigator as { standalone?: boolean }).standalone));
@@ -99,6 +100,13 @@ export function MoreView() {
             ))}
           </ul>
         ) : null}
+      </section>
+      <section className="space-y-3">
+        <h2 className="font-display text-lg">Тема</h2>
+        <label className="flex h-11 items-center justify-between rounded-md border border-border px-3">
+          <span className="text-sm">Светлая тема</span>
+          <Switch checked={light} onCheckedChange={(v) => { setLight(v); localStorage.setItem("doborka-theme", v ? "light" : "dark"); document.documentElement.dataset.theme = v ? "light" : "dark"; }} />
+        </label>
       </section>
       <section className="space-y-3">
         <h2 className="font-display text-lg">Запас и раскрой</h2>

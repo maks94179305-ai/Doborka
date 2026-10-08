@@ -4,6 +4,8 @@ import { PreviewHostBridge } from "@/components/preview-host-bridge";
 import { AppShell } from "@/components/app-shell";
 import appCss from "../styles.css?url";
 
+if (typeof document !== "undefined" && localStorage.getItem("doborka-theme") === "light") document.documentElement.dataset.theme = "light";
+
 const APP_NAME = "Доборка";
 
 export const Route = createRootRoute({
