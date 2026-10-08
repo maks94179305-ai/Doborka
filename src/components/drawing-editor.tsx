@@ -40,6 +40,7 @@ export function DrawingEditor({ drawing, onChange, compact = false }: { drawing:
   const pointers = useRef(new Map<number, { x: number; y: number }>());
   const pinchRef = useRef<{ dist: number; scale: number; ox: number; oy: number; vx: number; vy: number } | null>(null);
   const holdRef = useRef<number | null>(null);
+  const holdAdded = useRef(false);
   const lengthRef = useRef<HTMLInputElement>(null);
   const labelRef = useRef(labelBox);
   const lengthStateRef = useRef(length);
@@ -265,17 +266,19 @@ export function DrawingEditor({ drawing, onChange, compact = false }: { drawing:
     downRef.current = { x: e.clientX, y: e.clientY, empty: !found };
     if (found && (found.type === "line" || found.type === "dim") && !endHit) {
       const pickedId = found.id;
-      if (found.type === "line" && toolRef.current === "select") {
+      if (found.type === "line") {
+        holdAdded.current = false;
         holdRef.current = window.setTimeout(() => {
+          holdAdded.current = true;
           setSelected((cur) => cur.includes(pickedId) ? cur : [...cur, pickedId]);
           setDraft(null);
+          setTool("select");
         }, 420);
       }
       if (found.type === "line") { setLength(String(Math.round(dist({ x: found.x1, y: found.y1 }, { x: found.x2, y: found.y2 })))); freshRef.current = true; }
       setLabelBox(null);
     }
     if (toolRef.current === "select") {
-      setSelected(found ? [found.id] : []);
       setLabelBox(null);
       return;
     }
@@ -388,6 +391,12 @@ export function DrawingEditor({ drawing, onChange, compact = false }: { drawing:
     if (panRef.current) { panRef.current = null; setView(viewRef.current); return; }
     const tap = downRef.current;
     downRef.current = null;
+    if (holdAdded.current) { holdAdded.current = false; return; }
+    if (toolRef.current === "select" && tap && e) {
+      const picked = hit(toWorld(local(e).x, local(e).y));
+      setSelected(picked ? [picked.id] : []);
+      return;
+    }
     const d = draftRef.current;
     setDraft(null);
     const moved = e && tap ? Math.hypot(e.clientX - tap.x, e.clientY - tap.y) : d ? dist(d.start, d.end) : 0;
