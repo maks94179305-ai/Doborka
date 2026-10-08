@@ -232,15 +232,23 @@ export function DrawingEditor({ drawing, onChange, compact = false }: { drawing:
       downRef.current = { x: e.clientX, y: e.clientY, empty: false };
       return;
     }
-    const angleHit = toolRef.current === "select" ? objectsRef.current.find((o) => {
+    const angleHit = objectsRef.current.find((o) => {
       if (o.type !== "angle") return false;
       const joint = angleJoint(o, objectsRef.current);
       if (!joint) return false;
-      const r = o.radius ?? 18;
+      const r = o.radius ?? 22;
+      const labelAt = o.label ?? r + 28;
       const d = Math.hypot(world.x - joint.x, world.y - joint.y);
-      return Math.abs(d - r) < 10 || Math.abs(d - (r + 14)) < 12;
-    }) : undefined;
-    if (angleHit) { offsetDrag.current = angleHit.id; setSelected([angleHit.id]); downRef.current = { x: e.clientX, y: e.clientY, empty: false }; return; }
+      return Math.abs(d - r) < 12 || Math.abs(d - labelAt) < 16;
+    });
+    if (angleHit && angleHit.type === "angle") {
+      const joint = angleJoint(angleHit, objectsRef.current);
+      const d = joint ? Math.hypot(world.x - joint.x, world.y - joint.y) : 0;
+      offsetDrag.current = `${angleHit.id}:${d > (angleHit.radius ?? 22) + 8 ? "label" : "arc"}`;
+      setSelected([angleHit.id]);
+      downRef.current = { x: e.clientX, y: e.clientY, empty: false };
+      return;
+    }
     const found = hit(world);
     if (!found && !endHit) {
       holdRef.current = window.setTimeout(() => { setSelected(objectsRef.current.map((o) => o.id)); setDraft(null); setTool("select"); }, 520);
@@ -338,7 +346,8 @@ export function DrawingEditor({ drawing, onChange, compact = false }: { drawing:
     }
     if (offsetDrag.current) {
       const world = toWorld(local(e).x, local(e).y);
-      const id = offsetDrag.current;
+      const raw = offsetDrag.current;
+      const id = raw.split(":")[0];
       const obj = objectsRef.current.find((o) => o.id === id);
       if (obj?.type === "dim") {
         const offset = keepMinOffset(signedPerp(world, { x: obj.x1, y: obj.y1 }, { x: obj.x2, y: obj.y2 }));
@@ -347,9 +356,11 @@ export function DrawingEditor({ drawing, onChange, compact = false }: { drawing:
       }
       if (obj?.type === "angle") {
         const joint = angleJoint(obj, objectsRef.current);
+        const part = id.endsWith(":label") ? "label" : "arc";
+        const angleId = id.split(":")[0];
         if (joint) {
-          const radius = Math.max(12, Math.hypot(world.x - joint.x, world.y - joint.y));
-          objectsRef.current = objectsRef.current.map((o) => o.id === id && o.type === "angle" ? { ...o, radius } : o);
+          const dist = Math.max(12, Math.hypot(world.x - joint.x, world.y - joint.y));
+          objectsRef.current = objectsRef.current.map((o) => o.id === angleId && o.type === "angle" ? { ...o, ...(part === "label" ? { label: dist } : { radius: dist }) } : o);
           paintSoon();
         }
       }
@@ -387,7 +398,7 @@ export function DrawingEditor({ drawing, onChange, compact = false }: { drawing:
       setSelected([id]);
       return;
     }
-    if (offsetDrag.current) { const id = offsetDrag.current; offsetDrag.current = null; setView(viewRef.current); commit(objectsRef.current); setSelected([id]); return; }
+    if (offsetDrag.current) { const id = offsetDrag.current.split(":")[0]; offsetDrag.current = null; setView(viewRef.current); commit(objectsRef.current); setSelected([id]); return; }
     if (panRef.current) { panRef.current = null; setView(viewRef.current); return; }
     const tap = downRef.current;
     downRef.current = null;

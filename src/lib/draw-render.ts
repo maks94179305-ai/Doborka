@@ -244,19 +244,44 @@ export function paintAngle(ctx: CanvasRenderingContext2D, obj: Extract<DrawObjec
   while (sweep <= -Math.PI) sweep += Math.PI * 2;
   while (sweep > Math.PI) sweep -= Math.PI * 2;
   const deg = Math.round(Math.abs(sweep) * 180 / Math.PI);
-  const r = Math.max(12, obj.radius ?? 18);
+  const r = Math.max(12, obj.radius ?? 22);
+  const labelAt = Math.max(r + 16, obj.label ?? r + 28);
   ctx.save();
   ctx.strokeStyle = strokeColor(obj.color);
-  ctx.fillStyle = labelColor();
+  ctx.fillStyle = strokeColor(obj.color);
   ctx.lineWidth = 1.4 / scale;
   ctx.beginPath();
   ctx.arc(joint.x, joint.y, r, a0, a0 + sweep, sweep < 0);
   ctx.stroke();
+  const arrow = 5 / scale;
+  for (const ang of [a0, a0 + sweep]) {
+    const px = joint.x + Math.cos(ang) * r;
+    const py = joint.y + Math.sin(ang) * r;
+    const dir = ang === a0 ? (sweep < 0 ? -1 : 1) : (sweep < 0 ? 1 : -1);
+    const tx = -Math.sin(ang) * dir;
+    const ty = Math.cos(ang) * dir;
+    ctx.beginPath();
+    ctx.moveTo(px, py);
+    ctx.lineTo(px - tx * arrow + Math.cos(ang) * arrow * 0.6, py - ty * arrow + Math.sin(ang) * arrow * 0.6);
+    ctx.lineTo(px - tx * arrow - Math.cos(ang) * arrow * 0.6, py - ty * arrow - Math.sin(ang) * arrow * 0.6);
+    ctx.closePath();
+    ctx.fill();
+  }
   const mid = a0 + sweep / 2;
-  ctx.font = `600 ${14 / scale}px IBM Plex Mono, monospace`;
-  ctx.textAlign = "center";
+  const ax = joint.x + Math.cos(mid) * r;
+  const ay = joint.y + Math.sin(mid) * r;
+  const lx = joint.x + Math.cos(mid) * labelAt;
+  const ly = joint.y + Math.sin(mid) * labelAt;
+  ctx.beginPath();
+  ctx.moveTo(ax, ay);
+  ctx.lineTo(lx, ly);
+  ctx.lineTo(lx + 16 / scale, ly);
+  ctx.stroke();
+  ctx.fillStyle = labelColor();
+  ctx.font = `600 ${16 / scale}px IBM Plex Mono, monospace`;
+  ctx.textAlign = "left";
   ctx.textBaseline = "middle";
-  ctx.fillText(`${deg}°`, joint.x + Math.cos(mid) * (r + 14), joint.y + Math.sin(mid) * (r + 14));
+  ctx.fillText(`${deg}°`, lx + 18 / scale, ly);
   ctx.restore();
 }
 export function paintObject(ctx: CanvasRenderingContext2D, obj: DrawObject, scale: number, hi: boolean, hideLabel = false) {
