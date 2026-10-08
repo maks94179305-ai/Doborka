@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Download, Trash2 } from "lucide-react";
+import { ClipboardPaste, Copy, Download, Pencil, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -8,8 +8,10 @@ import { DEFAULT_STOCK, SIDE_KEYS, SIDE_SHORT, type Strategy } from "@/lib/types
 import { useProject, useWorkspace } from "@/lib/store";
 import { downloadText } from "@/lib/report";
 import { PairPanel } from "@/components/pair-panel";
+import { SchemeDrawDialog } from "@/components/scheme-draw-dialog";
 import { loadLibrary, rememberDrawing, saveLibrary, type LibraryDrawing } from "@/lib/drawing-library";
-import { Copy, ClipboardPaste } from "lucide-react";
+import { renderDrawingToBlob } from "@/lib/draw-render";
+import type { Drawing } from "@/lib/types";
 
 type BIPEvent = Event & { prompt: () => Promise<void> };
 
@@ -76,6 +78,12 @@ export function MoreView() {
           </div>
         </div>
       </section>
+      <section className="space-y-3">
+        <details className="rounded-xl border border-border bg-card px-3 py-2">
+          <summary className="cursor-pointer font-display text-lg">Архив чертежей</summary>
+          <ArchiveFolder library={library} />
+        </details>
+      </section>
       <PairPanel />
       <details className="panel space-y-3 p-4">
         <summary className="cursor-pointer font-display text-lg">Как пользоваться</summary>
@@ -109,23 +117,6 @@ export function MoreView() {
             ))}
           </ul>
         ) : null}
-      </section>
-      <section className="space-y-3">
-        <details className="rounded-xl border border-border px-3 py-2">
-          <summary className="cursor-pointer font-display text-lg">Чертежи</summary>
-          <div className="mt-3 grid gap-2">
-            <Button variant="secondary" onClick={() => { const raw = localStorage.getItem("doborka-drawing-clip"); if (!raw) return; try { rememberDrawing("Вставленный чертёж", JSON.parse(raw)); } catch { /* ignore */ } }}><ClipboardPaste /> Вставить чертёж</Button>
-            {library.length ? library.map((item) => (
-              <div key={item.id} className="flex items-center justify-between gap-2 rounded-md border border-border px-3 py-2">
-                <span className="min-w-0 truncate text-sm">{item.name}</span>
-                <span className="flex gap-1">
-                  <Button size="icon-sm" variant="secondary" aria-label="Копировать" onClick={() => { const payload = JSON.stringify(item.objects); localStorage.setItem("doborka-drawing-clip", payload); void navigator.clipboard?.writeText(payload); }}><Copy /></Button>
-                  <Button size="icon-sm" variant="ghost" aria-label="Удалить" onClick={() => saveLibrary(library.filter((x) => x.id !== item.id))}><Trash2 /></Button>
-                </span>
-              </div>
-            )) : <p className="text-sm text-muted-foreground">Пока нет сохранённых чертежей.</p>}
-          </div>
-        </details>
       </section>
       <section className="space-y-3">
         <h2 className="font-display text-lg">Тема</h2>
@@ -177,4 +168,47 @@ export function MoreView() {
       </section>
     </div>
   );
+}
+
+function ArchiveFolder({ library }: { library: LibraryDrawing[] }) {
+  const [picked, setPicked] = useState<string[]>([]);
+  const [edit, setEdit] = useState<LibraryDrawing | null>(null);
+  function copy(item: LibraryDrawing) {
+    const payload = JSON.stringify(item.objects);
+    localStorage.setItem("doborka-drawing-clip", payload);
+    void navigator.clipboard?.writeText(payload);
+  }
+  return (
+    <div className="mt-3 grid gap-2">
+      <Button variant="secondary" onClick={() => { const raw = localStorage.getItem("doborka-drawing-clip"); if (!raw) return; try { rememberDrawing("Вставленный чертёж", JSON.parse(raw)); } catch { /* ignore */ } }}><ClipboardPaste /> Вставить</Button>
+      {library.length ? <div className="grid grid-cols-2 gap-2">{library.map((item) => (
+        <article key={item.id} className={"rounded-xl border bg-card p-2 " + (picked.includes(item.id) ? "border-primary" : "border-border")} onClick={() => setPicked((cur) => cur.includes(item.id) ? cur.filter((id) => id !== item.id) : [...cur, item.id])}>
+          <ArchiveShot item={item} />
+          <div className="mt-2 flex items-center justify-between gap-1">
+            <span className="min-w-0 truncate text-xs">{item.name}</span>
+            <span className="flex gap-1">
+              <Button size="icon-sm" variant="secondary" aria-label="Редактировать" onClick={(e) => { e.stopPropagation(); setEdit(item); }}><Pencil /></Button>
+              <Button size="icon-sm" variant="secondary" aria-label="Копировать" onClick={(e) => { e.stopPropagation(); copy(item); }}><Copy /></Button>
+              <Button size="icon-sm" variant="ghost" aria-label="Удалить" onClick={(e) => { e.stopPropagation(); saveLibrary(library.filter((x) => x.id !== item.id)); }}><Trash2 /></Button>
+            </span>
+          </div>
+        </article>
+      ))}</div> : <p className="text-sm text-muted-foreground">Пока нет сохранённых чертежей.</p>}
+      {picked.length ? <Button variant="secondary" onClick={() => { const items = library.filter((item) => picked.includes(item.id)); const payload = JSON.stringify(items.flatMap((item) => item.objects)); localStorage.setItem("doborka-drawing-clip", payload); void navigator.clipboard?.writeText(payload); }}><Copy /> Копировать выбранные</Button> : null}
+      {edit ? <SchemeDrawDialog open title={edit.name} drawing={{ id: edit.id, name: edit.name, objects: edit.objects, updatedAt: edit.updatedAt }} onOpenChange={(open) => { if (!open) setEdit(null); }} onDone={(drawing: Drawing) => { saveLibrary(library.map((item) => item.id === edit.id ? { ...item, name: drawing.name, objects: drawing.objects, updatedAt: Date.now() } : item)); setEdit(null); }} /> : null}
+    </div>
+  );
+}
+function ArchiveShot({ item }: { item: LibraryDrawing }) {
+  const [url, setUrl] = useState("");
+  useEffect(() => {
+    let alive = true;
+    void renderDrawingToBlob({ id: item.id, name: item.name, objects: item.objects, updatedAt: item.updatedAt }, { w: 640, h: 420 }).then((blob) => {
+      if (!blob || !alive) return;
+      const next = URL.createObjectURL(blob);
+      setUrl((prev) => { if (prev) URL.revokeObjectURL(prev); return next; });
+    });
+    return () => { alive = false; };
+  }, [item]);
+  return <figure className="rounded-xl border border-border bg-[#141816] p-1.5">{url ? <img src={url} alt="" className="mx-auto block h-auto w-full object-contain" /> : null}</figure>;
 }
