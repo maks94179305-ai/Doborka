@@ -146,7 +146,8 @@ export type DrawObject =
   | { id: string; type: "line"; x1: number; y1: number; x2: number; y2: number; color: string; width: number; dash: DashStyle }
   | { id: string; type: "rect"; x: number; y: number; w: number; h: number; color: string; width: number; dash: DashStyle }
   | { id: string; type: "dim"; x1: number; y1: number; x2: number; y2: number; offset: number; color: string; width?: number; dash?: DashStyle; label?: string }
-  | { id: string; type: "text"; x: number; y: number; text: string; size: number; color: string };
+  | { id: string; type: "text"; x: number; y: number; text: string; size: number; color: string }
+  | { id: string; type: "angle"; a: string; b: string; color: string };
 
 export type Drawing = {
   id: string;

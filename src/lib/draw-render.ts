@@ -181,6 +181,7 @@ export function hitScore(obj: DrawObject, p: Pt, scale: number): number | null {
     const deep = p.x > obj.x + tol && p.x < obj.x + obj.w - tol && p.y > obj.y + tol && p.y < obj.y + obj.h - tol;
     return inside && !deep ? 0 : null;
   }
+  if (obj.type === "angle") return null;
   const d = dist(p, { x: obj.x, y: obj.y });
   return d < 16 * px ? d : null;
 }
@@ -206,6 +207,44 @@ export function paintDim(ctx: CanvasRenderingContext2D, obj: Extract<DrawObject,
   ctx.font = `600 ${DIM_FONT * s}px IBM Plex Mono, monospace`;
   ctx.fillText(dimText(obj), 0, 0); ctx.restore();
 }
+
+export function paintAngle(ctx: CanvasRenderingContext2D, obj: Extract<DrawObject, { type: "angle" }>, objects: DrawObject[], scale: number) {
+  const a = objects.find((o) => o.id === obj.a && o.type === "line");
+  const b = objects.find((o) => o.id === obj.b && o.type === "line");
+  if (!a || a.type !== "line" || !b || b.type !== "line") return;
+  const pts = [{ x: a.x1, y: a.y1 }, { x: a.x2, y: a.y2 }];
+  const qts = [{ x: b.x1, y: b.y1 }, { x: b.x2, y: b.y2 }];
+  let best = { d: Infinity, p: pts[0], q: qts[0] };
+  for (const p of pts) for (const q of qts) {
+    const d = Math.hypot(p.x - q.x, p.y - q.y);
+    if (d < best.d) best = { d, p, q };
+  }
+  const joint = { x: (best.p.x + best.q.x) / 2, y: (best.p.y + best.q.y) / 2 };
+  const va = best.p.x === a.x1 && best.p.y === a.y1 ? { x: a.x2 - a.x1, y: a.y2 - a.y1 } : { x: a.x1 - a.x2, y: a.y1 - a.y2 };
+  const vb = best.q.x === b.x1 && best.q.y === b.y1 ? { x: b.x2 - b.x1, y: b.y2 - b.y1 } : { x: b.x1 - b.x2, y: b.y1 - b.y2 };
+  const la = Math.hypot(va.x, va.y) || 1;
+  const lb = Math.hypot(vb.x, vb.y) || 1;
+  let a0 = Math.atan2(va.y, va.x);
+  let a1 = Math.atan2(vb.y, vb.x);
+  let sweep = a1 - a0;
+  while (sweep <= -Math.PI) sweep += Math.PI * 2;
+  while (sweep > Math.PI) sweep -= Math.PI * 2;
+  const deg = Math.round(Math.abs(sweep) * 180 / Math.PI);
+  const r = 18;
+  ctx.save();
+  ctx.strokeStyle = strokeColor(obj.color);
+  ctx.fillStyle = labelColor();
+  ctx.lineWidth = 1.4 / scale;
+  ctx.beginPath();
+  ctx.arc(joint.x, joint.y, r, a0, a0 + sweep, sweep < 0);
+  ctx.stroke();
+  const mid = a0 + sweep / 2;
+  ctx.font = `600 ${14 / scale}px IBM Plex Mono, monospace`;
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.fillText(`${deg}°`, joint.x + Math.cos(mid) * (r + 14), joint.y + Math.sin(mid) * (r + 14));
+  ctx.restore();
+}
 export function paintObject(ctx: CanvasRenderingContext2D, obj: DrawObject, scale: number, hi: boolean, hideLabel = false) {
   ctx.save();
   if (obj.type === "line" || obj.type === "rect") {
@@ -224,7 +263,7 @@ export function renderDrawingToBlob(drawing: Drawing, size?: { w: number; h: num
   const ctx = canvas.getContext("2d"); if (!ctx) return Promise.resolve(null);
   const v = fitView(drawing.objects, w, h, 48);
   ctx.fillStyle = sheetColor(); ctx.fillRect(0, 0, w, h); ctx.save(); ctx.translate(v.x, v.y); ctx.scale(v.scale, v.scale);
-  for (const obj of drawing.objects) paintObject(ctx, obj, v.scale, false);
+  for (const obj of drawing.objects) { if (obj.type === "angle") paintAngle(ctx, obj, drawing.objects, v.scale); else paintObject(ctx, obj, v.scale, false); }
   ctx.restore();
   return new Promise((resolve) => { canvas.toBlob((blob) => resolve(blob), "image/png"); });
 }

@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ClipboardPaste, Copy, DraftingCompass, Maximize2, MousePointer2, PenLine, Redo2, Ruler, Trash2, Undo2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { dimInputValue, dimLabelWorld, dist, fitView, hitDimPart, hitScore, keepMinOffset, paintDim, paintObject, parseMm, pickDimStart, resizeFromStart, SCALE_DEFAULT, sheetColor, signedPerp, snapDimEnd, snapToDrawing, strokeDash, type Pt } from "@/lib/draw-render";
+import { dimInputValue, dimLabelWorld, dist, fitView, hitDimPart, hitScore, keepMinOffset, paintAngle, paintDim, paintObject, parseMm, pickDimStart, resizeFromStart, SCALE_DEFAULT, sheetColor, signedPerp, snapDimEnd, snapToDrawing, strokeDash, type Pt } from "@/lib/draw-render";
 import { DRAW_COLORS, type DrawObject, type Drawing } from "@/lib/types";
 import { cn, uid } from "@/lib/utils";
 
@@ -129,7 +129,7 @@ export function DrawingEditor({ drawing, onChange, compact = false }: { drawing:
     ctx.save();
     ctx.translate(v.x, v.y);
     ctx.scale(v.scale, v.scale);
-    for (const obj of objectsRef.current) paintObject(ctx, obj, v.scale, selected.includes(obj.id));
+    for (const obj of objectsRef.current) { if (obj.type === "angle") paintAngle(ctx, obj, objectsRef.current, v.scale); else paintObject(ctx, obj, v.scale, selected.includes(obj.id)); }
     const preview = draftRef.current;
     if (preview && preview.pan) {
       /* sheet is moving */
@@ -435,7 +435,7 @@ export function DrawingEditor({ drawing, onChange, compact = false }: { drawing:
     let deg = Math.abs(Math.atan2(vb.y, vb.x) - Math.atan2(va.y, va.x)) * 180 / Math.PI;
     if (deg > 180) deg = 360 - deg;
     deg = Math.round(deg);
-    commit([...objectsRef.current, { id: uid("dr"), type: "text", x: joint.x + 12, y: joint.y - 12, text: `${deg}°`, size: 16, color: activeColor("dim") }]);
+    commit([...objectsRef.current, { id: uid("dr"), type: "angle", a: a.id, b: b.id, color: activeColor("dim") }]);
     return true;
   }
   function confirmTyped() {
