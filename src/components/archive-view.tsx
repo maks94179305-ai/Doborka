@@ -140,7 +140,7 @@ export function ArchiveView() {
           openFolder ? null : (
             <button key={e.projectId || e.id} type="button" className="panel flex w-full items-center justify-between p-4 text-left" onClick={() => setOpenFolder(e.projectId || e.id)}>
               <span>
-                <input value={e.projectName || e.title} onClick={(ev) => ev.stopPropagation()} onChange={(ev) => e.projectId && renameArchiveProject(e.projectId, ev.target.value)} className="w-full bg-transparent font-display text-2xl outline-none" aria-label="Название папки" />
+                <input value={e.projectId ? (e.projectName ?? "") : e.title} placeholder="Название папки" onClick={(ev) => ev.stopPropagation()} onChange={(ev) => e.projectId && renameArchiveProject(e.projectId, ev.target.value)} className="w-full bg-transparent font-display text-2xl outline-none" aria-label="Название папки" />
                 <span className="mt-1 block text-sm text-muted-foreground">{entries.filter((x) => (x.projectId || x.id) === (e.projectId || e.id)).length} карт. · {dayFmt.format(e.sentAt)}</span>
               </span>
               <span className="text-steel">Открыть</span>
