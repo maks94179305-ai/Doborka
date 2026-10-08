@@ -103,7 +103,7 @@ function SlopeColumn({ label, title, thickness, onThickness, schemeKey, empty = 
       const root = opening?.sourceId || openingId;
       const openings = p.openings.map((copy) => {
         if (copy.id === openingId) return copy;
-        const linked = copy.sourceId === root || copy.sourceId === openingId || (!copy.sourceId && opening && copy.name.startsWith(`${opening.name} копия`));
+        const linked = !opening?.sourceId && (copy.sourceId === openingId || (!copy.sourceId && opening && copy.name.startsWith(`${opening.name} копия`)));
         if (!linked) return copy;
         schemeDrawings[`slope:bottom:${copy.id}`] = next.id;
         schemes[`slope:bottom:${copy.id}`] = photoId ? [photoId] : [];
