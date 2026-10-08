@@ -243,6 +243,7 @@ export function paintAngle(ctx: CanvasRenderingContext2D, obj: Extract<DrawObjec
   let sweep = a1 - a0;
   while (sweep <= -Math.PI) sweep += Math.PI * 2;
   while (sweep > Math.PI) sweep -= Math.PI * 2;
+  sweep = sweep > 0 ? sweep - Math.PI * 2 : sweep + Math.PI * 2;
   const deg = Math.round(Math.abs(sweep) * 180 / Math.PI);
   const r = Math.max(12, obj.radius ?? 22);
   const labelAt = Math.max(r + 16, obj.label ?? r + 28);
