@@ -50,7 +50,7 @@ export async function shareFiles(files: File[], title: string): Promise<"shared"
     try {
       const urls: string[] = [];
       for (const file of files) {
-        const path = file.name || `doborka-${urls.length + 1}.png`;
+        const path = `doborka-${urls.length + 1}-${Date.now()}.png`;
         await fs.writeFile({ path, data: await toBase64(file), directory: "CACHE" });
         const uri = await fs.getUri({ path, directory: "CACHE" });
         urls.push(uri.uri);
@@ -62,8 +62,9 @@ export async function shareFiles(files: File[], title: string): Promise<"shared"
     }
   }
   try {
-    if (navigator.canShare?.({ files })) {
-      await navigator.share({ files, title });
+    const unique = files.map((file, i) => new File([file], `doborka-${i + 1}.png`, { type: file.type || "image/png" }));
+    if (navigator.canShare?.({ files: unique })) {
+      await navigator.share({ files: unique, title });
       return "shared";
     }
   } catch (e) {

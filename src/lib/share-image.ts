@@ -261,7 +261,7 @@ export async function composeWindowShot(imageUrl: string, meta?: ShareCardMeta):
   const blob = await new Promise<Blob>((resolve, reject) => {
     canvas.toBlob((b) => (b ? resolve(b) : reject(new Error("blob"))), "image/png");
   });
-  return new File([blob], "doborka-shema.png", { type: "image/png" });
+  return new File([blob], `doborka-${Date.now()}-${Math.random().toString(36).slice(2, 7)}.png`, { type: "image/png" });
 }
 
 export async function shareOrSave(file: File, title: string, text?: string): Promise<"shared" | "saved" | "cancelled"> {
