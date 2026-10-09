@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Check, ClipboardPaste, Copy, Download, Pencil, Trash2 } from "lucide-react";
+import { Check, Copy, Download, Pencil, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -191,7 +191,7 @@ function ArchiveShot({ item }: { item: LibraryDrawing }) {
       const next = URL.createObjectURL(blob);
       setUrl((prev) => { if (prev) URL.revokeObjectURL(prev); return next; });
     });
-    return () => { alive = false; };
+    return () => { alive = false; setUrl((prev) => { if (prev) URL.revokeObjectURL(prev); return ""; }); };
   }, [item]);
   return <figure className="rounded-xl border border-border bg-[#141816] p-1.5">{url ? <img src={url} alt="" className="mx-auto block h-auto w-full object-contain" /> : null}</figure>;
 }

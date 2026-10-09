@@ -19,7 +19,6 @@ export function DrawingEditor({ drawing, onChange, compact = false }: { drawing:
   const [labelBox, setLabelBox] = useState<{ id: string; x: number; y: number; value: string } | null>(null);
   const [pad, setPad] = useState<null | "length" | "label">(null);
   const [pressedKey, setPressedKey] = useState("");
-  const [angleLabel, setAngleLabel] = useState<string | null>(null);
   const freshRef = useRef(true);
   const history = useRef<DrawObject[][]>([drawing.objects]);
   const histIndex = useRef(0);
