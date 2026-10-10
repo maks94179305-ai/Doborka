@@ -121,10 +121,13 @@ function SlopeColumn({ label, title, thickness, onThickness, schemeKey, empty = 
     <div className="h-full">
       <button type="button" className="mt-1 block h-full w-full" onClick={() => setOpen(true)} aria-label={`Править ${title}`}>
         {(() => {
-          if (empty || (saved && !saved.objects.length)) return <DrawingShot drawing={blank} />;
-          if (saved && saved.objects.length) {
-            const shot = thickness === 0 ? { ...saved, objects: saved.objects.filter((o) => !(o.type === "dim" && o.offset === -50)) } : saved;
-            return <DrawingShot drawing={shot} />;
+          if (empty || (saved && !saved.objects.length && thickness === 0)) return <DrawingShot drawing={blank} />;
+          // Always drive card geometry from current thickness so left/right/top/bottom all update
+          if (thickness === 0) {
+            if (saved && saved.objects.length) {
+              return <DrawingShot drawing={{ ...saved, objects: saved.objects.filter((o) => !(o.type === "dim" && o.offset === -50)) }} />;
+            }
+            return <DrawingShot drawing={blank} />;
           }
           return <DrawingShot drawing={generated} />;
         })()}
@@ -257,13 +260,15 @@ export function OpeningsView() {
                     const sides = (["left", "right", "top", "bottom"] as const).filter((side) => patch.facade?.[side] !== o.facade?.[side]);
                     patchProject((p) => {
                       let drawings = p.drawings;
+                      let schemeDrawings = { ...(p.schemeDrawings ?? {}) };
                       for (const side of sides) {
                         const prev = o.facade?.[side] ?? 18;
                         const next = side === "bottom" ? Math.max(0, patch.facade?.[side] ?? prev) : Math.max(1, patch.facade?.[side] ?? prev);
-                        const key = side === "bottom" ? `slope:bottom:${o.id}` : `slope:${o.id}:${side}`;
-                        const drawingId = p.schemeDrawings?.[key];
-                        if (!drawingId || prev === next || next === 0) continue;
-                        const rise = next;
+                        if (prev === next) continue;
+                        const keys = side === "bottom"
+                          ? [`slope:bottom:${o.id}`, `slope:bottom:${prev}`, `slope:bottom:${next}`]
+                          : [`slope:${o.id}:${side}`, `slope:${prev}`, `slope:${next}`];
+                        const rise = Math.max(1, next);
                         const objects = [
                           { id: uid("ln"), type: "line" as const, x1: 0, y1: 0, x2: 0, y2: 50, color: "#f3f1ec", width: 2, dash: "solid" as const },
                           { id: uid("ln"), type: "line" as const, x1: 0, y1: 50, x2: 40, y2: 50, color: "#f3f1ec", width: 2, dash: "solid" as const },
@@ -277,9 +282,18 @@ export function OpeningsView() {
                           { id: uid("dm"), type: "dim" as const, x1: 20, y1: 49 - rise, x2: 20, y2: 49, offset: -50, color: "#c46a45", width: 1, label: String(next) },
                           { id: uid("dm"), type: "dim" as const, x1: 20, y1: 49 - rise, x2: 70, y2: 49 - rise, offset: -15, color: "#c46a45", width: 1, label: "50" },
                         ];
-                        drawings = drawings.map((d) => d.id === drawingId ? { ...d, updatedAt: Date.now(), objects } : d);
+                        for (const key of keys) {
+                          const drawingId = schemeDrawings[key];
+                          if (drawingId) {
+                            drawings = drawings.map((d) => d.id === drawingId ? { ...d, updatedAt: Date.now(), objects } : d);
+                          }
+                        }
+                        // Keep per-opening key linked for next edits
+                        const primary = side === "bottom" ? `slope:bottom:${o.id}` : `slope:${o.id}:${side}`;
+                        const anyId = keys.map((k) => schemeDrawings[k]).find(Boolean);
+                        if (anyId) schemeDrawings[primary] = anyId;
                       }
-                      return { ...p, drawings, openings: p.openings.map((item) => item.id === o.id ? { ...item, facade: { left: Math.max(1, patch.facade?.left ?? 18), right: Math.max(1, patch.facade?.right ?? 18), top: Math.max(1, patch.facade?.top ?? 18), bottom: Math.max(0, patch.facade?.bottom ?? 18) } } : item) };
+                      return { ...p, drawings, schemeDrawings, openings: p.openings.map((item) => item.id === o.id ? { ...item, facade: { left: Math.max(1, patch.facade?.left ?? 18), right: Math.max(1, patch.facade?.right ?? 18), top: Math.max(1, patch.facade?.top ?? 18), bottom: Math.max(0, patch.facade?.bottom ?? 18) } } : item) };
                     });
                   }} onRemove={() => removeOpening(o.id)} />
                 </div>
