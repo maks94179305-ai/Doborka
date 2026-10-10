@@ -55,6 +55,7 @@ export function Num({
 
   function onPointerDown(e: React.PointerEvent) {
     if (e.button != null && e.button !== 0) return;
+    e.stopPropagation();
     ptrId.current = e.pointerId;
     startY.current = e.clientY;
     startVal.current = Number.isFinite(value) ? value : floor;
@@ -70,7 +71,6 @@ export function Num({
       try {
         btnRef.current?.setPointerCapture(e.pointerId);
       } catch { /* ignore */ }
-      // light haptic if available
       try {
         navigator.vibrate?.(12);
       } catch { /* ignore */ }
@@ -79,10 +79,9 @@ export function Num({
 
   function onPointerMove(e: React.PointerEvent) {
     if (ptrId.current != null && e.pointerId !== ptrId.current) return;
-    const dy = startY.current - e.clientY; // up = increase
+    const dy = startY.current - e.clientY;
     if (!moved.current && Math.abs(e.clientY - startY.current) > 6) {
       moved.current = true;
-      // if user starts dragging before long-press, cancel open-on-tap but allow scrub after hold
     }
     if (!scrubActive.current) return;
     const steps = Math.round(dy / PX_PER_STEP);
@@ -92,6 +91,8 @@ export function Num({
 
   function onPointerUp(e: React.PointerEvent) {
     if (ptrId.current != null && e.pointerId !== ptrId.current) return;
+    e.stopPropagation();
+    e.preventDefault();
     const wasScrub = scrubActive.current;
     const didMove = moved.current;
     clearHold();
@@ -101,9 +102,9 @@ export function Num({
       return;
     }
 
-    // short tap without scrub → open numpad
+    // short tap → open numpad (defer so the same click cannot hit the backdrop)
     if (!didMove) {
-      setOpen(true);
+      window.setTimeout(() => setOpen(true), 0);
     }
     ptrId.current = null;
     setScrubbing(false);
@@ -115,7 +116,7 @@ export function Num({
   }
 
   return (
-    <label className="grid gap-1.5">
+    <div className="grid gap-1.5">
       <Label>{label}</Label>
       <button
         ref={btnRef}
@@ -130,6 +131,10 @@ export function Num({
         onPointerMove={onPointerMove}
         onPointerUp={onPointerUp}
         onPointerCancel={onPointerCancel}
+        onClick={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+        }}
         aria-label={label}
         aria-valuenow={shown}
       >
@@ -149,6 +154,6 @@ export function Num({
         onConfirm={(n) => onChange(n)}
         onClose={() => setOpen(false)}
       />
-    </label>
+    </div>
   );
 }
