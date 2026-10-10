@@ -18,21 +18,24 @@ export function NumPad({
   onConfirm: (n: number) => void;
   onClose: () => void;
 }) {
-  const [draft, setDraft] = useState(String(value ?? min ?? 0));
+  const [draft, setDraft] = useState("0");
   const [settled, setSettled] = useState(false);
+  const [fresh, setFresh] = useState(true);
 
-  const n = Math.max(min, Number(draft.replace(/\D/g, "") || min));
+  const n = Math.max(min, Number(draft.replace(/\D/g, "") || 0));
 
   useEffect(() => {
     if (!open) {
       setSettled(false);
       return;
     }
-    setDraft(String(Number.isFinite(value) ? value : min));
+    // Always start at 0 so user types a new value from scratch
+    setDraft("0");
+    setFresh(true);
     setSettled(false);
     const t = window.setTimeout(() => setSettled(true), SETTLE_MS);
     return () => window.clearTimeout(t);
-  }, [open, value, min]);
+  }, [open, min]);
 
   useEffect(() => {
     if (!open) return;
@@ -45,17 +48,22 @@ export function NumPad({
 
   function digit(d: string) {
     setDraft((cur) => {
+      if (fresh || cur === "0") {
+        setFresh(false);
+        return d;
+      }
       const next = (cur + d).replace(/\D/g, "").slice(0, 5);
-      if (!next) return String(min);
-      return String(Math.max(min, Number(next)));
+      if (!next) return "0";
+      return next.replace(/^0+(?=\d)/, "") || "0";
     });
   }
 
   function backspace() {
     setDraft((cur) => {
+      setFresh(false);
       const next = cur.slice(0, -1);
-      if (!next) return String(min);
-      return String(Math.max(min, Number(next.replace(/\D/g, "") || min)));
+      if (!next) return "0";
+      return next.replace(/\D/g, "") || "0";
     });
   }
 
@@ -120,7 +128,8 @@ export function NumPad({
             type="button"
             className="h-12 rounded-xl border border-steel/50 bg-primary text-primary-foreground active:opacity-90"
             onClick={() => {
-              onConfirm(n);
+              const v = Math.max(min, n);
+              onConfirm(v);
               onClose();
             }}
             aria-label="Готово"
