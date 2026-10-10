@@ -51,6 +51,7 @@ export function ArchiveView() {
   const [openFolder, setOpenFolder] = useState<string | null>(null);
   const [renaming, setRenaming] = useState<string | null>(null);
   const [renameDraft, setRenameDraft] = useState("");
+  const [sharing, setSharing] = useState(false);
   const entries = project?.archive ?? [];
   const [photoRev, setPhotoRev] = useState(0);
   const photoKey = entries.map((e) => e.photoId).join("|");
@@ -92,7 +93,7 @@ export function ArchiveView() {
     for (const [i, item] of list.entries()) {
       const blob = await getPhoto(item.photoId);
       if (!blob) continue;
-      files.push(new File([blob], `doborka-${i + 1}.png`, { type: blob.type || "image/png" }));
+      files.push(new File([blob], `doborka-${i + 1}-${Date.now()}-${(item.title || "schema").replace(/[^\wа-яА-ЯёЁ-]+/g, "_").slice(0, 20)}.png`, { type: blob.type || "image/png" }));
     }
     return files;
   }
@@ -103,9 +104,15 @@ export function ArchiveView() {
   }
 
   async function sharePicked() {
-    const chosen = entries.filter((e) => picked.includes(e.id));
-    const files = await filesOf(chosen);
-    if (files.length) await shareFiles(files, "Схемы · Доборка");
+    if (sharing || !picked.length) return;
+    setSharing(true);
+    try {
+      const chosen = entries.filter((e) => picked.includes(e.id));
+      const files = await filesOf(chosen);
+      if (files.length) await shareFiles(files, "Схемы · Доборка");
+    } finally {
+      setSharing(false);
+    }
   }
 
   async function remove(id: string, photoId: string) {
@@ -151,7 +158,7 @@ export function ArchiveView() {
         {entries.length ? <div className="mt-3 flex flex-wrap gap-2">
           <Button size="sm" variant="secondary" onClick={() => setPicked(entries.map((e) => e.id))}>Выбрать все</Button>
           <Button size="sm" variant="secondary" onClick={() => setPicked([])} disabled={!picked.length}>Снять выбор</Button>
-          <Button size="sm" onClick={() => void sharePicked()} disabled={!picked.length}><Share2 /> Поделиться выбранными{picked.length ? ` (${picked.length})` : ""}</Button>
+          <Button size="sm" onClick={() => void sharePicked()} disabled={!picked.length || sharing}><Share2 /> {sharing ? "Отправляем…" : `Поделиться выбранными${picked.length ? ` (${picked.length})` : ""}`}</Button>
         </div> : null}
       </header>
       {entries.length === 0 ? (
@@ -165,7 +172,7 @@ export function ArchiveView() {
           {(openFolder ? entries.filter((e) => (e.projectId || e.id) === openFolder) : Object.values(entries.reduce<Record<string, typeof entries[number]>>((acc, e) => { const key = e.projectId || e.id; acc[key] ??= e; return acc; }, {}))).map((e) => (
           openFolder ? null : (
             <div key={e.projectId || e.id} className="panel flex w-full items-center justify-between p-4 text-left">
-              <button type="button" className="min-w-0 flex-1 text-left" onClick={() => setOpenFolder(e.projectId || e.id)}>
+              <button type="button" className="min-w-0 flex-1 text-left" onClick={() => { if (renaming) return; setOpenFolder(e.projectId || e.id); }}>
                 {renaming === (e.projectId || e.id) ? (
                   <input
                     autoFocus
