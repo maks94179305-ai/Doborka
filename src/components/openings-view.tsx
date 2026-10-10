@@ -90,6 +90,10 @@ function SlopeColumn({ label, title, thickness, onThickness, schemeKey, empty = 
   const draft = saved ?? (empty ? blank : generated);
   async function done(next: Drawing) {
     const photoId = next.objects.length ? uid("ph") : "";
+    if (photoId) {
+      const blob = await renderDrawingToBlob(next);
+      if (blob) await savePhoto(photoId, blob);
+    }
     const isBottom = key.startsWith("slope:bottom:");
     const cutKey = isBottom ? `slope:bottom:${thickness}` : key;
     const openingId = isBottom ? key.slice("slope:bottom:".length) : "";
@@ -112,16 +116,20 @@ function SlopeColumn({ label, title, thickness, onThickness, schemeKey, empty = 
       });
       return { ...p, openings, drawings: [...p.drawings.filter((d) => d.id !== next.id), { ...next, previewPhotoId: photoId || undefined }], schemeDrawings, schemes };
     });
-    if (photoId) {
-      void renderDrawingToBlob(next).then(async (blob) => {
-        if (blob) await savePhoto(photoId, blob);
-      });
-    }
   }
   return (
     <div className="h-full">
       <button type="button" className="mt-1 block h-full w-full" onClick={() => setOpen(true)} aria-label={`Править ${title}`}>
-        {saved && saved.objects.length ? <SavedScheme drawing={thickness === 0 ? { ...saved, objects: saved.objects.filter((o) => !(o.type === "dim" && o.offset === -50)) } : saved} /> : empty || (saved && !saved.objects.length) ? <SlopeProfile thickness={thickness} label={title} blank /> : <SlopeProfile thickness={thickness} label={title} />}
+        {(() => {
+          const photoId = saved?.previewPhotoId || project?.schemes?.[key]?.[0];
+          if (photoId) return <SchemePreview photoId={photoId} label={title} />;
+          if (saved && saved.objects.length) {
+            const shot = thickness === 0 ? { ...saved, objects: saved.objects.filter((o) => !(o.type === "dim" && o.offset === -50)) } : saved;
+            return <DrawingShot drawing={shot} />;
+          }
+          if (empty || (saved && !saved.objects.length)) return <SlopeProfile thickness={thickness} label={title} blank />;
+          return <SlopeProfile thickness={thickness} label={title} />;
+        })()}
       </button>
       {open ? <SchemeDrawDialog open={open} title={title} drawing={draft} onOpenChange={setOpen} onDone={(d) => { void done(d); }} /> : null}
     </div>
@@ -175,7 +183,7 @@ function SchemePreview({ photoId, label }: { photoId: string; label: string }) {
     void getPhoto(photoId).then((blob) => { if (live && blob) setUrl(URL.createObjectURL(blob)); });
     return () => { live = false; };
   }, [photoId]);
-  return <figure className="mx-auto w-full rounded-xl border border-border bg-[#141816] p-1.5">{url ? <img src={url} alt={label} className="mx-auto block h-24 w-full object-contain" /> : null}</figure>;
+  return <figure className="mx-auto w-full rounded-xl border border-border bg-[#141816] p-1.5">{url ? <img src={url} alt={label} className="mx-auto block h-auto max-h-40 w-full object-contain" /> : null}</figure>;
 }
 function SlopeProfile({ thickness, label, blank = false }: { thickness: number; label: string; blank?: boolean }) {
   const rise = Math.max(1, thickness);

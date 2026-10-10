@@ -107,7 +107,7 @@ export function ArchiveView() {
     if (sharing || !picked.length) return;
     setSharing(true);
     try {
-      const chosen = entries.filter((e) => picked.includes(e.id));
+      const chosen = entries.filter((e) => picked.includes(e.id) && (!openFolder || (e.projectId || e.id) === openFolder));
       const files = await filesOf(chosen);
       if (files.length) await shareFiles(files, "Схемы · Доборка");
     } finally {
@@ -154,9 +154,9 @@ export function ArchiveView() {
       <header>
         <p className="kicker">История</p>
         <h1>История заказов</h1>
-        <p className="mt-1 text-sm text-muted-foreground">Отметьте карточки и отправьте сразу несколько.</p>
-        {entries.length ? <div className="mt-3 flex flex-wrap gap-2">
-          <Button size="sm" variant="secondary" onClick={() => setPicked(entries.map((e) => e.id))}>Выбрать все</Button>
+        <p className="mt-1 text-sm text-muted-foreground">{openFolder ? "Отметьте карточки в папке и отправьте сразу несколько." : "Откройте папку, чтобы выбрать и поделиться схемами."}</p>
+        {openFolder && entries.length ? <div className="mt-3 flex flex-wrap gap-2">
+          <Button size="sm" variant="secondary" onClick={() => setPicked(entries.filter((e) => (e.projectId || e.id) === openFolder).map((e) => e.id))}>Выбрать все</Button>
           <Button size="sm" variant="secondary" onClick={() => setPicked([])} disabled={!picked.length}>Снять выбор</Button>
           <Button size="sm" onClick={() => void sharePicked()} disabled={!picked.length || sharing}><Share2 /> {sharing ? "Отправляем…" : `Поделиться выбранными${picked.length ? ` (${picked.length})` : ""}`}</Button>
         </div> : null}
@@ -168,7 +168,7 @@ export function ArchiveView() {
         </div>
       ) : (
         <div className="space-y-4">
-          {openFolder ? <div className="flex gap-2"><Button variant="secondary" onClick={() => setOpenFolder(null)}>Назад к папкам</Button><Button variant="secondary" onClick={() => void removeFolder(openFolder)}><Trash2 /> Удалить папку</Button></div> : null}
+          {openFolder ? <div className="flex gap-2"><Button variant="secondary" onClick={() => { setOpenFolder(null); setPicked([]); }}>Назад к папкам</Button><Button variant="secondary" onClick={() => void removeFolder(openFolder)}><Trash2 /> Удалить папку</Button></div> : null}
           {(openFolder ? entries.filter((e) => (e.projectId || e.id) === openFolder) : Object.values(entries.reduce<Record<string, typeof entries[number]>>((acc, e) => { const key = e.projectId || e.id; acc[key] ??= e; return acc; }, {}))).map((e) => (
           openFolder ? null : (
             <div key={e.projectId || e.id} className="panel flex w-full items-center justify-between p-4 text-left">
