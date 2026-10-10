@@ -38,6 +38,9 @@ export function PlanView() {
   function toggle(key: string) { setPicked((cur) => cur.includes(key) ? cur.filter((x) => x !== key) : [...cur, key]); }
   async function prepareShare() {
     if (sharing || !project || !picked.length) return;
+    setNameDraft(project.name?.trim() || "Раскрой");
+    setPendingSent(null);
+    setNameOpen(true);
     setSharing(true);
     try {
       const chosen = materials.filter((m) => picked.includes(m.key));
@@ -52,8 +55,8 @@ export function PlanView() {
         let blob = null as Blob | null;
         const photoId = schemeIdsOf(project, schemeKey)[0] || schemeIdsOf(project, m.key)[0] || drawing?.previewPhotoId;
         if (photoId) blob = await getPhoto(photoId);
-        if (!blob && drawing) blob = await renderDrawingToBlob(drawing, { w: 900, h: 640 });
-        if (!blob) blob = await renderDrawingToBlob({ id: m.key, name: m.title, objects: [], updatedAt: Date.now() }, { w: 900, h: 640 });
+        if (!blob && drawing) blob = await renderDrawingToBlob(drawing, { w: 720, h: 480 });
+        if (!blob) blob = await renderDrawingToBlob({ id: m.key, name: m.title, objects: [], updatedAt: Date.now() }, { w: 720, h: 480 });
         if (!blob) continue;
         const url = URL.createObjectURL(blob);
         try {
@@ -63,14 +66,14 @@ export function PlanView() {
         } finally { URL.revokeObjectURL(url); }
       }
       if (!sent.length) return;
-      setPendingSent(sent);
-      setNameDraft(project.name?.trim() || "Раскрой");
-      setNameOpen(true);
+      setPendingSent(sent.length ? sent : null);
+      if (!sent.length) setNameOpen(false);
     } finally {
       setSharing(false);
     }
   }
   async function confirmShare() {
+    if (sharing && !pendingSent?.length) return;
     if (!pendingSent?.length) { setNameOpen(false); return; }
     const projectName = nameDraft.trim() || "Раскрой";
     setNameOpen(false);
@@ -165,7 +168,7 @@ export function PlanView() {
             />
             <div className="mt-4 flex gap-2 justify-end">
               <Button variant="secondary" onClick={() => { setNameOpen(false); setPendingSent(null); }}>Отмена</Button>
-              <Button onClick={() => void confirmShare()} disabled={sharing}><Share2 /> Отправить</Button>
+              <Button onClick={() => void confirmShare()} disabled={sharing || !pendingSent?.length}><Share2 /> {sharing && !pendingSent ? "Готовим…" : "Отправить"}</Button>
             </div>
           </div>
         </div>
