@@ -14,9 +14,8 @@ jobs:
         run: |
           git config user.name "fix"
           git config user.email "fix@users.noreply.github.com"
-          git checkout 5e20ea4a1b9ae40fc4b7c6e92e8f7805f6ddf179 -- src/components/openings-view.tsx
-          python3 scripts/apply-ui-speed-fix.py
-          git add src/components/openings-view.tsx src/components/plan-view.tsx
+          python3 scripts/apply-snapshot-fix.py
+          git add src/components/openings-view.tsx src/components/archive-view.tsx
           git status
-          git commit -m "Faster slope preview (SVG), custom drip -> + отлив, instant share name dialog" || echo nochange
+          git commit -m "Cards show drawing snapshots; history select/share only inside folder" || echo nochange
           git push
