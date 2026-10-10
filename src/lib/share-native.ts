@@ -21,7 +21,7 @@ export async function shareOrSave(file: File, title: string, text?: string): Pro
   const share = cap?.Plugins?.Share;
   if (fs && share) {
     try {
-      const path = file.name || "doborka-shema.png";
+      const path = `doborka-one-${Date.now()}-${Math.random().toString(36).slice(2, 8)}.png`;
       await fs.writeFile({ path, data: await toBase64(file), directory: "CACHE" });
       const uri = await fs.getUri({ path, directory: "CACHE" });
       await share.share({ title, text, url: uri.uri, dialogTitle: "Поделиться" });
@@ -43,26 +43,37 @@ export async function shareOrSave(file: File, title: string, text?: string): Pro
 
 export async function shareFiles(files: File[], title: string): Promise<"shared" | "saved" | "cancelled"> {
   if (!files.length) return "cancelled";
+  const unique = files.map((file, i) => new File([file], `doborka-${i + 1}-${Date.now()}.png`, { type: file.type || "image/png" }));
   const cap = (window as unknown as { Capacitor?: { Plugins?: Record<string, { writeFile: Function; getUri: Function; share: Function }> } }).Capacitor;
   const fs = cap?.Plugins?.Filesystem;
   const sharePlugin = cap?.Plugins?.Share;
   if (fs && sharePlugin) {
     try {
       const urls: string[] = [];
-      for (const file of files) {
-        const path = `doborka-${urls.length + 1}-${Date.now()}.png`;
-        await fs.writeFile({ path, data: await toBase64(file), directory: "CACHE" });
+      for (let i = 0; i < unique.length; i += 1) {
+        const path = `doborka-share-${i + 1}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}.png`;
+        await fs.writeFile({ path, data: await toBase64(unique[i]!), directory: "CACHE" });
         const uri = await fs.getUri({ path, directory: "CACHE" });
         urls.push(uri.uri);
       }
-      await sharePlugin.share({ title, files: urls, url: urls[0], dialogTitle: "Поделиться" });
-      return "shared";
+      if (urls.length === 1) {
+        await sharePlugin.share({ title, url: urls[0], dialogTitle: "Поделиться" });
+        return "shared";
+      }
+      try {
+        await sharePlugin.share({ title, files: urls, dialogTitle: "Поделиться" });
+        return "shared";
+      } catch {
+        for (let i = 0; i < urls.length; i += 1) {
+          await sharePlugin.share({ title: `${title} (${i + 1}/${urls.length})`, url: urls[i], dialogTitle: "Поделиться" });
+        }
+        return "shared";
+      }
     } catch (e) {
       if ((e as Error).name === "AbortError") return "cancelled";
     }
   }
   try {
-    const unique = files.map((file, i) => new File([file], `doborka-${i + 1}.png`, { type: file.type || "image/png" }));
     if (navigator.canShare?.({ files: unique })) {
       await navigator.share({ files: unique, title });
       return "shared";
