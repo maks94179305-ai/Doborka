@@ -1,0 +1,41 @@
+name: fix-plan-name
+on:
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  fix:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Empty history name field
+        run: |
+          set -e
+          git config user.name "fix"
+          git config user.email "fix@users.noreply.github.com"
+          if [ "$(wc -c < src/components/plan-view.tsx)" -lt 100 ]; then
+            git show HEAD~1:src/components/plan-view.tsx > src/components/plan-view.tsx || git show a27838d017c6caff6528f57f51b0dd824c31cbde:src/components/plan-view.tsx > src/components/plan-view.tsx
+          fi
+          python3 << 'PY'
+          from pathlib import Path
+          p = Path("src/components/plan-view.tsx")
+          src = p.read_text()
+          if src.strip() == "PLACEHOLDER" or len(src) < 100:
+              raise SystemExit("plan-view still broken")
+          src = src.replace(
+              'const [nameDraft, setNameDraft] = useState("Раскрой");',
+              'const [nameDraft, setNameDraft] = useState("");',
+          )
+          src = src.replace(
+              'setNameDraft(project.name?.trim() || "Раскрой");',
+              'setNameDraft("");',
+          )
+          p.write_text(src)
+          print("patched name field empty")
+          PY
+          git add src/components/plan-view.tsx
+          git status
+          git commit -m "History name dialog opens with empty field" || echo nochange
+          git push
