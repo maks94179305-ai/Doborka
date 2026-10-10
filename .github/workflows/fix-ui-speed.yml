@@ -1,0 +1,136 @@
+name: fix-ui-speed
+on:
+  workflow_dispatch:
+jobs:
+  fix:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Restore openings and patch
+        run: |
+          git config user.name "fix"
+          git config user.email "fix@users.noreply.github.com"
+          git checkout 5e20ea4a1b9ae40fc4b7c6e92e8f7805f6ddf179 -- src/components/openings-view.tsx
+
+          python3 << 'PY'
+          from pathlib import Path
+          src = Path('src/components/openings-view.tsx').read_text()
+
+          old_done = '''  async function done(next: Drawing) {
+    const photoId = next.objects.length ? uid("ph") : "";
+    if (photoId) {
+      const blob = await renderDrawingToBlob(next);
+      if (blob) await savePhoto(photoId, blob);
+    }
+    const cutKey = key.startsWith("slope:bottom:") ? `slope:bottom:${thickness}` : key;
+    patch((p) => {
+      const schemeDrawings = { ...(p.schemeDrawings ?? {}), [key]: next.id, [cutKey]: next.id };
+      const schemes = { ...(p.schemes ?? {}), [key]: photoId ? [photoId] : [], [cutKey]: photoId ? [photoId] : [] };
+      const openingId = key.startsWith("slope:bottom:") ? key.slice("slope:bottom:".length) : "";
+      const opening = p.openings.find((o) => o.id === openingId);
+      const root = opening?.sourceId || openingId;
+      const openings = p.openings.map((copy) => {
+        if (copy.id === openingId) return copy;
+        const linked = !opening?.sourceId && (copy.sourceId === openingId || (!copy.sourceId && opening && copy.name.startsWith(`${opening.name} копия`)));
+        if (!linked) return copy;
+        schemeDrawings[`slope:bottom:${copy.id}`] = next.id;
+        schemes[`slope:bottom:${copy.id}`] = photoId ? [photoId] : [];
+        return copy.sourceId ? copy : { ...copy, sourceId: root };
+      });
+      return { ...p, openings, drawings: [...p.drawings.filter((d) => d.id !== next.id), { ...next, previewPhotoId: photoId || undefined }], schemeDrawings, schemes };
+    });
+  }'''
+
+          new_done = '''  async function done(next: Drawing) {
+    const photoId = next.objects.length ? uid("ph") : "";
+    const isBottom = key.startsWith("slope:bottom:");
+    const cutKey = isBottom ? `slope:bottom:${thickness}` : key;
+    const openingId = isBottom ? key.slice("slope:bottom:".length) : "";
+    patch((p) => {
+      const schemeDrawings = { ...(p.schemeDrawings ?? {}), [key]: next.id, [cutKey]: next.id };
+      const schemes = { ...(p.schemes ?? {}), [key]: photoId ? [photoId] : [], [cutKey]: photoId ? [photoId] : [] };
+      const opening = p.openings.find((o) => o.id === openingId);
+      const root = opening?.sourceId || openingId;
+      const openings = p.openings.map((copy) => {
+        if (isBottom && copy.id === openingId) {
+          const facade = { left: copy.facade?.left ?? 18, right: copy.facade?.right ?? 18, top: copy.facade?.top ?? 18, bottom: 0 };
+          return { ...copy, facade };
+        }
+        const linked = !opening?.sourceId && (copy.sourceId === openingId || (!copy.sourceId && opening && copy.name.startsWith(`${opening.name} копия`)));
+        if (!linked) return copy;
+        schemeDrawings[`slope:bottom:${copy.id}`] = next.id;
+        schemes[`slope:bottom:${copy.id}`] = photoId ? [photoId] : [];
+        if (isBottom) {
+          const facade = { left: copy.facade?.left ?? 18, right: copy.facade?.right ?? 18, top: copy.facade?.top ?? 18, bottom: 0 };
+          return copy.sourceId ? { ...copy, facade } : { ...copy, sourceId: root, facade };
+        }
+        return copy.sourceId ? copy : { ...copy, sourceId: root };
+      });
+      return { ...p, openings, drawings: [...p.drawings.filter((d) => d.id !== next.id), { ...next, previewPhotoId: photoId || undefined }], schemeDrawings, schemes };
+    });
+    if (photoId) {
+      void renderDrawingToBlob(next).then(async (blob) => {
+        if (blob) await savePhoto(photoId, blob);
+      });
+    }
+  }'''
+
+          if old_done not in src:
+              raise SystemExit('done block missing')
+          src = src.replace(old_done, new_done)
+
+          old_preview = '''        {saved && saved.objects.length ? <DrawingShot drawing={thickness === 0 ? { ...saved, objects: saved.objects.filter((o) => !(o.type === "dim" && o.offset === -50)) } : saved} /> : empty || (saved && !saved.objects.length) ? <SlopeProfile thickness={thickness} label={title} blank /> : <DrawingShot drawing={generated} />}'''
+          new_preview = '''        {saved && saved.objects.length ? <SavedScheme drawing={thickness === 0 ? { ...saved, objects: saved.objects.filter((o) => !(o.type === "dim" && o.offset === -50)) } : saved} /> : empty || (saved && !saved.objects.length) ? <SlopeProfile thickness={thickness} label={title} blank /> : <SlopeProfile thickness={thickness} label={title} />}'''
+          if old_preview not in src:
+              raise SystemExit('preview block missing')
+          src = src.replace(old_preview, new_preview)
+          Path('src/components/openings-view.tsx').write_text(src)
+          print('openings patched', len(src))
+          PY
+
+          python3 << 'PY'
+          from pathlib import Path
+          pv = Path('src/components/plan-view.tsx').read_text()
+          old_prep = '''  async function prepareShare() {
+    if (sharing || !project || !picked.length) return;
+    setSharing(true);
+    try {'''
+          # only patch if old pattern still present
+          if 'Сразу открываем диалог' in pv:
+              print('plan-view already patched')
+          elif 'setSharing(true);' in pv and 'setNameOpen(true)' in pv:
+              # open dialog first
+              pv2 = pv.replace(
+                '    setSharing(true);\n    try {\n      const chosen = materials.filter((m) => picked.includes(m.key));',
+                '    setNameDraft(project.name?.trim() || "Раскрой");\n    setPendingSent(null);\n    setNameOpen(true);\n    setSharing(true);\n    try {\n      const chosen = materials.filter((m) => picked.includes(m.key));',
+                1,
+              )
+              # remove late setNameOpen
+              pv2 = pv2.replace(
+                '      setPendingSent(sent);\n      setNameDraft(project.name?.trim() || "Раскрой");\n      setNameOpen(true);',
+                '      setPendingSent(sent.length ? sent : null);\n      if (!sent.length) setNameOpen(false);',
+                1,
+              )
+              # smaller render size
+              pv2 = pv2.replace('{ w: 900, h: 640 }', '{ w: 720, h: 480 }')
+              # dialog button
+              pv2 = pv2.replace(
+                '<Button onClick={() => void confirmShare()} disabled={sharing}><Share2 /> Отправить</Button>',
+                '<Button onClick={() => void confirmShare()} disabled={sharing || !pendingSent?.length}><Share2 /> {sharing && !pendingSent ? "Готовим…" : "Отправить"}</Button>',
+              )
+              pv2 = pv2.replace(
+                '  async function confirmShare() {\n    if (!pendingSent?.length) { setNameOpen(false); return; }',
+                '  async function confirmShare() {\n    if (sharing && !pendingSent?.length) return;\n    if (!pendingSent?.length) { setNameOpen(false); return; }',
+              )
+              Path('src/components/plan-view.tsx').write_text(pv2)
+              print('plan-view patched', len(pv2))
+          else:
+              print('plan-view unexpected')
+          PY
+
+          git add src/components/openings-view.tsx src/components/plan-view.tsx
+          git commit -m "Faster slope preview (SVG), custom drip -> + отлив, share name dialog opens immediately" || echo no change
+          git push
