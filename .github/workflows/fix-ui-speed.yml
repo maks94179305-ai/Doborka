@@ -13,13 +13,13 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - name: Snapshot-style cards, thickness still updates numbers/lines
+      - name: Apply openings thickness + numpad wiring
         run: |
           set -e
           git config user.name "fix"
           git config user.email "fix@users.noreply.github.com"
           python3 scripts/restore-live-preview.py
-          git add src/components/openings-view.tsx
+          git add src/components/openings-view.tsx src/components/num-field.tsx src/components/num-pad.tsx
           git status
-          git commit -m "Slope cards: DrawingShot snapshots that update numbers/lines on thickness change" || echo nochange
+          git commit -m "All slope previews follow thickness; app numpad with scroll" || echo nochange
           git push
