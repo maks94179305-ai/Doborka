@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import { Delete, Check } from "lucide-react";
-import { Button } from "@/components/ui/button";
 
 const SETTLE_MS = 320;
 
@@ -44,10 +43,6 @@ export function NumPad({
     return () => window.removeEventListener("keydown", onKey);
   }, [open, onClose]);
 
-  function setNum(next: number) {
-    setDraft(String(Math.max(min, next)));
-  }
-
   function digit(d: string) {
     setDraft((cur) => {
       const next = (cur + d).replace(/\D/g, "").slice(0, 5);
@@ -90,20 +85,10 @@ export function NumPad({
         onClick={(e) => e.stopPropagation()}
       >
         {label ? <p className="mb-2 text-sm text-muted-foreground">{label}</p> : null}
-        <div className="mb-3 flex items-center justify-between gap-3">
-          <p className="font-display text-3xl tabular tracking-tight">
-            {n}
-            <span className="ml-1 text-base text-muted-foreground">мм</span>
-          </p>
-          <div className="flex gap-1">
-            <Button size="sm" variant="secondary" type="button" onClick={() => setNum(n - 1)} disabled={n <= min}>
-              −
-            </Button>
-            <Button size="sm" variant="secondary" type="button" onClick={() => setNum(n + 1)}>
-              +
-            </Button>
-          </div>
-        </div>
+        <p className="mb-3 font-display text-3xl tabular tracking-tight">
+          {n}
+          <span className="ml-1 text-base text-muted-foreground">мм</span>
+        </p>
 
         <div className="grid grid-cols-3 gap-2">
           {["1", "2", "3", "4", "5", "6", "7", "8", "9"].map((d) => (
