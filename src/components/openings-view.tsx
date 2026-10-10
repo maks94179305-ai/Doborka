@@ -120,7 +120,14 @@ function SlopeColumn({ label, title, thickness, onThickness, schemeKey, empty = 
   return (
     <div className="h-full">
       <button type="button" className="mt-1 block h-full w-full" onClick={() => setOpen(true)} aria-label={`Править ${title}`}>
-        {saved && saved.objects.length ? <SavedScheme drawing={thickness === 0 ? { ...saved, objects: saved.objects.filter((o) => !(o.type === "dim" && o.offset === -50)) } : saved} /> : empty || (saved && !saved.objects.length) ? <SlopeProfile thickness={thickness} label={title} blank /> : <SlopeProfile thickness={thickness} label={title} />}
+        {(() => {
+          if (empty || (saved && !saved.objects.length)) return <DrawingShot drawing={blank} />;
+          if (saved && saved.objects.length) {
+            const shot = thickness === 0 ? { ...saved, objects: saved.objects.filter((o) => !(o.type === "dim" && o.offset === -50)) } : saved;
+            return <DrawingShot drawing={shot} />;
+          }
+          return <DrawingShot drawing={generated} />;
+        })()}
       </button>
       {open ? <SchemeDrawDialog open={open} title={title} drawing={draft} onOpenChange={setOpen} onDone={(d) => { void done(d); }} /> : null}
     </div>
@@ -131,6 +138,7 @@ function SlopeColumn({ label, title, thickness, onThickness, schemeKey, empty = 
 
 function DrawingShot({ drawing }: { drawing: Drawing }) {
   const [url, setUrl] = useState("");
+  const sig = useMemo(() => JSON.stringify(drawing.objects) + "|" + String(drawing.updatedAt ?? ""), [drawing.objects, drawing.updatedAt]);
   useEffect(() => {
     let alive = true;
     void renderDrawingToBlob(drawing, { w: 640, h: 420 }).then((blob) => {
@@ -139,8 +147,8 @@ function DrawingShot({ drawing }: { drawing: Drawing }) {
       setUrl((prev) => { if (prev) URL.revokeObjectURL(prev); return next; });
     });
     return () => { alive = false; setUrl((prev) => { if (prev) URL.revokeObjectURL(prev); return ""; }); };
-  }, [drawing]);
-  return <figure className="mx-auto w-full rounded-xl border border-border bg-[#141816] p-1.5">{url ? <img src={url} alt="" className="mx-auto block h-auto w-full object-contain" /> : <svg viewBox="8 17 126 85" className="mx-auto mt-1 block h-auto w-full" />}</figure>;
+  }, [sig, drawing]);
+  return <figure className="mx-auto w-full rounded-xl border border-border bg-[#141816] p-1.5">{url ? <img src={url} alt="" className="mx-auto block h-auto max-h-40 w-full object-contain" /> : <svg viewBox="8 17 126 85" className="mx-auto mt-1 block h-auto w-full" />}</figure>;
 }
 function SavedScheme({ drawing }: { drawing: Drawing }) {
   const lines = drawing.objects.filter((o) => o.type === "line");
