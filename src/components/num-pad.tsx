@@ -1,8 +1,7 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { Delete, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
-const ITEM = 40;
 const SETTLE_MS = 320;
 
 export function NumPad({
@@ -22,12 +21,8 @@ export function NumPad({
 }) {
   const [draft, setDraft] = useState(String(value ?? min ?? 0));
   const [settled, setSettled] = useState(false);
-  const wheelRef = useRef<HTMLDivElement>(null);
-  const suppress = useRef(false);
 
   const n = Math.max(min, Number(draft.replace(/\D/g, "") || min));
-  const maxWheel = Math.max(n + 40, 120);
-  const ticks = useMemo(() => Array.from({ length: maxWheel - min + 1 }, (_, i) => min + i), [min, maxWheel]);
 
   useEffect(() => {
     if (!open) {
@@ -40,16 +35,6 @@ export function NumPad({
     return () => window.clearTimeout(t);
   }, [open, value, min]);
 
-  useEffect(() => {
-    if (!open || !wheelRef.current) return;
-    suppress.current = true;
-    wheelRef.current.scrollTop = (n - min) * ITEM;
-    requestAnimationFrame(() => {
-      suppress.current = false;
-    });
-  }, [open, n, min]);
-
-  // Close on Escape
   useEffect(() => {
     if (!open) return;
     function onKey(e: KeyboardEvent) {
@@ -79,13 +64,6 @@ export function NumPad({
     });
   }
 
-  function onWheelScroll() {
-    if (suppress.current || !wheelRef.current) return;
-    const idx = Math.round(wheelRef.current.scrollTop / ITEM);
-    const v = min + Math.max(0, Math.min(ticks.length - 1, idx));
-    setDraft(String(v));
-  }
-
   function tryClose() {
     if (!settled) return;
     onClose();
@@ -98,7 +76,6 @@ export function NumPad({
       data-numpad
       className="fixed inset-0 z-[200] flex items-end justify-center bg-black/50 p-3 pt-[max(0.75rem,env(safe-area-inset-top))] sm:items-center"
       onPointerDown={(e) => {
-        // only backdrop (this element) closes — not children
         if (e.target === e.currentTarget) {
           e.preventDefault();
           e.stopPropagation();
@@ -125,31 +102,6 @@ export function NumPad({
             <Button size="sm" variant="secondary" type="button" onClick={() => setNum(n + 1)}>
               +
             </Button>
-          </div>
-        </div>
-
-        <div className="relative mb-3 h-[120px] overflow-hidden rounded-xl border border-border bg-[#141816]">
-          <div className="pointer-events-none absolute inset-x-0 top-1/2 z-10 h-10 -translate-y-1/2 rounded-md border border-steel/40 bg-steel/10" />
-          <div
-            ref={wheelRef}
-            onScroll={onWheelScroll}
-            className="h-full overflow-y-auto px-2"
-            style={{ scrollSnapType: "y mandatory" }}
-          >
-            <div style={{ height: ITEM * 1.5 }} />
-            {ticks.map((t) => (
-              <div
-                key={t}
-                className={
-                  "flex h-10 items-center justify-center text-lg tabular " +
-                  (t === n ? "font-semibold text-foreground" : "text-muted-foreground")
-                }
-                style={{ scrollSnapAlign: "center" }}
-              >
-                {t}
-              </div>
-            ))}
-            <div style={{ height: ITEM * 1.5 }} />
           </div>
         </div>
 
