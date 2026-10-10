@@ -120,16 +120,7 @@ function SlopeColumn({ label, title, thickness, onThickness, schemeKey, empty = 
   return (
     <div className="h-full">
       <button type="button" className="mt-1 block h-full w-full" onClick={() => setOpen(true)} aria-label={`Править ${title}`}>
-        {(() => {
-          const photoId = saved?.previewPhotoId || project?.schemes?.[key]?.[0];
-          if (photoId) return <SchemePreview photoId={photoId} label={title} />;
-          if (saved && saved.objects.length) {
-            const shot = thickness === 0 ? { ...saved, objects: saved.objects.filter((o) => !(o.type === "dim" && o.offset === -50)) } : saved;
-            return <DrawingShot drawing={shot} />;
-          }
-          if (empty || (saved && !saved.objects.length)) return <SlopeProfile thickness={thickness} label={title} blank />;
-          return <SlopeProfile thickness={thickness} label={title} />;
-        })()}
+        {saved && saved.objects.length ? <SavedScheme drawing={thickness === 0 ? { ...saved, objects: saved.objects.filter((o) => !(o.type === "dim" && o.offset === -50)) } : saved} /> : empty || (saved && !saved.objects.length) ? <SlopeProfile thickness={thickness} label={title} blank /> : <SlopeProfile thickness={thickness} label={title} />}
       </button>
       {open ? <SchemeDrawDialog open={open} title={title} drawing={draft} onOpenChange={setOpen} onDone={(d) => { void done(d); }} /> : null}
     </div>
@@ -253,36 +244,7 @@ export function OpeningsView() {
                   </div>
                 </div>
                 <div className="mt-1 flex flex-col items-center">
-                  <OpeningEditor opening={o} fallback={fallback} onChange={(patch) => {
-                    if (!patch.facade) { updateOpening(o.id, patch); return; }
-                    const sides = (["left", "right", "top", "bottom"] as const).filter((side) => patch.facade?.[side] !== o.facade?.[side]);
-                    patchProject((p) => {
-                      let drawings = p.drawings;
-                      for (const side of sides) {
-                        const prev = o.facade?.[side] ?? 18;
-                        const next = side === "bottom" ? Math.max(0, patch.facade?.[side] ?? prev) : Math.max(1, patch.facade?.[side] ?? prev);
-                        const key = side === "bottom" ? `slope:bottom:${o.id}` : `slope:${o.id}:${side}`;
-                        const drawingId = p.schemeDrawings?.[key];
-                        if (!drawingId || prev === next || next === 0) continue;
-                        const rise = next;
-                        const objects = [
-                          { id: uid("ln"), type: "line" as const, x1: 0, y1: 0, x2: 0, y2: 50, color: "#f3f1ec", width: 2, dash: "solid" as const },
-                          { id: uid("ln"), type: "line" as const, x1: 0, y1: 50, x2: 40, y2: 50, color: "#f3f1ec", width: 2, dash: "solid" as const },
-                          { id: uid("ln"), type: "line" as const, x1: 40, y1: 50, x2: 40, y2: 49, color: "#f3f1ec", width: 2, dash: "solid" as const },
-                          { id: uid("ln"), type: "line" as const, x1: 40, y1: 49, x2: 20, y2: 49, color: "#f3f1ec", width: 2, dash: "solid" as const },
-                          { id: uid("ln"), type: "line" as const, x1: 20, y1: 49, x2: 20, y2: 49 - rise, color: "#f3f1ec", width: 2, dash: "solid" as const },
-                          { id: uid("ln"), type: "line" as const, x1: 20, y1: 49 - rise, x2: 70, y2: 49 - rise, color: "#f3f1ec", width: 2, dash: "solid" as const },
-                          { id: uid("dm"), type: "dim" as const, x1: 0, y1: 0, x2: 0, y2: 50, offset: 15, color: "#c46a45", width: 1, label: "50" },
-                          { id: uid("dm"), type: "dim" as const, x1: 0, y1: 50, x2: 40, y2: 50, offset: 15, color: "#c46a45", width: 1, label: "40" },
-                          { id: uid("dm"), type: "dim" as const, x1: 20, y1: 49, x2: 40, y2: 49, offset: -15, color: "#c46a45", width: 1, label: "20" },
-                          { id: uid("dm"), type: "dim" as const, x1: 20, y1: 49 - rise, x2: 20, y2: 49, offset: -50, color: "#c46a45", width: 1, label: String(next) },
-                          { id: uid("dm"), type: "dim" as const, x1: 20, y1: 49 - rise, x2: 70, y2: 49 - rise, offset: -15, color: "#c46a45", width: 1, label: "50" },
-                        ];
-                        drawings = drawings.map((d) => d.id === drawingId ? { ...d, updatedAt: Date.now(), objects } : d);
-                      }
-                      return { ...p, drawings, openings: p.openings.map((item) => item.id === o.id ? { ...item, facade: { left: Math.max(1, patch.facade?.left ?? 18), right: Math.max(1, patch.facade?.right ?? 18), top: Math.max(1, patch.facade?.top ?? 18), bottom: Math.max(0, patch.facade?.bottom ?? 18) } } : item) };
-                    });
-                  }} onRemove={() => removeOpening(o.id)} />
+                  <OpeningEditor opening={o} fallback={fallback} onChange={(patch) => updateOpening(o.id, patch)} onRemove={() => removeOpening(o.id)} />
                 </div>
               </li>
             );
