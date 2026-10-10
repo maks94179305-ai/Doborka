@@ -1,14 +1,12 @@
 #!/usr/bin/env python3
-"""Cards show DrawingShot (bitmap snapshot look); thickness changes still update numbers/lines."""
+"""Fix: thickness updates all slope previews; cards stay DrawingShot snapshots."""
 from pathlib import Path
 
 path = Path("src/components/openings-view.tsx")
 src = path.read_text()
 
-# 1) Preview in SlopeColumn -> always DrawingShot (snapshot look, data-driven)
-old_preview = '''        {saved && saved.objects.length ? <SavedScheme drawing={thickness === 0 ? { ...saved, objects: saved.objects.filter((o) => !(o.type === "dim" && o.offset === -50)) } : saved} /> : empty || (saved && !saved.objects.length) ? <SlopeProfile thickness={thickness} label={title} blank /> : <SlopeProfile thickness={thickness} label={title} />}'''
-
-new_preview = '''        {(() => {
+# --- 1) Preview always reflects current thickness (generated or thickness-synced saved) ---
+old_preview = '''        {(() => {
           if (empty || (saved && !saved.objects.length)) return <DrawingShot drawing={blank} />;
           if (saved && saved.objects.length) {
             const shot = thickness === 0 ? { ...saved, objects: saved.objects.filter((o) => !(o.type === "dim" && o.offset === -50)) } : saved;
@@ -17,73 +15,84 @@ new_preview = '''        {(() => {
           return <DrawingShot drawing={generated} />;
         })()}'''
 
+new_preview = '''        {(() => {
+          if (empty || (saved && !saved.objects.length && thickness === 0)) return <DrawingShot drawing={blank} />;
+          // Always drive card geometry from current thickness so left/right/top/bottom all update
+          if (thickness === 0) {
+            if (saved && saved.objects.length) {
+              return <DrawingShot drawing={{ ...saved, objects: saved.objects.filter((o) => !(o.type === "dim" && o.offset === -50)) }} />;
+            }
+            return <DrawingShot drawing={blank} />;
+          }
+          return <DrawingShot drawing={generated} />;
+        })()}'''
+
 if old_preview in src:
     src = src.replace(old_preview, new_preview)
-    print("preview -> DrawingShot (snapshot style, data-driven)")
-elif "return <DrawingShot drawing={generated}" in src:
-    print("preview already DrawingShot")
+    print("preview: always generated from thickness")
+elif "Always drive card geometry from current thickness" in src:
+    print("preview already thickness-driven")
 else:
-    # try after previous snapshot block
-    old2 = '''        {(() => {
-          const photoId = saved?.previewPhotoId || project?.schemes?.[key]?.[0];
-          if (photoId) return <SchemePreview photoId={photoId} label={title} />;
-          if (saved && saved.objects.length) {
-            const shot = thickness === 0 ? { ...saved, objects: saved.objects.filter((o) => !(o.type === "dim" && o.offset === -50)) } : saved;
-            return <DrawingShot drawing={shot} />;
-          }
-          if (empty || (saved && !saved.objects.length)) return <SlopeProfile thickness={thickness} label={title} blank />;
-          return <SlopeProfile thickness={thickness} label={title} />;
-        })()}'''
-    if old2 in src:
-        src = src.replace(old2, new_preview)
-        print("preview -> DrawingShot from photo/snapshot block")
-    else:
-        raise SystemExit("preview pattern not found")
+    print("WARN: preview pattern not found")
 
-# 2) Stabilize DrawingShot so it re-renders when objects/thickness change, not on every parent render identity
-old_shot = '''function DrawingShot({ drawing }: { drawing: Drawing }) {
-  const [url, setUrl] = useState("");
-  useEffect(() => {
-    let alive = true;
-    void renderDrawingToBlob(drawing, { w: 640, h: 420 }).then((blob) => {
-      if (!blob || !alive) return;
-      const next = URL.createObjectURL(blob);
-      setUrl((prev) => { if (prev) URL.revokeObjectURL(prev); return next; });
-    });
-    return () => { alive = false; setUrl((prev) => { if (prev) URL.revokeObjectURL(prev); return ""; }); };
-  }, [drawing]);
-  return <figure className="mx-auto w-full rounded-xl border border-border bg-[#141816] p-1.5">{url ? <img src={url} alt="" className="mx-auto block h-auto w-full object-contain" /> : <svg viewBox="8 17 126 85" className="mx-auto mt-1 block h-auto w-full" />}</figure>;
-}'''
+# --- 2) Expand facade thickness update keys for left/right/top (not only bottom) ---
+old_loop = '''                    patchProject((p) => {
+                      let drawings = p.drawings;
+                      for (const side of sides) {
+                        const prev = o.facade?.[side] ?? 18;
+                        const next = side === "bottom" ? Math.max(0, patch.facade?.[side] ?? prev) : Math.max(1, patch.facade?.[side] ?? prev);
+                        const key = side === "bottom" ? `slope:bottom:${o.id}` : `slope:${o.id}:${side}`;
+                        const drawingId = p.schemeDrawings?.[key];
+                        if (!drawingId || prev === next || next === 0) continue;
+                        const rise = next;'''
 
-new_shot = '''function DrawingShot({ drawing }: { drawing: Drawing }) {
-  const [url, setUrl] = useState("");
-  const sig = useMemo(() => JSON.stringify(drawing.objects) + "|" + String(drawing.updatedAt ?? ""), [drawing.objects, drawing.updatedAt]);
-  useEffect(() => {
-    let alive = true;
-    void renderDrawingToBlob(drawing, { w: 640, h: 420 }).then((blob) => {
-      if (!blob || !alive) return;
-      const next = URL.createObjectURL(blob);
-      setUrl((prev) => { if (prev) URL.revokeObjectURL(prev); return next; });
-    });
-    return () => { alive = false; setUrl((prev) => { if (prev) URL.revokeObjectURL(prev); return ""; }); };
-  }, [sig, drawing]);
-  return <figure className="mx-auto w-full rounded-xl border border-border bg-[#141816] p-1.5">{url ? <img src={url} alt="" className="mx-auto block h-auto max-h-40 w-full object-contain" /> : <svg viewBox="8 17 126 85" className="mx-auto mt-1 block h-auto w-full" />}</figure>;
-}'''
+new_loop = '''                    patchProject((p) => {
+                      let drawings = p.drawings;
+                      let schemeDrawings = { ...(p.schemeDrawings ?? {}) };
+                      for (const side of sides) {
+                        const prev = o.facade?.[side] ?? 18;
+                        const next = side === "bottom" ? Math.max(0, patch.facade?.[side] ?? prev) : Math.max(1, patch.facade?.[side] ?? prev);
+                        if (prev === next) continue;
+                        const keys = side === "bottom"
+                          ? [`slope:bottom:${o.id}`, `slope:bottom:${prev}`, `slope:bottom:${next}`]
+                          : [`slope:${o.id}:${side}`, `slope:${prev}`, `slope:${next}`];
+                        const rise = Math.max(1, next);'''
 
-if old_shot in src:
-    src = src.replace(old_shot, new_shot)
-    print("DrawingShot stabilized + max-h")
-elif "const sig = useMemo" in src and "DrawingShot" in src:
-    print("DrawingShot already stabilized")
+if old_loop in src:
+    src = src.replace(old_loop, new_loop)
+    print("update loop expanded keys")
+elif "let schemeDrawings = { ...(p.schemeDrawings ?? {}) }" in src:
+    print("update loop already expanded")
 else:
-    print("DrawingShot pattern not exact — checking useMemo import")
+    print("WARN: update loop start not found")
 
-# Ensure useMemo is imported (already used in file for OpeningsView)
-if "useMemo" not in src.split("from \"react\"")[0]:
-    src = src.replace(
-        'import { useEffect, useMemo, useState } from "react";',
-        'import { useEffect, useMemo, useState } from "react";',
-    )
+# Replace the drawingId single-key update with multi-key
+old_apply = '''                        drawings = drawings.map((d) => d.id === drawingId ? { ...d, updatedAt: Date.now(), objects } : d);
+                      }
+                      return { ...p, drawings, openings: p.openings.map((item) => item.id === o.id ? { ...item, facade: { left: Math.max(1, patch.facade?.left ?? 18), right: Math.max(1, patch.facade?.right ?? 18), top: Math.max(1, patch.facade?.top ?? 18), bottom: Math.max(0, patch.facade?.bottom ?? 18) } } : item) };
+                    });'''
+
+new_apply = '''                        for (const key of keys) {
+                          const drawingId = schemeDrawings[key];
+                          if (drawingId) {
+                            drawings = drawings.map((d) => d.id === drawingId ? { ...d, updatedAt: Date.now(), objects } : d);
+                          }
+                        }
+                        // Keep per-opening key linked for next edits
+                        const primary = side === "bottom" ? `slope:bottom:${o.id}` : `slope:${o.id}:${side}`;
+                        const anyId = keys.map((k) => schemeDrawings[k]).find(Boolean);
+                        if (anyId) schemeDrawings[primary] = anyId;
+                      }
+                      return { ...p, drawings, schemeDrawings, openings: p.openings.map((item) => item.id === o.id ? { ...item, facade: { left: Math.max(1, patch.facade?.left ?? 18), right: Math.max(1, patch.facade?.right ?? 18), top: Math.max(1, patch.facade?.top ?? 18), bottom: Math.max(0, patch.facade?.bottom ?? 18) } } : item) };
+                    });'''
+
+if old_apply in src:
+    src = src.replace(old_apply, new_apply)
+    print("apply multi-key update")
+elif "for (const key of keys)" in src:
+    print("apply already multi-key")
+else:
+    print("WARN: apply block not found")
 
 path.write_text(src)
-print("ok")
+print("openings ok")
