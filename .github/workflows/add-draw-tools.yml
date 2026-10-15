@@ -8,12 +8,22 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Apply freehand, arrow, finger menu
+        with:
+          fetch-depth: 0
+      - name: Apply drawing tool patches
         run: |
           set -e
           git config user.name "fix"
           git config user.email "fix@users.noreply.github.com"
-          base64 -d scripts/draw-tools.b64 | tar xzf -
+          # ensure base files exist
+          if [ "$(wc -c < src/lib/draw-render.ts)" -lt 100 ]; then
+            git show e6fa7bbe378b27ec50034ac1ee5f9b33c3bd13a0:src/lib/draw-render.ts > src/lib/draw-render.ts
+          fi
+          if ! grep -q 'type: "path"' src/lib/types.ts; then
+            git show a5096c59a299e3e4a8736a4ff1953463c8b3d6c3:src/lib/types.ts > src/lib/types.ts || true
+          fi
+          patch -p0 < scripts/patches/draw-render.path.patch
+          patch -p0 < scripts/patches/drawing-editor.path.patch
           git add src/lib/types.ts src/lib/draw-render.ts src/components/drawing-editor.tsx
           git status
           git commit -m "Drawing editor: freehand curve, arrow with text, tool menu under finger" || echo nochange
