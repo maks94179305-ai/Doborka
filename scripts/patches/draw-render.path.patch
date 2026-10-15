@@ -1,1 +1,23 @@
-PLACEHOLDER
+--- src/lib/draw-render.ts
++++ src/lib/draw-render.ts
+@@ -73,14 +73,20 @@ export function quantizeOffset(offset: number, step = 0.25): number { return Mat
+ export function verticesOf(obj: DrawObject): Pt[] {
+-  if (obj.type === "line" || obj.type === "dim") return [{ x: obj.x1, y: obj.y1 }, { x: obj.x2, y: obj.y2 }];
++  if (obj.type === "line" || obj.type === "dim" || obj.type === "arrow") return [{ x: obj.x1, y: obj.y1 }, { x: obj.x2, y: obj.y2 }];
+   if (obj.type === "rect") return [{ x: obj.x, y: obj.y }, { x: obj.x + obj.w, y: obj.y }, { x: obj.x + obj.w, y: obj.y + obj.h }, { x: obj.x, y: obj.y + obj.h }];
+-  return [{ x: obj.x, y: obj.y }];
++  if (obj.type === "path") return obj.points.slice();
++  if (obj.type === "text") return [{ x: obj.x, y: obj.y }];
++  return [];
+ }
+ export function segmentsOf(obj: DrawObject) {
+-  if (obj.type === "line") return [{ a: { x: obj.x1, y: obj.y1 }, b: { x: obj.x2, y: obj.y2 } }];
++  if (obj.type === "line" || obj.type === "arrow" || obj.type === "dim") return [{ a: { x: obj.x1, y: obj.y1 }, b: { x: obj.x2, y: obj.y2 } }];
++  if (obj.type === "path" && obj.points.length > 1) {
++    const segs = [];
++    for (let i = 1; i < obj.points.length; i++) segs.push({ a: obj.points[i - 1], b: obj.points[i] });
++    return segs;
++  }
+   if (obj.type === "rect") { const p = verticesOf(obj); return [{ a: p[0], b: p[1] }, { a: p[1], b: p[2] }, { a: p[2], b: p[3] }, { a: p[3], b: p[0] }]; }
+   return [];
+ }
