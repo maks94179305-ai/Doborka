@@ -15,6 +15,9 @@ export function DrawingEditor({ drawing, onChange, compact = false }: { drawing:
   const [selected, setSelected] = useState<string[]>([]);
   const [view, setView] = useState(() => drawing.view ?? { x: 72, y: 72, scale: SCALE_DEFAULT });
   const [draft, setDraft] = useState<{ start: Pt; end: Pt; offset?: number; locked?: boolean } | null>(null);
+  const [pathPoints, setPathPoints] = useState<Pt[] | null>(null);
+  const pathPointsRef = useRef<Pt[] | null>(null);
+  pathPointsRef.current = pathPoints;
   const [length, setLength] = useState("");
   const [labelBox, setLabelBox] = useState<{ id: string; x: number; y: number; value: string } | null>(null);
   const [pad, setPad] = useState<null | "length" | "label">(null);
@@ -135,6 +138,8 @@ export function DrawingEditor({ drawing, onChange, compact = false }: { drawing:
       /* sheet is moving */
     } else if (preview && toolRef.current === "dim") {
       paintDim(ctx, { id: "tmp", type: "dim", x1: preview.start.x, y1: preview.start.y, x2: preview.end.x, y2: preview.end.y, offset: preview.offset ?? 40, color: activeColor("dim"), width: 2, dash: "dash" }, v.scale);
+    } else if (preview && toolRef.current === "arrow") {
+      paintObject(ctx, { id: "tmp", type: "arrow", x1: preview.start.x, y1: preview.start.y, x2: preview.end.x, y2: preview.end.y, color: activeColor("line"), width: 3, dash: "solid" }, v.scale, false);
     } else if (preview) {
       ctx.strokeStyle = activeColor("line");
       ctx.lineWidth = 2.8 / v.scale;
@@ -144,10 +149,14 @@ export function DrawingEditor({ drawing, onChange, compact = false }: { drawing:
       ctx.lineTo(preview.end.x, preview.end.y);
       ctx.stroke();
     }
+    const pd = pathPointsRef.current;
+    if (pd && pd.length > 1) {
+      paintObject(ctx, { id: "tmp", type: "path", points: pd, color: activeColor("line"), width: 3 }, v.scale, false);
+    }
     ctx.restore();
   }, [selected]);
 
-  useEffect(() => { redraw(); }, [redraw, objects, view, draft, color]);
+  useEffect(() => { redraw(); }, [redraw, objects, view, draft, pathPoints, color]);
   const fitted = useRef("");
   useEffect(() => {
     const el = wrapRef.current;
@@ -302,6 +311,12 @@ export function DrawingEditor({ drawing, onChange, compact = false }: { drawing:
       setDraft(picked);
       return;
     }
+    if (toolRef.current === "path") {
+      pathPointsRef.current = [world];
+      setPathPoints([world]);
+      setDraft(null);
+      return;
+    }
     const start = snapToDrawing(world, objectsRef.current, undefined, tol);
     setDraft({ start, end: start });
   }
@@ -336,6 +351,18 @@ export function DrawingEditor({ drawing, onChange, compact = false }: { drawing:
       }
     }
     if (downRef.current && Math.hypot(e.clientX - downRef.current.x, e.clientY - downRef.current.y) > 8) clearHold();
+    if (toolRef.current === "path" && pathPointsRef.current) {
+      const world = toWorld(local(e).x, local(e).y);
+      const pts = pathPointsRef.current;
+      const last = pts[pts.length - 1];
+      const minDist = 2.5 / viewRef.current.scale;
+      if (Math.hypot(world.x - last.x, world.y - last.y) >= minDist) {
+        const next = [...pts, world];
+        pathPointsRef.current = next;
+        setPathPoints(next);
+      }
+      return;
+    }
     if (endDrag.current) {
       const world = toWorld(local(e).x, local(e).y);
       const drag = endDrag.current;
@@ -452,13 +479,6 @@ export function DrawingEditor({ drawing, onChange, compact = false }: { drawing:
       const id = uid("dr");
       const label = window.prompt("Текст у начала стрелки (можно пусто)") || undefined;
       commit([...objectsRef.current, { id, type: "arrow" as const, x1: d.start.x, y1: d.start.y, x2: d.end.x, y2: d.end.y, color: activeColor("line"), width: 3, dash: "solid" as const, label }]);
-      setSelected([id]);
-      return;
-    }
-    if (toolRef.current === "path") {
-      const id = uid("dr");
-      const pts = [d.start, { x: (d.start.x + d.end.x) / 2, y: (d.start.y + d.end.y) / 2 }, d.end];
-      commit([...objectsRef.current, { id, type: "path" as const, points: pts, color: activeColor("line"), width: 3 }]);
       setSelected([id]);
       return;
     }
@@ -599,13 +619,13 @@ export function DrawingEditor({ drawing, onChange, compact = false }: { drawing:
         </div>
       </div>
       <div ref={wrapRef} className="relative min-h-[22rem] flex-1 overflow-hidden rounded-xl border border-border">
-        <canvas ref={canvasRef} className="absolute inset-0 touch-none" style={{ touchAction: "none" }} onPointerDown={onDown} onPointerMove={onMove} onPointerUp={onUp} onPointerCancel={(e) => { clearHold(); pointers.current.delete(e.pointerId); pinchRef.current = null; panRef.current = null; offsetDrag.current = null; endDrag.current = null; downRef.current = null; setDraft(null); }} onContextMenu={(e) => e.preventDefault()} />
+        <canvas ref={canvasRef} className="absolute inset-0 touch-none" style={{ touchAction: "none" }} onPointerDown={onDown} onPointerMove={onMove} onPointerUp={onUp} onPointerCancel={(e) => { clearHold(); pointers.current.delete(e.pointerId); pinchRef.current = null; panRef.current = null; offsetDrag.current = null; endDrag.current = null; downRef.current = null; setDraft(null); pathPointsRef.current = null; setPathPoints(null); }} onContextMenu={(e) => e.preventDefault()} />
         {labelBox ? (
           <div className="absolute z-20 h-9 w-20 -translate-x-1/2 -translate-y-1/2 rounded-md border border-primary bg-background px-2 text-center text-sm leading-9 text-foreground shadow-float" style={{ left: labelBox.x, top: labelBox.y }}>{labelBox.value || "0"}</div>
         ) : null}
       </div>
       </div>
-      <div className="flex w-full shrink-0 flex-col gap-1 landscape:w-40">
+      <div className="flex w-full shrink-0 flex-col gap-1 rounded-2xl border border-border/80 bg-card/80 p-2 landscape:w-40">
       <div className="flex h-9 shrink-0 items-center justify-center gap-1">
         {(labelBox ? labelBox.value : length).split("").map((digit, i) => (
           <span key={`${digit}-${i}`} className="grid h-9 min-w-9 place-items-center rounded-md border border-primary bg-primary text-sm font-medium text-primary-foreground">{digit}</span>

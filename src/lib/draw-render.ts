@@ -40,7 +40,8 @@ export function objectsBounds(objects: DrawObject[]) {
   let x1 = Infinity, y1 = Infinity, x2 = -Infinity, y2 = -Infinity, any = false;
   const add = (x: number, y: number) => { any = true; x1 = Math.min(x1, x); y1 = Math.min(y1, y); x2 = Math.max(x2, x); y2 = Math.max(y2, y); };
   for (const o of objects) {
-    if (o.type === "line" || o.type === "dim") { add(o.x1, o.y1); add(o.x2, o.y2); if (o.type === "dim") { const g = dimGeom(o); add(g.ax, g.ay); add(g.bx, g.by); const label = dimLabelWorld(o, 1); add(label.x, label.y); } }
+    if (o.type === "line" || o.type === "dim" || o.type === "arrow") { add(o.x1, o.y1); add(o.x2, o.y2); if (o.type === "dim") { const g = dimGeom(o); add(g.ax, g.ay); add(g.bx, g.by); const label = dimLabelWorld(o, 1); add(label.x, label.y); } }
+    else if (o.type === "path") { for (const pt of o.points) add(pt.x, pt.y); }
     else if (o.type === "rect") { add(o.x, o.y); add(o.x + o.w, o.y + o.h); }
     else if (o.type === "text") add(o.x, o.y);
   }
@@ -216,7 +217,9 @@ export function paintDim(ctx: CanvasRenderingContext2D, obj: Extract<DrawObject,
   ctx.save(); ctx.lineCap = "round"; ctx.lineJoin = "round"; strokeDash(ctx, "dash", scale);
   ctx.strokeStyle = strokeColor(obj.color); ctx.fillStyle = strokeColor(obj.color); ctx.lineWidth = (hi ? Math.max((obj.width ?? 1) + 0.6, 1.6) : (obj.width ?? 1)) / scale;
   if (hi) { ctx.shadowColor = obj.color; ctx.shadowBlur = 8; }
+  else { ctx.globalAlpha = 0.5; }
   strokeDimMarks(ctx, obj, g, tick); ctx.setLineDash([]);
+  ctx.globalAlpha = 1;
   if (hideLabel) { ctx.restore(); return; }
   const pose = dimLabelWorld(obj, scale);
   ctx.translate(pose.x, pose.y); ctx.rotate(pose.angle); ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.fillStyle = labelColor();
@@ -316,6 +319,8 @@ export function paintObject(ctx: CanvasRenderingContext2D, obj: DrawObject, scal
         ctx.stroke();
       }
     } else if (obj.type === "arrow") {
+      ctx.save();
+      ctx.globalAlpha = hi ? 0.75 : 0.48;
       strokeDash(ctx, obj.dash, scale);
       const dx = obj.x2 - obj.x1, dy = obj.y2 - obj.y1;
       const len = Math.hypot(dx, dy) || 1;
@@ -329,12 +334,22 @@ export function paintObject(ctx: CanvasRenderingContext2D, obj: DrawObject, scal
       ctx.closePath();
       ctx.fillStyle = strokeColor(obj.color);
       ctx.fill();
+      ctx.restore();
       if (obj.label && !hideLabel) {
-        ctx.fillStyle = strokeColor(obj.color);
-        ctx.font = `${12 / scale}px Manrope, sans-serif`;
+        const lx = obj.x1 + 4 / scale;
+        const ly = obj.y1 - 4 / scale;
+        ctx.font = `600 ${13 / scale}px Manrope, sans-serif`;
         ctx.textAlign = "left";
         ctx.textBaseline = "bottom";
-        ctx.fillText(obj.label, obj.x1 + 4 / scale, obj.y1 - 4 / scale);
+        const metrics = ctx.measureText(obj.label);
+        const pad = 3 / scale;
+        const th = 14 / scale;
+        ctx.fillStyle = sheetColor();
+        ctx.globalAlpha = 0.88;
+        ctx.fillRect(lx - pad, ly - th, metrics.width + pad * 2, th + pad);
+        ctx.globalAlpha = 1;
+        ctx.fillStyle = labelColor();
+        ctx.fillText(obj.label, lx, ly);
       }
     }
   } else if (obj.type === "dim") paintDim(ctx, obj, scale, hi, hideLabel);
