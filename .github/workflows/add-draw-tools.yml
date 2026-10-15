@@ -13,12 +13,17 @@ jobs:
       - name: Apply draw tools
         run: |
           set -e
-          git config user.name "fix"
-          git config user.email "fix@users.noreply.github.com"
+          git config user.name "maks94179305-ai"
+          git config user.email "maks94179305@gmail.com"
           git show e6fa7bbe378b27ec50034ac1ee5f9b33c3bd13a0:src/lib/types.ts > src/lib/types.ts
           git show e6fa7bbe378b27ec50034ac1ee5f9b33c3bd13a0:src/lib/draw-render.ts > src/lib/draw-render.ts
           git show e6fa7bbe378b27ec50034ac1ee5f9b33c3bd13a0:src/components/drawing-editor.tsx > src/components/drawing-editor.tsx
           python3 scripts/apply-draw-tools.py
-          git add src/lib/types.ts src/lib/draw-render.ts src/components/drawing-editor.tsx
-          git commit -m "Drawing editor: freehand, arrow+text, finger tool menu" || echo nochange
+          mkdir -p scripts/patches
+          if [ -f scripts/patches/drawing-editor.path.patch ]; then
+            patch -p0 < scripts/patches/drawing-editor.path.patch
+          fi
+          git add src/lib/types.ts src/lib/draw-render.ts src/components/drawing-editor.tsx src/components/extras-view.tsx
+          git status
+          git commit -m "Draw tools: freehand curve, arrow with text, finger menu; extras overlay" || echo nochange
           git push
