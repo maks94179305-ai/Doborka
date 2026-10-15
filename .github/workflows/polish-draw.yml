@@ -1,0 +1,12 @@
+name: polish-draw
+"on":
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  fix:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Apply polish
+        run: python3 scripts/apply-polish-draw.py && git config user.name maks94179305-ai && git config user.email maks94179305@gmail.com && git add src/lib/draw-render.ts src/components/drawing-editor.tsx && git commit -m "Freehand path, translucent arrow/dim, rounded tool strip" || echo nochange && git push
