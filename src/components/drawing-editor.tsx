@@ -589,12 +589,11 @@ export function DrawingEditor({ drawing, onChange, compact = false }: { drawing:
   return (
     <div className={cn("flex min-h-0 flex-1 flex-col gap-2 landscape:flex-row", compact && "min-h-[24rem]")}>
       <div className="flex min-h-0 min-w-0 flex-1 flex-col gap-2">
-      <div className="flex shrink-0 flex-wrap items-center gap-2">
-        <div className="flex rounded-xl border border-border/80 bg-card/80 p-1">
+      <div className="flex min-w-0 shrink-0 flex-wrap items-center gap-1.5">
+        <div className="flex min-w-0 max-w-full overflow-hidden rounded-2xl border border-border/80 bg-card/80 p-0.5">
           {tools.map((t) => (
-            <button key={t.id} type="button" aria-label={t.label} aria-pressed={tool === t.id} onClick={() => { offsetDrag.current = null; endDrag.current = null; setDraft(null); manualRef.current = null; if (t.id === "angle" && placeAngle()) return; setTool(t.id); setColor(t.id === "dim" ? dimColor : lineColor); }} className={cn("flex h-10 items-center gap-1.5 rounded-lg px-2 text-xs font-medium", tool === t.id ? "bg-primary text-primary-foreground" : "text-muted-foreground")}>
+            <button key={t.id} type="button" title={t.label} aria-label={t.label} aria-pressed={tool === t.id} onClick={() => { offsetDrag.current = null; endDrag.current = null; setDraft(null); manualRef.current = null; if (t.id === "angle" && placeAngle()) return; setTool(t.id); setColor(t.id === "dim" ? dimColor : lineColor); }} className={cn("flex h-9 w-9 shrink-0 items-center justify-center rounded-xl", tool === t.id ? "bg-primary text-primary-foreground" : "text-muted-foreground")}>
               <t.icon className="size-4" />
-              <span>{t.label}</span>
             </button>
           ))}
         </div>
