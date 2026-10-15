@@ -1,0 +1,19 @@
+name: fix-tools-bar
+"on":
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  fix:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Apply tools bar fix
+        run: |
+          set -e
+          git config user.name "maks94179305-ai"
+          git config user.email "maks94179305@gmail.com"
+          python3 scripts/apply-tools-bar.py
+          git add src/components/drawing-editor.tsx
+          git commit -m "Tools bar: compact icons, fully rounded ends" || echo nochange
+          git push
