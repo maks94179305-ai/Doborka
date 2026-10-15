@@ -1,8 +1,11 @@
 name: add-draw-tools
+
 on:
   workflow_dispatch:
+
 permissions:
   contents: write
+
 jobs:
   fix:
     runs-on: ubuntu-latest
