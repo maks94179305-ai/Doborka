@@ -1,1 +1,20 @@
-placeholder
+name: add-draw-tools
+on:
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  fix:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Apply freehand, arrow, finger menu
+        run: |
+          set -e
+          git config user.name "fix"
+          git config user.email "fix@users.noreply.github.com"
+          base64 -d scripts/draw-tools.b64 | tar xzf -
+          git add src/lib/types.ts src/lib/draw-render.ts src/components/drawing-editor.tsx
+          git status
+          git commit -m "Drawing editor: freehand curve, arrow with text, tool menu under finger" || echo nochange
+          git push
