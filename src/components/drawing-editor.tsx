@@ -1,11 +1,11 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { ClipboardPaste, Copy, DraftingCompass, Maximize2, MousePointer2, PenLine, Redo2, Ruler, Trash2, Undo2 } from "lucide-react";
+import { ArrowUpRight, ClipboardPaste, Copy, DraftingCompass, Maximize2, MousePointer2, PenLine, Pencil, Redo2, Ruler, Trash2, Undo2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { dimInputValue, dimLabelWorld, dist, fitView, hitDimPart, hitScore, keepMinOffset, angleJoint, paintAngle, paintDim, paintObject, parseMm, pickDimStart, resizeFromStart, SCALE_DEFAULT, sheetColor, signedPerp, snapDimEnd, snapToDrawing, strokeDash, type Pt } from "@/lib/draw-render";
 import { DRAW_COLORS, type DrawObject, type Drawing } from "@/lib/types";
 import { cn, uid } from "@/lib/utils";
 
-type Tool = "select" | "line" | "dim" | "angle";
+type Tool = "select" | "line" | "dim" | "angle" | "path" | "arrow";
 
 export function DrawingEditor({ drawing, onChange, compact = false }: { drawing: Drawing; onChange: (d: Drawing) => void; compact?: boolean }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -448,6 +448,20 @@ export function DrawingEditor({ drawing, onChange, compact = false }: { drawing:
       commit([...objectsRef.current, { id: uid("dr"), type: "dim", x1: d.start.x, y1: d.start.y, x2: d.end.x, y2: d.end.y, offset: d.offset ?? 40, color: activeColor("dim"), width: 2, dash: "dash" }]);
       return;
     }
+    if (toolRef.current === "arrow") {
+      const id = uid("dr");
+      const label = window.prompt("Текст у начала стрелки (можно пусто)") || undefined;
+      commit([...objectsRef.current, { id, type: "arrow" as const, x1: d.start.x, y1: d.start.y, x2: d.end.x, y2: d.end.y, color: activeColor("line"), width: 3, dash: "solid" as const, label }]);
+      setSelected([id]);
+      return;
+    }
+    if (toolRef.current === "path") {
+      const id = uid("dr");
+      const pts = [d.start, { x: (d.start.x + d.end.x) / 2, y: (d.start.y + d.end.y) / 2 }, d.end];
+      commit([...objectsRef.current, { id, type: "path" as const, points: pts, color: activeColor("line"), width: 3 }]);
+      setSelected([id]);
+      return;
+    }
     const line = { id: uid("dr"), type: "line" as const, x1: d.start.x, y1: d.start.y, x2: d.end.x, y2: d.end.y, color: activeColor("line"), width: 3, dash: "solid" as const };
     commit([...objectsRef.current, line]);
     setSelected([line.id]);
@@ -535,6 +549,8 @@ export function DrawingEditor({ drawing, onChange, compact = false }: { drawing:
   const tools = useMemo(() => [
     { id: "select" as const, icon: MousePointer2, label: "Выбор" },
     { id: "line" as const, icon: PenLine, label: "Линия" },
+    { id: "path" as const, icon: Pencil, label: "Кривая" },
+    { id: "arrow" as const, icon: ArrowUpRight, label: "Стрелка" },
     { id: "dim" as const, icon: Ruler, label: "Размер" },
     { id: "angle" as const, icon: DraftingCompass, label: "Угол" },
   ], []);
