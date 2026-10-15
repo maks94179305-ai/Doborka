@@ -1,6 +1,6 @@
 name: add-draw-tools
 
-on:
+"on":
   workflow_dispatch:
 
 permissions:
