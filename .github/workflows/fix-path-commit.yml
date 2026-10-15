@@ -1,0 +1,19 @@
+name: fix-path-commit
+"on":
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  fix:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Apply path commit fix
+        run: |
+          set -e
+          git config user.name "maks94179305-ai"
+          git config user.email "maks94179305@gmail.com"
+          python3 scripts/apply-path-commit.py
+          git add src/components/drawing-editor.tsx
+          git commit -m "Fix: freehand curves persist after drawing next one" || echo nochange
+          git push
