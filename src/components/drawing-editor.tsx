@@ -439,6 +439,17 @@ export function DrawingEditor({ drawing, onChange, compact = false }: { drawing:
       offsetDrag.current = null;
       return;
     }
+    if (toolRef.current === "path") {
+      const pts = pathPointsRef.current;
+      pathPointsRef.current = null;
+      setPathPoints(null);
+      if (pts && pts.length > 1) {
+        const id = uid("dr");
+        commit([...objectsRef.current, { id, type: "path" as const, points: pts, color: activeColor("line"), width: 3 }]);
+        setSelected([id]);
+      }
+      return;
+    }
     const d = draftRef.current;
     setDraft(null);
     const moved = e && tap ? Math.hypot(e.clientX - tap.x, e.clientY - tap.y) : d ? dist(d.start, d.end) : 0;
