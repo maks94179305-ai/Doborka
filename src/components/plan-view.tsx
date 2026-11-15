@@ -4,7 +4,7 @@ import { BarScheme } from "@/components/bar-scheme";
 import { SchemeDrawDialog } from "@/components/scheme-draw-dialog";
 import { PhotoStrip } from "@/components/photo-strip";
 import { getPhoto } from "@/lib/photos";
-import { composeWindowShot } from "@/lib/share-image";
+import { composeWindowShot, renderCuttingPlanShot } from "@/lib/share-image";
 import { shareFiles } from "@/lib/share-native";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -63,6 +63,14 @@ export function PlanView() {
           const color = profileColorOf(project, m.key);
           const file = await composeWindowShot(url, { heading: "Схема", title: m.title, color, colorName: profileColorName(color), note: project.profileNotes?.[m.key], bars: m.plan.barCounts, totalBars: m.plan.bars.length });
           sent.push({ file, title: m.title });
+          if (m.plan.bars.length > 0) {
+            const cutBars = m.plan.bars.map((b) => {
+              const global = plan.pieceToBar[b.cuts[0]?.pieceId] ?? b.index;
+              return { ...b, index: global };
+            });
+            const cutFile = await renderCuttingPlanShot(m.title, cutBars);
+            if (cutFile) sent.push({ file: cutFile, title: `Раскрой · ${m.title}` });
+          }
         } finally { URL.revokeObjectURL(url); }
       }
       if (!sent.length) return;

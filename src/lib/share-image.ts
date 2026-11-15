@@ -1,5 +1,5 @@
 import { mm } from "@/lib/format";
-import { profileChipSide, profileFinish, profileId, profileTexture } from "@/lib/types";
+import { profileChipSide, profileFinish, profileId, profileTexture, type StockBar } from "@/lib/types";
 
 export type ShareCardMeta = {
   heading?: string;
@@ -262,6 +262,92 @@ export async function composeWindowShot(imageUrl: string, meta?: ShareCardMeta):
     canvas.toBlob((b) => (b ? resolve(b) : reject(new Error("blob"))), "image/png");
   });
   return new File([blob], `doborka-${Date.now()}-${Math.random().toString(36).slice(2, 7)}.png`, { type: "image/png" });
+}
+
+
+/** Renders visual cutting layout (bars with cuts) for archive / share. */
+export async function renderCuttingPlanShot(title: string, bars: StockBar[]): Promise<File | null> {
+  if (!bars.length) return null;
+  const W = 1080;
+  const pad = 36;
+  const barH = 52;
+  const headerH = 96;
+  let yEst = pad + headerH;
+  for (const bar of bars) {
+    yEst += 32 + barH + 10 + Math.max(1, bar.cuts.length) * 26 + 20;
+  }
+  yEst += pad;
+  const H = Math.min(Math.max(yEst, 400), 12000);
+  const canvas = document.createElement("canvas");
+  canvas.width = W;
+  canvas.height = H;
+  const ctx = canvas.getContext("2d");
+  if (!ctx) return null;
+  ctx.fillStyle = CARD;
+  ctx.fillRect(0, 0, W, H);
+  ctx.textBaseline = "top";
+  ctx.fillStyle = INK;
+  ctx.font = "600 36px Unbounded, Manrope, system-ui, sans-serif";
+  ctx.fillText("Раскрой", pad, pad);
+  ctx.fillStyle = MUTED;
+  ctx.font = "600 24px Manrope, system-ui, sans-serif";
+  ctx.fillText(title, pad, pad + 46);
+  let y = pad + headerH;
+  for (const bar of bars) {
+    if (y > H - 120) break;
+    ctx.fillStyle = INK;
+    ctx.font = "600 22px Manrope, system-ui, sans-serif";
+    ctx.textAlign = "left";
+    ctx.fillText(`Хлыст ${mm(bar.stockLength)} · №${bar.index}`, pad, y);
+    ctx.fillStyle = MUTED;
+    ctx.font = "500 18px Manrope, system-ui, sans-serif";
+    ctx.textAlign = "right";
+    ctx.fillText(bar.usableRemainder ? `остаток ${mm(bar.leftover)}` : `отход ${mm(bar.leftover)}`, W - pad, y + 2);
+    ctx.textAlign = "left";
+    y += 32;
+    const barW = W - pad * 2;
+    ctx.fillStyle = PANEL;
+    roundRect(ctx, pad, y, barW, barH, 10);
+    ctx.fill();
+    let x = pad;
+    for (const c of bar.cuts) {
+      const w = Math.max(1, (c.length / Math.max(1, bar.stockLength)) * barW);
+      ctx.fillStyle = c.color || STEEL;
+      ctx.fillRect(x, y, w, barH);
+      if (w > 48) {
+        ctx.fillStyle = "#fff";
+        ctx.font = "600 13px Manrope, system-ui, sans-serif";
+        ctx.fillText(String(c.label || "").slice(0, 14), x + 6, y + barH / 2 - 8);
+      }
+      x += w;
+    }
+    if (bar.leftover > 0) {
+      const w = (bar.leftover / Math.max(1, bar.stockLength)) * barW;
+      ctx.fillStyle = bar.usableRemainder ? "rgba(155,176,166,0.25)" : "rgba(196,92,74,0.18)";
+      ctx.fillRect(x, y, Math.max(1, w), barH);
+    }
+    y += barH + 12;
+    for (const c of bar.cuts) {
+      ctx.fillStyle = c.color || STEEL;
+      ctx.beginPath();
+      ctx.arc(pad + 7, y + 9, 5, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = INK;
+      ctx.font = "500 18px Manrope, system-ui, sans-serif";
+      ctx.textAlign = "left";
+      ctx.fillText(String(c.label || ""), pad + 22, y);
+      ctx.fillStyle = MUTED;
+      ctx.textAlign = "right";
+      ctx.fillText(mm(c.length), W - pad, y);
+      ctx.textAlign = "left";
+      y += 26;
+    }
+    y += 16;
+  }
+  const blob = await new Promise<Blob>((resolve, reject) => {
+    canvas.toBlob((b) => (b ? resolve(b) : reject(new Error("blob"))), "image/png");
+  });
+  return new File([blob], `doborka-raskroy-${Date.now()}-${Math.random().toString(36).slice(2, 7)}.png`, { type: "image/png" });
 }
 
 export async function shareOrSave(file: File, title: string, text?: string): Promise<"shared" | "saved" | "cancelled"> {
