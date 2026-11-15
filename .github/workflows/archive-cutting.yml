@@ -13,7 +13,44 @@ jobs:
           set -e
           git config user.name "maks94179305-ai"
           git config user.email "maks94179305@gmail.com"
-          python3 scripts/apply-archive-cutting.py
+          python3 << 'PY'
+          from pathlib import Path
+          p = Path("src/lib/share-image.ts")
+          s = p.read_text()
+          if "renderCuttingPlanShot" not in s:
+              s = s.replace(
+                  'import { profileChipSide, profileFinish, profileId, profileTexture } from "@/lib/types";',
+                  'import { profileChipSide, profileFinish, profileId, profileTexture, type StockBar } from "@/lib/types";',
+                  1,
+              )
+              fn = '''\n/** Renders visual cutting layout (bars with cuts) for archive / share. */\nexport async function renderCuttingPlanShot(title: string, bars: StockBar[]): Promise<File | null> {\n  if (!bars.length) return null;\n  const W = 1080;\n  const pad = 36;\n  const barH = 52;\n  const headerH = 96;\n  let yEst = pad + headerH;\n  for (const bar of bars) {\n    yEst += 32 + barH + 10 + Math.max(1, bar.cuts.length) * 26 + 20;\n  }\n  yEst += pad;\n  const H = Math.min(Math.max(yEst, 400), 12000);\n  const canvas = document.createElement("canvas");\n  canvas.width = W;\n  canvas.height = H;\n  const ctx = canvas.getContext("2d");\n  if (!ctx) return null;\n  ctx.fillStyle = CARD;\n  ctx.fillRect(0, 0, W, H);\n  ctx.textBaseline = "top";\n  ctx.fillStyle = INK;\n  ctx.font = "600 36px Unbounded, Manrope, system-ui, sans-serif";\n  ctx.fillText("Раскрой", pad, pad);\n  ctx.fillStyle = MUTED;\n  ctx.font = "600 24px Manrope, system-ui, sans-serif";\n  ctx.fillText(title, pad, pad + 46);\n  let y = pad + headerH;\n  for (const bar of bars) {\n    if (y > H - 120) break;\n    ctx.fillStyle = INK;\n    ctx.font = "600 22px Manrope, system-ui, sans-serif";\n    ctx.textAlign = "left";\n    ctx.fillText(`Хлыст ${mm(bar.stockLength)} · №${bar.index}`, pad, y);\n    ctx.fillStyle = MUTED;\n    ctx.font = "500 18px Manrope, system-ui, sans-serif";\n    ctx.textAlign = "right";\n    ctx.fillText(bar.usableRemainder ? `остаток ${mm(bar.leftover)}` : `отход ${mm(bar.leftover)}`, W - pad, y + 2);\n    ctx.textAlign = "left";\n    y += 32;\n    const barW = W - pad * 2;\n    ctx.fillStyle = PANEL;\n    roundRect(ctx, pad, y, barW, barH, 10);\n    ctx.fill();\n    let x = pad;\n    for (const c of bar.cuts) {\n      const w = Math.max(1, (c.length / Math.max(1, bar.stockLength)) * barW);\n      ctx.fillStyle = c.color || STEEL;\n      ctx.fillRect(x, y, w, barH);\n      if (w > 48) {\n        ctx.fillStyle = "#fff";\n        ctx.font = "600 13px Manrope, system-ui, sans-serif";\n        ctx.fillText(String(c.label || "").slice(0, 14), x + 6, y + barH / 2 - 8);\n      }\n      x += w;\n    }\n    if (bar.leftover > 0) {\n      const w = (bar.leftover / Math.max(1, bar.stockLength)) * barW;\n      ctx.fillStyle = bar.usableRemainder ? "rgba(155,176,166,0.25)" : "rgba(196,92,74,0.18)";\n      ctx.fillRect(x, y, Math.max(1, w), barH);\n    }\n    y += barH + 12;\n    for (const c of bar.cuts) {\n      ctx.fillStyle = c.color || STEEL;\n      ctx.beginPath();\n      ctx.arc(pad + 7, y + 9, 5, 0, Math.PI * 2);\n      ctx.fill();\n      ctx.fillStyle = INK;\n      ctx.font = "500 18px Manrope, system-ui, sans-serif";\n      ctx.textAlign = "left";\n      ctx.fillText(String(c.label || ""), pad + 22, y);\n      ctx.fillStyle = MUTED;\n      ctx.textAlign = "right";\n      ctx.fillText(mm(c.length), W - pad, y);\n      ctx.textAlign = "left";\n      y += 26;\n    }\n    y += 16;\n  }\n  const blob = await new Promise<Blob>((resolve, reject) => {\n    canvas.toBlob((b) => (b ? resolve(b) : reject(new Error("blob"))), "image/png");\n  });\n  return new File([blob], `doborka-raskroy-${Date.now()}-${Math.random().toString(36).slice(2, 7)}.png`, { type: "image/png" });\n}\n\n'''
+              marker = 'export async function shareOrSave(file: File, title: string, text?: string): Promise<"shared" | "saved" | "cancelled"> {'
+              if marker not in s:
+                  raise SystemExit("shareOrSave marker missing")
+              s = s.replace(marker, fn + marker, 1)
+              p.write_text(s)
+              print("share-image ok")
+          else:
+              print("share-image already")
+          p = Path("src/components/plan-view.tsx")
+          s = p.read_text()
+          if "renderCuttingPlanShot" not in s:
+              s = s.replace(
+                  'import { composeWindowShot } from "@/lib/share-image";',
+                  'import { composeWindowShot, renderCuttingPlanShot } from "@/lib/share-image";',
+                  1,
+              )
+              old = '''          const file = await composeWindowShot(url, { heading: "Схема", title: m.title, color, colorName: profileColorName(color), note: project.profileNotes?.[m.key], bars: m.plan.barCounts, totalBars: m.plan.bars.length });\n          sent.push({ file, title: m.title });\n        } finally { URL.revokeObjectURL(url); }'''
+              new = '''          const file = await composeWindowShot(url, { heading: "Схема", title: m.title, color, colorName: profileColorName(color), note: project.profileNotes?.[m.key], bars: m.plan.barCounts, totalBars: m.plan.bars.length });\n          sent.push({ file, title: m.title });\n          if (m.plan.bars.length > 0) {\n            const cutBars = m.plan.bars.map((b) => {\n              const global = plan.pieceToBar[b.cuts[0]?.pieceId] ?? b.index;\n              return { ...b, index: global };\n            });\n            const cutFile = await renderCuttingPlanShot(m.title, cutBars);\n            if (cutFile) sent.push({ file: cutFile, title: `Раскрой · ${m.title}` });\n          }\n        } finally { URL.revokeObjectURL(url); }'''
+              if old not in s:
+                  raise SystemExit("prepareShare pattern missing")
+              s = s.replace(old, new, 1)
+              p.write_text(s)
+              print("plan-view ok")
+          else:
+              print("plan-view already")
+          print("ALL DONE")
+          PY
           git add src/lib/share-image.ts src/components/plan-view.tsx
           git commit -m "Save cutting layout (raskroy) to archive when sharing" || echo nochange
           git push
