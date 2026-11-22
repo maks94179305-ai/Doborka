@@ -8,14 +8,14 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Apply birch, plan archive kinds, archive-view UI
+      - name: Apply white birch and archive folders
         run: |
           set -e
           git config user.name "maks94179305-ai"
           git config user.email "maks94179305@gmail.com"
           python3 scripts/apply-min-history.py
-          cat scripts/arch-b64-0.txt scripts/arch-b64-1.txt scripts/arch-b64-2.txt scripts/arch-b64-3.txt | base64 -d > src/components/archive-view.tsx
-          python3 -c "from pathlib import Path; t=Path('src/components/archive-view.tsx').read_text(); assert 'openSub' in t and 'BarScheme' in t; print('archive-view ok', len(t))"
+          python3 scripts/apply-arch-compact.py
           git add src/lib/types.ts src/lib/store.ts src/components/plan-view.tsx src/components/archive-view.tsx
-          git commit -m "White birch; archive subfolders cutting/schemes with BarScheme" || echo nochange
+          git status
+          git commit -m "White birch palette; archive cutting/scheme folders with BarScheme" || echo nochange
           git push
