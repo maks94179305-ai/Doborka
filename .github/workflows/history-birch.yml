@@ -8,47 +8,14 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Download and run apply script
-        env:
-          SCRIPT_B64: ""
+      - name: Apply birch, plan archive kinds, archive-view UI
         run: |
           set -e
           git config user.name "maks94179305-ai"
           git config user.email "maks94179305@gmail.com"
-          python3 - <<'PY'
-          import urllib.request
-          from pathlib import Path
-          # Inline minimal patches without external script
-          # 1) types birch + ArchiveEntry
-          p = Path('src/lib/types.ts')
-          s = p.read_text()
-          if 'white-birch' not in s:
-              s = s.replace(
-                  '  { id: "vintage", name: "Винтаж", hex: "#6e5a4a", finish: "matte", texture: "/textures/vintage-matte.jpg" },\n];',
-                  '  { id: "vintage", name: "Винтаж", hex: "#6e5a4a", finish: "matte", texture: "/textures/vintage-matte.jpg" },\n  { id: "white-birch", name: "Белая берёза", hex: "#f0e4cc", finish: "matte", texture: "/textures/vintage-matte.jpg" },\n];',
-                  1,
-              )
-          if 'kind?:' not in s or 'cutting' not in s[s.find('ArchiveEntry'):s.find('ArchiveEntry')+300]:
-              old = 'export type ArchiveEntry = { id: string; photoId: string; title: string; colorName?: string; sentAt: number; projectId?: string; projectName?: string };'
-              new = 'export type ArchiveEntry = { id: string; photoId: string; title: string; colorName?: string; sentAt: number; projectId?: string; projectName?: string; kind?: "scheme" | "cutting"; bars?: { id: string; index: number; stockLength: number; cuts: { pieceId: string; length: number; label: string; color: string; openingName?: string }[]; used: number; waste: number; leftover: number; usableRemainder: boolean }[] };'
-              if old in s:
-                  s = s.replace(old, new, 1)
-          p.write_text(s)
-          print('types ok')
-          # 2) store
-          p = Path('src/lib/store.ts')
-          s = p.read_text()
-          old_impl = 'const item: ArchiveEntry = { id: uid("ar"), photoId: entry.photoId, title: entry.title, colorName: entry.colorName, sentAt: Date.now(), projectId: entry.projectId, projectName: entry.projectName };'
-          new_impl = 'const item: ArchiveEntry = { id: uid("ar"), photoId: entry.photoId, title: entry.title, colorName: entry.colorName, sentAt: Date.now(), projectId: entry.projectId, projectName: entry.projectName, kind: (entry as {kind?: "scheme" | "cutting"}).kind, bars: (entry as {bars?: ArchiveEntry["bars"]}).bars };'
-          if old_impl in s:
-              s = s.replace(old_impl, new_impl, 1)
-          # widen signature loosely
-          s = s.replace(
-              'addArchiveEntry: (entry: { photoId: string; title: string; colorName?: string; projectId?: string; projectName?: string }) => ArchiveEntry;',
-              'addArchiveEntry: (entry: { photoId: string; title: string; colorName?: string; projectId?: string; projectName?: string; kind?: "scheme" | "cutting"; bars?: ArchiveEntry["bars"] }) => ArchiveEntry;',
-              1,
-          )
-          p.write_text(s)
-          print('store ok')
-          print('partial done - plan and archive via second step')
-          PY
+          python3 scripts/apply-min-history.py
+          cat scripts/arch-b64-0.txt scripts/arch-b64-1.txt scripts/arch-b64-2.txt scripts/arch-b64-3.txt | base64 -d > src/components/archive-view.tsx
+          python3 -c "from pathlib import Path; t=Path('src/components/archive-view.tsx').read_text(); assert 'openSub' in t and 'BarScheme' in t; print('archive-view ok', len(t))"
+          git add src/lib/types.ts src/lib/store.ts src/components/plan-view.tsx src/components/archive-view.tsx
+          git commit -m "White birch; archive subfolders cutting/schemes with BarScheme" || echo nochange
+          git push
