@@ -71,6 +71,23 @@ function drawColorChip(ctx: CanvasRenderingContext2D, x: number, y: number, size
     ctx.fillStyle = texImg ? "rgba(0,0,0,0.06)" : "rgba(0,0,0,0.18)";
     ctx.fillRect(x, y, size, size);
   }
+  if (profileId(hex) === "white-birch") {
+    ctx.beginPath();
+    ctx.moveTo(x, y + size * 0.62);
+    ctx.quadraticCurveTo(x + size * 0.5, y + size * 0.25, x + size, y + size * 0.68);
+    ctx.lineTo(x + size, y + size * 0.88);
+    ctx.quadraticCurveTo(x + size * 0.5, y + size * 0.45, x, y + size * 0.82);
+    ctx.closePath();
+    ctx.fillStyle = "rgba(155,155,155,0.55)";
+    ctx.fill();
+    ctx.beginPath();
+    ctx.moveTo(x + size * 0.06, y + size * 0.68);
+    ctx.quadraticCurveTo(x + size * 0.5, y + size * 0.35, x + size * 0.94, y + size * 0.72);
+    ctx.strokeStyle = "rgba(122,122,122,0.75)";
+    ctx.lineWidth = Math.max(1, size * 0.04);
+    ctx.lineCap = "round";
+    ctx.stroke();
+  }
   if (gloss) {
     const graphite = profileId(hex) === "graphite-gloss";
     if (graphite) {

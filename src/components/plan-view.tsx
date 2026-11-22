@@ -89,15 +89,19 @@ export function PlanView() {
     try {
       const projectId = uid("hp");
       const files: File[] = [];
+      const shareOnly: File[] = [];
       for (let i = 0; i < pendingSent.length; i += 1) {
         const item = pendingSent[i]!;
         const named = new File([item.file], `doborka-${i + 1}-${projectName.replace(/[^\wа-яА-ЯёЁ-]+/g, "_").slice(0, 24) || "pos"}.png`, { type: "image/png" });
-        files.push(named);
         const photoId = uid("ph");
         await savePhoto(photoId, named);
         addArchiveEntry({ photoId, title: item.title, projectId, projectName, kind: item.kind, bars: item.bars, colorName: item.colorName });
+        if (item.kind === "scheme") {
+          files.push(named);
+          shareOnly.push(named);
+        }
       }
-      await shareFiles(files, projectName);
+      if (shareOnly.length) await shareFiles(shareOnly, projectName);
     } finally {
       setSharing(false);
       setPendingSent(null);
@@ -327,6 +331,12 @@ export function ColorChip({ hex, size = "md" }: { hex: string; size?: "sm" | "md
         <rect width="32" height="32" rx="4" fill={texture ? `url(#${gid}-tex)` : matte ? `url(#${gid}-grain)` : hex} />
         {graphiteGloss ? (<><rect width="32" height="32" rx="4" fill={`url(#${gid}-env)`} style={{ mixBlendMode: "soft-light" }} /><rect width="32" height="32" rx="4" fill={`url(#${gid}-spec)`} style={{ mixBlendMode: "screen" }} /><rect width="32" height="32" rx="4" fill={`url(#${gid}-strip)`} style={{ mixBlendMode: "screen" }} opacity="0.85" /></>) : gloss ? <rect width="32" height="32" rx="4" fill={`url(#${gid}-gloss)`} /> : null}
         {matte ? <rect width="32" height="32" rx="4" fill="#000" opacity={texture ? 0.06 : 0.18} /> : null}
+        {profileId(hex) === "white-birch" ? (
+          <>
+            <path d="M0 20 Q16 8 32 22 L32 28 Q16 14 0 26 Z" fill="#9b9b9b" opacity="0.55" />
+            <path d="M2 22 Q16 11 30 23" fill="none" stroke="#7a7a7a" strokeWidth="1.2" strokeLinecap="round" opacity="0.7" />
+          </>
+        ) : null}
       </svg>
     </span>
   );

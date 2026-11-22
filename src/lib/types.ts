@@ -52,7 +52,7 @@ export const PROFILE_COLORS: { id: string; name: string; hex: string; finish?: "
   { id: "graphite-gloss", name: "Графит глянцевый", hex: "#23282e", finish: "gloss", texture: "/textures/graphite-matte.jpg" },
   { id: "anthracite", name: "Антрацит", hex: "#3d4548" },
   { id: "vintage", name: "Винтаж", hex: "#6e5a4a", finish: "matte", texture: "/textures/vintage-matte.jpg" },
-  { id: "white-birch", name: "Белая берёза", hex: "#f0e4cc", finish: "matte", texture: "/textures/vintage-matte.jpg" },
+  { id: "white-birch", name: "Белая берёза", hex: "#f4f2ec", finish: "gloss" },
 ];
 
 export const DEFAULT_PROFILE_COLOR = PROFILE_COLORS[0].hex;
@@ -84,6 +84,7 @@ export function profileTexture(hex: string): string | undefined {
   return profileOf(hex)?.texture;
 }
 export function profileSwatchBg(hex: string): string {
+  if (profileId(hex) === "white-birch") return "#f4f2ec";
   const texture = profileTexture(hex);
   if (texture) return `center / cover url("${texture}")`;
   if (profileFinish(hex) === "matte") return mixHex(hex, "#6e6c68", 0.3);
