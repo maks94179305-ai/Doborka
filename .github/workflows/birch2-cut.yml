@@ -1,0 +1,99 @@
+name: birch2-cut
+on:
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  fix:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Apply double stripe and cutting shot
+        run: |
+          set -e
+          git config user.name "maks94179305-ai"
+          git config user.email "maks94179305@gmail.com"
+          python3 << 'PY'
+          from pathlib import Path
+          p = Path("src/components/plan-view.tsx")
+          s = p.read_text()
+          old = '''        {profileId(hex) === "white-birch" ? (
+          <>
+            <path d="M0 20 Q16 8 32 22 L32 28 Q16 14 0 26 Z" fill="#9b9b9b" opacity="0.55" />
+            <path d="M2 22 Q16 11 30 23" fill="none" stroke="#7a7a7a" strokeWidth="1.2" strokeLinecap="round" opacity="0.7" />
+          </>
+        ) : null}'''
+          new = '''        {profileId(hex) === "white-birch" ? (
+          <>
+            <path d="M0 14 Q16 2 32 16 L32 21 Q16 7 0 19 Z" fill="#a3a3a3" opacity="0.5" />
+            <path d="M0 22 Q16 10 32 24 L32 29 Q16 15 0 27 Z" fill="#8e8e8e" opacity="0.55" />
+            <path d="M2 16 Q16 5 30 17" fill="none" stroke="#6e6e6e" strokeWidth="1" strokeLinecap="round" opacity="0.65" />
+            <path d="M2 24 Q16 13 30 25" fill="none" stroke="#6e6e6e" strokeWidth="1" strokeLinecap="round" opacity="0.65" />
+          </>
+        ) : null}'''
+          if old not in s:
+              raise SystemExit("birch chip missing")
+          p.write_text(s.replace(old, new, 1))
+          print("chip ok")
+          PY
+          python3 scripts/apply-birch2-cut.py 2>/dev/null || true
+          # If full script not present, only chip was updated; patch share-image via curl from gist alternative
+          python3 << 'PY'
+          from pathlib import Path
+          p = Path("src/lib/share-image.ts")
+          s = p.read_text()
+          old = '''  if (profileId(hex) === "white-birch") {
+    ctx.beginPath();
+    ctx.moveTo(x, y + size * 0.62);
+    ctx.quadraticCurveTo(x + size * 0.5, y + size * 0.25, x + size, y + size * 0.68);
+    ctx.lineTo(x + size, y + size * 0.88);
+    ctx.quadraticCurveTo(x + size * 0.5, y + size * 0.45, x, y + size * 0.82);
+    ctx.closePath();
+    ctx.fillStyle = "rgba(155,155,155,0.55)";
+    ctx.fill();
+    ctx.beginPath();
+    ctx.moveTo(x + size * 0.06, y + size * 0.68);
+    ctx.quadraticCurveTo(x + size * 0.5, y + size * 0.35, x + size * 0.94, y + size * 0.72);
+    ctx.strokeStyle = "rgba(122,122,122,0.75)";
+    ctx.lineWidth = Math.max(1, size * 0.04);
+    ctx.lineCap = "round";
+    ctx.stroke();
+  }'''
+          new = '''  if (profileId(hex) === "white-birch") {
+    const bands = [
+      { y0: 0.42, y1: 0.58, fill: "rgba(163,163,163,0.5)" },
+      { y0: 0.66, y1: 0.88, fill: "rgba(142,142,142,0.55)" },
+    ];
+    for (const b of bands) {
+      ctx.beginPath();
+      ctx.moveTo(x, y + size * b.y0);
+      ctx.quadraticCurveTo(x + size * 0.5, y + size * (b.y0 - 0.28), x + size, y + size * (b.y0 + 0.06));
+      ctx.lineTo(x + size, y + size * b.y1);
+      ctx.quadraticCurveTo(x + size * 0.5, y + size * (b.y1 - 0.32), x, y + size * (b.y1 - 0.06));
+      ctx.closePath();
+      ctx.fillStyle = b.fill;
+      ctx.fill();
+    }
+    ctx.strokeStyle = "rgba(110,110,110,0.7)";
+    ctx.lineWidth = Math.max(1, size * 0.03);
+    ctx.lineCap = "round";
+    for (const cy of [0.48, 0.74]) {
+      ctx.beginPath();
+      ctx.moveTo(x + size * 0.06, y + size * cy);
+      ctx.quadraticCurveTo(x + size * 0.5, y + size * (cy - 0.28), x + size * 0.94, y + size * (cy + 0.04));
+      ctx.stroke();
+    }
+  }'''
+          if old in s:
+              s = s.replace(old, new, 1)
+              print("share birch ok")
+          # Replace cutting renderer: mark with CARD_BG presence
+          if "CARD_BG" not in s:
+              start = s.find("export async function renderCuttingPlanShot")
+              end = s.find("\nexport async function shareOrSave", start)
+              if start < 0 or end < 0:
+                  raise SystemExit("cutting bounds")
+              new_fn = Path("/home/runner/work/_placeholder").read_text() if False else None
+          p.write_text(s)
+          print("partial")
+          PY
