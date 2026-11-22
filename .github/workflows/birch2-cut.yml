@@ -1,5 +1,5 @@
 name: birch2-cut
-on:
+"on":
   workflow_dispatch:
 permissions:
   contents: write
@@ -8,12 +8,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Apply
+      - name: Apply extras birch + cutting scheme
         run: |
           set -e
           git config user.name "maks94179305-ai"
           git config user.email "maks94179305@gmail.com"
-          python3 scripts/apply-birch2-cut.py
-          git add src/components/plan-view.tsx src/lib/share-image.ts
-          git commit -m "Double birch stripe; cutting image like in-app BarScheme" || echo nochange
+          python3 scripts/apply-extras-cut-scheme.py
+          git add src/components/extras-view.tsx src/components/plan-view.tsx src/lib/share-image.ts
+          git commit -m "Extras birch stripes; cutting share shows scheme" || echo nochange
           git push
