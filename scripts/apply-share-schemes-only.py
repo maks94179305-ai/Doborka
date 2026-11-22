@@ -2,21 +2,30 @@
 from pathlib import Path
 p = Path("src/components/plan-view.tsx")
 s = p.read_text()
-old = '''        if (item.kind === "scheme" || item.kind === "cutting") {
+old = '''        // Схемы + скрин раскроя в мессенджер; в истории раскрой — живые карточки
+        if (item.kind === "scheme" || item.kind === "cutting") {
           files.push(named);
           shareOnly.push(named);
         }'''
-new = '''        // В мессенджер — только схемы; раскрой остаётся в истории (BarScheme)
+new = '''        // Из вкладки раскрой в мессенджер — только схемы
         if (item.kind === "scheme") {
           files.push(named);
           shareOnly.push(named);
         }'''
 if old not in s:
-    if 'item.kind === "scheme")' in s and 'item.kind === "cutting"' not in s[s.find("shareOnly"):s.find("shareOnly")+500]:
+    old2 = '''        if (item.kind === "scheme" || item.kind === "cutting") {
+          files.push(named);
+          shareOnly.push(named);
+        }'''
+    if old2 in s:
+        s = s.replace(old2, new, 1)
+        print("share schemes only ok")
+    elif 'item.kind === "scheme")' in s and 'item.kind === "cutting"' not in s[s.find("shareOnly"):s.find("shareOnly")+400]:
         print("already schemes only")
     else:
-        raise SystemExit("share filter pattern missing")
+        raise SystemExit("pattern missing")
 else:
-    p.write_text(s.replace(old, new, 1))
+    s = s.replace(old, new, 1)
     print("share schemes only ok")
+p.write_text(s)
 print("ALL DONE")
