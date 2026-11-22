@@ -4,7 +4,7 @@ import { BarScheme } from "@/components/bar-scheme";
 import { SchemeDrawDialog } from "@/components/scheme-draw-dialog";
 import { PhotoStrip } from "@/components/photo-strip";
 import { getPhoto } from "@/lib/photos";
-import { composeWindowShot, renderCuttingPlanShot } from "@/lib/share-image";
+import { captureElementToFile, composeWindowShot, renderCuttingPlanShot } from "@/lib/share-image";
 import { shareFiles } from "@/lib/share-native";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -68,7 +68,14 @@ export function PlanView() {
               const global = plan.pieceToBar[b.cuts[0]?.pieceId] ?? b.index;
               return { ...b, index: global };
             });
-            const cutFile = await renderCuttingPlanShot(m.title, cutBars, url);
+            let cutFile: File | null = null;
+            const cutEl = document.querySelector(`[data-cut-capture="${CSS.escape(m.key)}"]`) as HTMLElement | null;
+            if (cutEl) {
+              cutEl.scrollIntoView({ block: "nearest", behavior: "instant" as ScrollBehavior });
+              await new Promise<void>((r) => requestAnimationFrame(() => requestAnimationFrame(() => r())));
+              cutFile = await captureElementToFile(cutEl, `doborka-raskroy-${Date.now()}.png`);
+            }
+            if (!cutFile) cutFile = await renderCuttingPlanShot(m.title, cutBars, url);
             if (cutFile) sent.push({ file: cutFile, title: m.title, kind: "cutting", bars: cutBars, colorName: profileColorName(color) });
           }
         } finally { URL.revokeObjectURL(url); }
@@ -146,7 +153,7 @@ export function PlanView() {
                 {i > 0 ? <div className="cut-rule" role="separator" aria-hidden /> : null}
                 <OrderLine material={m} schemeIds={schemeIdsOf(project, m.key)} color={profileColorOf(project, m.key)} note={project.profileNotes?.[m.key] ?? ""} picked={picked.includes(m.key)} onToggle={() => toggle(m.key)} onSchemeChange={(ids) => setSchemeIds(m.key, ids)} onColorChange={(hex) => setProfileColor(m.key, hex)} onNoteChange={(note) => setProfileNote(m.key, note)} />
                 {m.plan.bars.length > 0 ? (
-                  <div className="grid min-w-0 gap-3">
+                  <div className="grid min-w-0 gap-3" data-cut-capture={m.key}>
                     <h2 className="font-display text-base">Раскрой · {m.title}</h2>
                     {m.plan.bars.map((b) => {
                       const global = plan.pieceToBar[b.cuts[0]?.pieceId] ?? b.index;

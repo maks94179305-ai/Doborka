@@ -291,6 +291,29 @@ export async function composeWindowShot(imageUrl: string, meta?: ShareCardMeta):
 
 
 /** Renders visual cutting layout (bars with cuts) for archive / share. */
+
+/** Screenshot a live DOM node (same pixels as on screen). */
+export async function captureElementToFile(el: HTMLElement, name = "doborka-cut.png"): Promise<File | null> {
+  try {
+    const { toPng } = await import("html-to-image");
+    const bg = getComputedStyle(document.documentElement).getPropertyValue("--color-background").trim()
+      || getComputedStyle(document.body).backgroundColor
+      || "#121614";
+    const dataUrl = await toPng(el, {
+      cacheBust: true,
+      pixelRatio: Math.min(3, (window.devicePixelRatio || 1) * 2),
+      backgroundColor: bg.startsWith("#") || bg.startsWith("rgb") ? bg : "#121614",
+      style: { transform: "none" },
+    });
+    const res = await fetch(dataUrl);
+    const blob = await res.blob();
+    if (!blob.size) return null;
+    return new File([blob], name, { type: "image/png" });
+  } catch {
+    return null;
+  }
+}
+
 export async function renderCuttingPlanShot(title: string, bars: StockBar[], schemeUrl?: string | null): Promise<File | null> {
   if (!bars.length) return null;
   const W = 1080;
