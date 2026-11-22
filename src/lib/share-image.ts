@@ -291,7 +291,7 @@ export async function composeWindowShot(imageUrl: string, meta?: ShareCardMeta):
 
 
 /** Renders visual cutting layout (bars with cuts) for archive / share. */
-export async function renderCuttingPlanShot(title: string, bars: StockBar[]): Promise<File | null> {
+export async function renderCuttingPlanShot(title: string, bars: StockBar[], schemeUrl?: string | null): Promise<File | null> {
   if (!bars.length) return null;
   const W = 1080;
   const outerPad = 28;
@@ -307,12 +307,18 @@ export async function renderCuttingPlanShot(title: string, bars: StockBar[]): Pr
   const WASTE = "#c4a574";
   const INNER = "rgba(18,22,20,0.7)";
 
-  let H = outerPad + 72;
+  let schemeImg: HTMLImageElement | null = null;
+  if (schemeUrl) {
+    try { schemeImg = await loadImage(schemeUrl); } catch { schemeImg = null; }
+  }
+  const schemeBoxH = schemeImg ? Math.min(420, Math.round((W - outerPad * 2) * (schemeImg.naturalHeight / Math.max(1, schemeImg.naturalWidth)))) : 0;
+
+  let H = outerPad + 72 + (schemeImg ? 36 + schemeBoxH + 24 : 0);
   for (const bar of bars) {
     const listH = Math.max(1, bar.cuts.length) * 28;
     H += cardPad * 2 + 28 + 12 + barH + 16 + listH + gap;
   }
-  H = Math.min(Math.max(H + outerPad, 400), 14000);
+  H = Math.min(Math.max(H + outerPad, 400), 16000);
 
   const canvas = document.createElement("canvas");
   canvas.width = W;
@@ -330,6 +336,36 @@ export async function renderCuttingPlanShot(title: string, bars: StockBar[]): Pr
   ctx.fillText(title, outerPad, outerPad + 40);
 
   let y = outerPad + 72;
+  if (schemeImg) {
+    const cardX = outerPad;
+    const cardW = W - outerPad * 2;
+    const imgH = schemeBoxH;
+    const cardH = 16 + 22 + 12 + imgH + 16;
+    ctx.fillStyle = CARD_BG;
+    roundRect(ctx, cardX, y, cardW, cardH, 16);
+    ctx.fill();
+    ctx.strokeStyle = BORDER;
+    ctx.lineWidth = 1;
+    roundRect(ctx, cardX, y, cardW, cardH, 16);
+    ctx.stroke();
+    ctx.fillStyle = INK2;
+    ctx.font = "600 18px Manrope, system-ui, sans-serif";
+    ctx.textAlign = "left";
+    ctx.fillText("Схема · чертёж", cardX + cardPad, y + 16);
+    const ix = cardX + cardPad;
+    const iy = y + 16 + 22 + 8;
+    const maxW = cardW - cardPad * 2;
+    const scale = Math.min(maxW / schemeImg.naturalWidth, imgH / schemeImg.naturalHeight);
+    const dw = schemeImg.naturalWidth * scale;
+    const dh = schemeImg.naturalHeight * scale;
+    const dx = ix + (maxW - dw) / 2;
+    const dy = iy + (imgH - dh) / 2;
+    ctx.fillStyle = INNER;
+    roundRect(ctx, ix, iy, maxW, imgH, 10);
+    ctx.fill();
+    ctx.drawImage(schemeImg, dx, dy, dw, dh);
+    y += cardH + gap;
+  }
   const cardX = outerPad;
   const cardW = W - outerPad * 2;
 

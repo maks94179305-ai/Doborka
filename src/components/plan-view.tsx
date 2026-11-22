@@ -68,7 +68,7 @@ export function PlanView() {
               const global = plan.pieceToBar[b.cuts[0]?.pieceId] ?? b.index;
               return { ...b, index: global };
             });
-            const cutFile = await renderCuttingPlanShot(m.title, cutBars);
+            const cutFile = await renderCuttingPlanShot(m.title, cutBars, url);
             if (cutFile) sent.push({ file: cutFile, title: m.title, kind: "cutting", bars: cutBars, colorName: profileColorName(color) });
           }
         } finally { URL.revokeObjectURL(url); }
@@ -96,7 +96,7 @@ export function PlanView() {
         const photoId = uid("ph");
         await savePhoto(photoId, named);
         addArchiveEntry({ photoId, title: item.title, projectId, projectName, kind: item.kind, bars: item.bars, colorName: item.colorName });
-        if (item.kind === "scheme") {
+        if (item.kind === "scheme" || item.kind === "cutting") {
           files.push(named);
           shareOnly.push(named);
         }

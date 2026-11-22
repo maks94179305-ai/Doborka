@@ -125,7 +125,20 @@ function PaletteChip({ hex }: { hex: string }) {
   const texture = profileTexture(hex);
   const gloss = profileFinish(hex) === "gloss";
   const matte = profileFinish(hex) === "matte";
-  return <span className="inline-block h-9 w-10 rounded-md border border-border" style={{ background: texture ? `url(${texture}) center/cover` : hex, boxShadow: `3px 4px 0 ${profileChipSide(hex)}`, filter: gloss ? "saturate(1.1)" : matte ? "contrast(0.92)" : undefined }} />;
+  const birch = profileId(hex) === "white-birch";
+  return (
+    <span className="relative inline-block h-9 w-10 overflow-hidden rounded-md border border-border" style={{ background: birch ? "#f4f2ec" : texture ? `url(${texture}) center/cover` : hex, boxShadow: `3px 4px 0 ${profileChipSide(hex)}`, filter: gloss && !birch ? "saturate(1.1)" : matte && !birch ? "contrast(0.92)" : undefined }} aria-hidden>
+      {birch ? (
+        <svg viewBox="0 0 32 32" className="absolute inset-0 size-full">
+          <rect width="32" height="32" fill="#f4f2ec" />
+          <path d="M0 14 Q16 2 32 16 L32 21 Q16 7 0 19 Z" fill="#a3a3a3" opacity="0.5" />
+          <path d="M0 22 Q16 10 32 24 L32 29 Q16 15 0 27 Z" fill="#8e8e8e" opacity="0.55" />
+          <path d="M2 16 Q16 5 30 17" fill="none" stroke="#6e6e6e" strokeWidth="1" strokeLinecap="round" opacity="0.65" />
+          <path d="M2 24 Q16 13 30 25" fill="none" stroke="#6e6e6e" strokeWidth="1" strokeLinecap="round" opacity="0.65" />
+        </svg>
+      ) : null}
+    </span>
+  );
 }
 function ExtraCard({ extra, onChange, onRemove }: { extra: ExtraItem; onChange: (patch: Partial<ExtraItem>) => void; onRemove: () => void }) {
   const project = useProject();
