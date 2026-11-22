@@ -1,0 +1,19 @@
+name: birch-share-fix
+on:
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  fix:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Apply
+        run: |
+          set -e
+          git config user.name "maks94179305-ai"
+          git config user.email "maks94179305@gmail.com"
+          python3 scripts/apply-birch-share.py
+          git add src/lib/types.ts src/components/plan-view.tsx src/lib/share-image.ts
+          git commit -m "White birch white+stripe; share only schemes" || echo nochange
+          git push
