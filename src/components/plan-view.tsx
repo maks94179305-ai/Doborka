@@ -333,8 +333,10 @@ export function ColorChip({ hex, size = "md" }: { hex: string; size?: "sm" | "md
         {matte ? <rect width="32" height="32" rx="4" fill="#000" opacity={texture ? 0.06 : 0.18} /> : null}
         {profileId(hex) === "white-birch" ? (
           <>
-            <path d="M0 20 Q16 8 32 22 L32 28 Q16 14 0 26 Z" fill="#9b9b9b" opacity="0.55" />
-            <path d="M2 22 Q16 11 30 23" fill="none" stroke="#7a7a7a" strokeWidth="1.2" strokeLinecap="round" opacity="0.7" />
+            <path d="M0 14 Q16 2 32 16 L32 21 Q16 7 0 19 Z" fill="#a3a3a3" opacity="0.5" />
+            <path d="M0 22 Q16 10 32 24 L32 29 Q16 15 0 27 Z" fill="#8e8e8e" opacity="0.55" />
+            <path d="M2 16 Q16 5 30 17" fill="none" stroke="#6e6e6e" strokeWidth="1" strokeLinecap="round" opacity="0.65" />
+            <path d="M2 24 Q16 13 30 25" fill="none" stroke="#6e6e6e" strokeWidth="1" strokeLinecap="round" opacity="0.65" />
           </>
         ) : null}
       </svg>
