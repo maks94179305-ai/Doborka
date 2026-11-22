@@ -1,5 +1,5 @@
 name: extras-cut-scheme
-on:
+"on":
   workflow_dispatch:
 permissions:
   contents: write
@@ -15,7 +15,6 @@ jobs:
           git config user.email "maks94179305@gmail.com"
           python3 << 'PY'
           from pathlib import Path
-          # extras PaletteChip
           p = Path("src/components/extras-view.tsx")
           s = p.read_text()
           old = """function PaletteChip({ hex }: { hex: string }) {
@@ -47,14 +46,12 @@ jobs:
               raise SystemExit("PaletteChip missing")
           p.write_text(s.replace(old, new, 1))
           print("extras ok")
-          # plan-view url + share cutting
           p = Path("src/components/plan-view.tsx")
           s = p.read_text()
           s = s.replace("const cutFile = await renderCuttingPlanShot(m.title, cutBars);", "const cutFile = await renderCuttingPlanShot(m.title, cutBars, url);", 1)
           s = s.replace('if (item.kind === "scheme") {\n          files.push(named);\n          shareOnly.push(named);\n        }', 'if (item.kind === "scheme" || item.kind === "cutting") {\n          files.push(named);\n          shareOnly.push(named);\n        }', 1)
           p.write_text(s)
           print("plan ok")
-          # share-image schemeUrl
           p = Path("src/lib/share-image.ts")
           s = p.read_text()
           s = s.replace("export async function renderCuttingPlanShot(title: string, bars: StockBar[]): Promise<File | null> {", "export async function renderCuttingPlanShot(title: string, bars: StockBar[], schemeUrl?: string | null): Promise<File | null> {", 1)
