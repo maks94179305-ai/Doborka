@@ -8,12 +8,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Apply extras birch + cutting scheme
+      - name: Share schemes only to messenger
         run: |
           set -e
           git config user.name "maks94179305-ai"
           git config user.email "maks94179305@gmail.com"
-          python3 scripts/apply-extras-cut-scheme.py
-          git add src/components/extras-view.tsx src/components/plan-view.tsx src/lib/share-image.ts
-          git commit -m "Extras birch stripes; cutting share shows scheme" || echo nochange
+          python3 scripts/apply-share-schemes-only.py
+          git add src/components/plan-view.tsx
+          git commit -m "Messenger: share only schemes; cutting stays in history as BarScheme" || echo nochange
           git push
