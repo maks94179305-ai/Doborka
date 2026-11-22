@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
-import { Pencil, Share2, Trash2 } from "lucide-react";
+import { ChevronLeft, Folder, Pencil, Share2, Trash2 } from "lucide-react";
+import { BarScheme } from "@/components/bar-scheme";
 import { Button } from "@/components/ui/button";
 import { deletePhoto, getPhoto } from "@/lib/photos";
 import { shareFiles, shareOrSave } from "@/lib/share-native";
@@ -49,6 +50,7 @@ export function ArchiveView() {
   const [preview, setPreview] = useState<string | null>(null);
   const [picked, setPicked] = useState<string[]>([]);
   const [openFolder, setOpenFolder] = useState<string | null>(null);
+  const [openSub, setOpenSub] = useState<null | "cutting" | "scheme">(null);
   const [renaming, setRenaming] = useState<string | null>(null);
   const [renameDraft, setRenameDraft] = useState("");
   const [sharing, setSharing] = useState(false);
@@ -130,7 +132,7 @@ export function ArchiveView() {
       void unpublishHistory(item.id);
     }
     setPicked((cur) => cur.filter((id) => !items.some((item) => item.id === id)));
-    if (openFolder === folderId) setOpenFolder(null);
+    if (openFolder === folderId) { setOpenFolder(null); setOpenSub(null); }
     setPreview(null);
   }
 
@@ -147,6 +149,14 @@ export function ArchiveView() {
     setRenameDraft("");
   }
 
+
+  function entryKind(e: (typeof entries)[number]): "cutting" | "scheme" {
+    if (e.kind === "cutting" || e.kind === "scheme") return e.kind;
+    if (e.bars && e.bars.length) return "cutting";
+    if ((e.title || "").startsWith("Раскрой")) return "cutting";
+    return "scheme";
+  }
+
   if (!project) return null;
 
   return (
@@ -156,7 +166,7 @@ export function ArchiveView() {
         <h1>История заказов</h1>
         <p className="mt-1 text-sm text-muted-foreground">{openFolder ? "Отметьте карточки в папке и отправьте сразу несколько." : "Откройте папку, чтобы выбрать и поделиться схемами."}</p>
         {openFolder && entries.length ? <div className="mt-3 flex flex-wrap gap-2">
-          <Button size="sm" variant="secondary" onClick={() => setPicked(entries.filter((e) => (e.projectId || e.id) === openFolder).map((e) => e.id))}>Выбрать все</Button>
+          <Button size="sm" variant="secondary" onClick={() => setPicked(entries.filter((e) => (e.projectId || e.id) === openFolder && (!openSub || entryKind(e) === openSub)).map((e) => e.id))}>Выбрать все</Button>
           <Button size="sm" variant="secondary" onClick={() => setPicked([])} disabled={!picked.length}>Снять выбор</Button>
           <Button size="sm" onClick={() => void sharePicked()} disabled={!picked.length || sharing}><Share2 /> {sharing ? "Отправляем…" : `Поделиться выбранными${picked.length ? ` (${picked.length})` : ""}`}</Button>
         </div> : null}
@@ -168,7 +178,7 @@ export function ArchiveView() {
         </div>
       ) : (
         <div className="space-y-4">
-          {openFolder ? <div className="flex gap-2"><Button variant="secondary" onClick={() => { setOpenFolder(null); setPicked([]); }}>Назад к папкам</Button><Button variant="secondary" onClick={() => void removeFolder(openFolder)}><Trash2 /> Удалить папку</Button></div> : null}
+          {openFolder ? <div className="flex gap-2"><Button variant="secondary" onClick={() => { setOpenFolder(null); setOpenSub(null); setPicked([]); }}>Назад к папкам</Button><Button variant="secondary" onClick={() => void removeFolder(openFolder)}><Trash2 /> Удалить папку</Button></div> : null}
           {(openFolder ? entries.filter((e) => (e.projectId || e.id) === openFolder) : Object.values(entries.reduce<Record<string, typeof entries[number]>>((acc, e) => { const key = e.projectId || e.id; acc[key] ??= e; return acc; }, {}))).map((e) => (
           openFolder ? null : (
             <div key={e.projectId || e.id} className="panel flex w-full items-center justify-between p-4 text-left">
@@ -198,22 +208,81 @@ export function ArchiveView() {
               </span>
             </div>
           )))}
-          {openFolder ? <ul className="grid gap-3 sm:grid-cols-2">{entries.filter((e) => (e.projectId || e.id) === openFolder).map((e) => (
-            <li key={e.id} className={"panel overflow-hidden p-4 " + (picked.includes(e.id) ? "ring-2 ring-primary" : "")}>
-              <button type="button" className="block w-full overflow-hidden rounded-xl border border-border bg-background/50" onClick={() => urls[e.id] && setPreview(urls[e.id])} aria-label="Открыть карточку">
-                {urls[e.id] ? <img src={urls[e.id]} alt="" className="max-h-52 w-full object-contain" /> : <div className="h-36 bg-muted" />}
-              </button>
-              <div className="mt-3 flex items-start justify-between gap-2">
-                <div className="min-w-0">
-                  <label className="mb-1 flex items-center gap-2 text-sm"><input type="checkbox" checked={picked.includes(e.id)} onChange={() => toggle(e.id)} /> Выбрать</label>
-                  <p className="font-medium">{e.title}</p>
-                  {e.colorName ? <p className="text-sm text-muted-foreground">Цвет {e.colorName}</p> : null}
-                  <p className="mt-1 tabular text-sm text-steel">{sentFmt.format(e.sentAt)}</p>
-                </div>
-                <div className="flex shrink-0 gap-1"><Button size="sm" variant="secondary" onClick={() => void share(e.photoId, e.title)}><Share2 /> Поделиться</Button><Button size="icon-sm" variant="ghost" onClick={() => void remove(e.id, e.photoId)} aria-label="Удалить из архива"><Trash2 /></Button></div>
-              </div>
-            </li>
-          ))}</ul> : null}
+          {openFolder && !openSub ? (
+          <div className="grid gap-3 sm:grid-cols-2">
+            {(["cutting", "scheme"] as const).map((sub) => {
+              const count = entries.filter((e) => (e.projectId || e.id) === openFolder && entryKind(e) === sub).length;
+              return (
+                <button key={sub} type="button" className="panel flex items-center justify-between gap-3 p-4 text-left" onClick={() => setOpenSub(sub)}>
+                  <span className="flex min-w-0 items-center gap-3">
+                    <Folder className="size-5 shrink-0 text-steel" />
+                    <span>
+                      <span className="block font-medium">{sub === "cutting" ? "Раскрой хлыстов" : "Схемы"}</span>
+                      <span className="text-sm text-muted-foreground">{count} поз.</span>
+                    </span>
+                  </span>
+                  <span className="text-steel">Открыть</span>
+                </button>
+              );
+            })}
+          </div>
+        ) : null}
+        {openFolder && openSub ? (
+          <div className="grid gap-3">
+            <div className="flex flex-wrap items-center gap-2">
+              <Button size="sm" variant="secondary" onClick={() => setOpenSub(null)}><ChevronLeft className="size-4" /> К папкам</Button>
+              <p className="text-sm text-muted-foreground">{openSub === "cutting" ? "Раскрой хлыстов" : "Схемы"}</p>
+            </div>
+            {openSub === "cutting" ? (
+              <ul className="grid gap-6">
+                {entries.filter((e) => (e.projectId || e.id) === openFolder && entryKind(e) === "cutting").map((e) => (
+                  <li key={e.id} className={"space-y-3 " + (picked.includes(e.id) ? "rounded-2xl ring-2 ring-primary p-2" : "")}>
+                    <div className="flex flex-wrap items-start justify-between gap-2">
+                      <div className="min-w-0">
+                        <label className="mb-1 flex items-center gap-2 text-sm"><input type="checkbox" checked={picked.includes(e.id)} onChange={() => toggle(e.id)} /> Выбрать</label>
+                        <h2 className="font-display text-base">Раскрой · {e.title.replace(/^Раскрой\s*·\s*/, "")}</h2>
+                        {e.colorName ? <p className="text-sm text-muted-foreground">Цвет {e.colorName}</p> : null}
+                        <p className="mt-1 tabular text-sm text-steel">{sentFmt.format(e.sentAt)}</p>
+                      </div>
+                      <div className="flex shrink-0 gap-1">
+                        {e.photoId ? <Button size="sm" variant="secondary" onClick={() => void share(e.photoId, e.title)}><Share2 /> Поделиться</Button> : null}
+                        <Button size="icon-sm" variant="ghost" onClick={() => void remove(e.id, e.photoId)} aria-label="Удалить"><Trash2 /></Button>
+                      </div>
+                    </div>
+                    {e.bars && e.bars.length > 0 ? (
+                      <div className="grid min-w-0 gap-3">{e.bars.map((b) => <BarScheme key={b.id} bar={b} />)}</div>
+                    ) : urls[e.id] ? (
+                      <button type="button" className="block w-full overflow-hidden rounded-xl border border-border bg-background/50" onClick={() => setPreview(urls[e.id])}>
+                        <img src={urls[e.id]} alt="" className="max-h-80 w-full object-contain" />
+                      </button>
+                    ) : (
+                      <div className="panel-dash px-4 py-8 text-center text-sm text-muted-foreground">Нет данных раскроя</div>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <ul className="grid gap-3 sm:grid-cols-2">
+                {entries.filter((e) => (e.projectId || e.id) === openFolder && entryKind(e) === "scheme").map((e) => (
+                  <li key={e.id} className={"panel overflow-hidden p-4 " + (picked.includes(e.id) ? "ring-2 ring-primary" : "")}>
+                    <button type="button" className="block w-full overflow-hidden rounded-xl border border-border bg-background/50" onClick={() => urls[e.id] && setPreview(urls[e.id])}>
+                      {urls[e.id] ? <img src={urls[e.id]} alt="" className="max-h-52 w-full object-contain" /> : <div className="h-36 bg-muted" />}
+                    </button>
+                    <div className="mt-3 flex items-start justify-between gap-2">
+                      <div className="min-w-0">
+                        <label className="mb-1 flex items-center gap-2 text-sm"><input type="checkbox" checked={picked.includes(e.id)} onChange={() => toggle(e.id)} /> Выбрать</label>
+                        <p className="font-medium">{e.title}</p>
+                        {e.colorName ? <p className="text-sm text-muted-foreground">Цвет {e.colorName}</p> : null}
+                        <p className="mt-1 tabular text-sm text-steel">{sentFmt.format(e.sentAt)}</p>
+                      </div>
+                      <div className="flex shrink-0 gap-1"><Button size="sm" variant="secondary" onClick={() => void share(e.photoId, e.title)}><Share2 /> Поделиться</Button><Button size="icon-sm" variant="ghost" onClick={() => void remove(e.id, e.photoId)} aria-label="Удалить"><Trash2 /></Button></div>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        ) : null}
         </div>
       )}
       {preview ? <SchemeZoom src={preview} onClose={() => setPreview(null)} /> : null}

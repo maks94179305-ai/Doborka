@@ -25,7 +25,7 @@ type Workspace = {
   setSchemeIds: (key: string, photoIds: string[]) => void;
   setProfileColor: (key: string, color: string) => void;
   setProfileNote: (key: string, note: string) => void;
-  addArchiveEntry: (entry: { photoId: string; title: string; colorName?: string; projectId?: string; projectName?: string }) => ArchiveEntry;
+  addArchiveEntry: (entry: { photoId: string; title: string; colorName?: string; projectId?: string; projectName?: string; kind?: "scheme" | "cutting"; bars?: ArchiveEntry["bars"] }) => ArchiveEntry;
   renameArchiveProject: (projectId: string, name: string) => void;
   removeArchiveEntry: (id: string) => void;
   importProject: (data: Project) => string;
@@ -168,7 +168,7 @@ export const useWorkspace = create<Workspace>()(
       setProfileColor: (key, color) => get().patchProject((p) => ({ ...p, profileColors: { ...(p.profileColors ?? {}), [key]: color } })),
       setProfileNote: (key, note) => get().patchProject((p) => ({ ...p, profileNotes: { ...(p.profileNotes ?? {}), [key]: note.slice(0, 400) } })),
       addArchiveEntry: (entry) => {
-        const item: ArchiveEntry = { id: uid("ar"), photoId: entry.photoId, title: entry.title, colorName: entry.colorName, sentAt: Date.now(), projectId: entry.projectId, projectName: entry.projectName };
+        const item: ArchiveEntry = { id: uid("ar"), photoId: entry.photoId, title: entry.title, colorName: entry.colorName, sentAt: Date.now(), projectId: entry.projectId, projectName: entry.projectName, kind: entry.kind, bars: entry.bars };
         get().patchProject((p) => ({ ...p, archive: [item, ...(p.archive ?? [])] }));
         return item;
       },

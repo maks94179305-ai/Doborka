@@ -44,7 +44,7 @@ export function PlanView() {
     setSharing(true);
     try {
       const chosen = materials.filter((m) => picked.includes(m.key));
-      const sent: { file: File; title: string }[] = [];
+      const sent: { file: File; title: string; kind: "scheme" | "cutting"; bars?: import("@/lib/types").StockBar[]; colorName?: string }[] = [];
       const seen = new Set<string>();
       for (const m of chosen) {
         if (seen.has(m.key)) continue;
@@ -62,14 +62,14 @@ export function PlanView() {
         try {
           const color = profileColorOf(project, m.key);
           const file = await composeWindowShot(url, { heading: "Схема", title: m.title, color, colorName: profileColorName(color), note: project.profileNotes?.[m.key], bars: m.plan.barCounts, totalBars: m.plan.bars.length });
-          sent.push({ file, title: m.title });
+          sent.push({ file, title: m.title, kind: "scheme", colorName: profileColorName(color) });
           if (m.plan.bars.length > 0) {
             const cutBars = m.plan.bars.map((b) => {
               const global = plan.pieceToBar[b.cuts[0]?.pieceId] ?? b.index;
               return { ...b, index: global };
             });
             const cutFile = await renderCuttingPlanShot(m.title, cutBars);
-            if (cutFile) sent.push({ file: cutFile, title: `Раскрой · ${m.title}` });
+            if (cutFile) sent.push({ file: cutFile, title: m.title, kind: "cutting", bars: cutBars, colorName: profileColorName(color) });
           }
         } finally { URL.revokeObjectURL(url); }
       }
@@ -95,7 +95,7 @@ export function PlanView() {
         files.push(named);
         const photoId = uid("ph");
         await savePhoto(photoId, named);
-        addArchiveEntry({ photoId, title: item.title, projectId, projectName });
+        addArchiveEntry({ photoId, title: item.title, projectId, projectName, kind: item.kind, bars: item.bars, colorName: item.colorName });
       }
       await shareFiles(files, projectName);
     } finally {

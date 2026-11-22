@@ -52,6 +52,7 @@ export const PROFILE_COLORS: { id: string; name: string; hex: string; finish?: "
   { id: "graphite-gloss", name: "Графит глянцевый", hex: "#23282e", finish: "gloss", texture: "/textures/graphite-matte.jpg" },
   { id: "anthracite", name: "Антрацит", hex: "#3d4548" },
   { id: "vintage", name: "Винтаж", hex: "#6e5a4a", finish: "matte", texture: "/textures/vintage-matte.jpg" },
+  { id: "white-birch", name: "Белая берёза", hex: "#f0e4cc", finish: "matte", texture: "/textures/vintage-matte.jpg" },
 ];
 
 export const DEFAULT_PROFILE_COLOR = PROFILE_COLORS[0].hex;
@@ -187,7 +188,7 @@ export type Project = {
   settings: ProjectSettings;
 };
 
-export type ArchiveEntry = { id: string; photoId: string; title: string; colorName?: string; sentAt: number; projectId?: string; projectName?: string };
+export type ArchiveEntry = { id: string; photoId: string; title: string; colorName?: string; sentAt: number; projectId?: string; projectName?: string; kind?: "scheme" | "cutting"; bars?: { id: string; index: number; stockLength: number; cuts: { pieceId: string; length: number; label: string; color: string; openingName?: string }[]; used: number; waste: number; leftover: number; usableRemainder: boolean }[] };
 
 export type NeedPiece = {
   id: string;
