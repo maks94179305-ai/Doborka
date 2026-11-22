@@ -8,12 +8,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Share schemes only to messenger
+      - name: Share cutting screenshots
         run: |
           set -e
           git config user.name "maks94179305-ai"
           git config user.email "maks94179305@gmail.com"
-          python3 scripts/apply-share-schemes-only.py
+          python3 scripts/apply-share-cutting-shot.py
           git add src/components/plan-view.tsx
-          git commit -m "Messenger: share only schemes; cutting stays in history as BarScheme" || echo nochange
+          git commit -m "Messenger: send cutting screenshots with schemes" || echo nochange
           git push
