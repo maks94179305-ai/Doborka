@@ -103,8 +103,8 @@ export function PlanView() {
         const photoId = uid("ph");
         await savePhoto(photoId, named);
         addArchiveEntry({ photoId, title: item.title, projectId, projectName, kind: item.kind, bars: item.bars, colorName: item.colorName });
-        // Схемы + скрин раскроя в мессенджер; в истории раскрой — живые карточки
-        if (item.kind === "scheme" || item.kind === "cutting") {
+        // Из вкладки раскрой в мессенджер — только схемы
+        if (item.kind === "scheme") {
           files.push(named);
           shareOnly.push(named);
         }
